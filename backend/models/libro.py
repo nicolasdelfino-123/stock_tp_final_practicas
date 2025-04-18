@@ -14,6 +14,7 @@ class Libro(Base):
     isbn: Mapped[str] = mapped_column(String(20), unique=True, nullable=True)
     stock: Mapped[int] = mapped_column(Integer, default=0)
     precio: Mapped[float] = mapped_column(Float)
+    ubicacion: Mapped[str] = mapped_column(String(40), nullable=False)
 
     def __repr__(self):
         return f"<Libro {self.titulo}>"

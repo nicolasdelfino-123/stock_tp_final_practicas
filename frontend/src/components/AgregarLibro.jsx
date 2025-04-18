@@ -8,7 +8,7 @@ const AgregarLibro = () => {
     editorial: "",
     stock: 0,
     precio: 0,
-    ubicacion: "", // Nuevo campo de ubicación
+    ubicacion: "",
   });
 
   // Función para manejar los cambios de los inputs
@@ -20,15 +20,15 @@ const AgregarLibro = () => {
     });
   };
 
-  // Función para autocompletar los datos basados en el ISBN o Título
+  // Función para autocompletar los datos basados en el ISBN
   const handleAutocomplete = async () => {
-    const { isbn, titulo } = formData;
+    const { isbn } = formData;
 
-    // Realizamos la búsqueda por ISBN o Título
-    if (isbn || titulo) {
+    // Realizamos la búsqueda por ISBN
+    if (isbn) {
       try {
         const response = await fetch(
-          `http://localhost:5000/libros?isbn=${isbn}&titulo=${titulo}`
+          `http://localhost:5000/libros?isbn=${isbn}`
         );
         const data = await response.json();
 
@@ -38,25 +38,49 @@ const AgregarLibro = () => {
           // Autocompletar los campos
           setFormData({
             ...formData,
-            autor: libro.autor,
-            editorial: libro.editorial,
-            stock: libro.stock,
-            precio: libro.precio,
-            titulo: libro.titulo, // Agregar el título en caso de que se haya dejado vacío
+            autor: libro.autor || "", // Validación de autor
+            editorial: libro.editorial || "", // Validación de editorial
+            stock: libro.stock || 0, // Validación de stock
+            precio: libro.precio || 0, // Validación de precio
+            titulo: libro.titulo || "", // Validación de título
+            ubicacion: libro.ubicacion || "", // Validación de ubicación
+          });
+        } else {
+          // Si no hay libro con ese ISBN, limpiar los campos para un nuevo libro
+          setFormData({
+            isbn: formData.isbn,
+            titulo: "",
+            autor: "",
+            editorial: "",
+            stock: 0,
+            precio: 0,
+            ubicacion: "",
           });
         }
       } catch (error) {
         console.error("Error al autocompletar los datos:", error);
+        alert("Hubo un error al intentar obtener los datos del libro.");
       }
     }
   };
 
-  // Detectar cambios en ISBN o Título y hacer autocompletado
+  // Detectar el cambio del ISBN y hacer autocompletado
   useEffect(() => {
-    if (formData.isbn || formData.titulo) {
-      handleAutocomplete();
+    // Si el ISBN está vacío, resetear los campos
+    if (!formData.isbn) {
+      setFormData({
+        isbn: "",
+        titulo: "",
+        autor: "",
+        editorial: "",
+        stock: 0,
+        precio: 0,
+        ubicacion: "",
+      });
+    } else {
+      handleAutocomplete(); // Si el ISBN tiene valor, autocompletar
     }
-  }, [formData.isbn, formData.titulo]); // Se ejecuta cuando cambian los valores de ISBN o Título
+  }, [formData.isbn]); // Solo se ejecuta cuando cambia el ISBN
 
   // Función para manejar el envío del formulario
   const handleSubmit = async (e) => {
@@ -65,6 +89,12 @@ const AgregarLibro = () => {
     // Validar que todos los campos obligatorios estén presentes
     if (!formData.isbn || !formData.titulo || !formData.autor) {
       alert("Por favor, complete todos los campos obligatorios.");
+      return;
+    }
+
+    // Validaciones adicionales para los campos numéricos
+    if (formData.stock < 0 || formData.precio < 0) {
+      alert("El stock y el precio no pueden ser negativos.");
       return;
     }
 
