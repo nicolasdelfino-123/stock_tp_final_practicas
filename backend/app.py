@@ -51,9 +51,11 @@ def obtener_libros():
         if palabra_clave:
             palabra_clave = unidecode(palabra_clave.lower())
             libros = session.query(Libro).filter(
-                or_(
+                or_( # or_ es como WHERE titulo LIKE '%harry%' OR autor LIKE '%harry%' “significa Dame los libros que cumplan con condición_1 o condición_2”.
                     func.lower(Libro.titulo).like(f"%{palabra_clave}%"),
+                    #Esto baja todo a minúsculas. Es para que la búsqueda no sea sensible a mayúsculas/minúsculas. esto genera en SQL algo como LOWER(titulo)
                     func.lower(Libro.autor).like(f"%{palabra_clave}%")
+                    #El % significa “cualquier cosa antes o después”.
                 )
             ).all()
         else:
@@ -90,22 +92,38 @@ def crear_libro():
     precio = float(precio_raw) if precio_raw not in (None, '', 'null') else None
 
     try:
-        nuevo_libro = Libro(
-            titulo=data['titulo'],
-            autor=data['autor'],
-            editorial=data.get('editorial'),
-            isbn=data.get('isbn'),
-            stock=data.get('stock', 0),
-            precio=precio,
-            ubicacion=data.get('ubicacion')
-        )
-        session.add(nuevo_libro)
-        session.commit()
-        return jsonify({'mensaje': 'Libro creado con éxito'}), 201
+        # Buscar si ya existe un libro con el mismo ISBN
+        libro_existente = session.query(Libro).filter(Libro.isbn == data.get('isbn')).first()
+
+        if libro_existente:
+            # Si ya existe, actualizamos el libro con los nuevos datos
+            libro_existente.titulo = data['titulo']
+            libro_existente.autor = data['autor']
+            libro_existente.editorial = data.get('editorial')
+            libro_existente.stock = data.get('stock', 0)
+            libro_existente.precio = precio
+            libro_existente.ubicacion = data.get('ubicacion')
+
+            session.commit()
+            return jsonify({'mensaje': 'Libro actualizado con éxito'}), 200
+        else:
+            # Si no existe, creamos un nuevo libro
+            nuevo_libro = Libro(
+                titulo=data['titulo'],
+                autor=data['autor'],
+                editorial=data.get('editorial'),
+                isbn=data.get('isbn'),
+                stock=data.get('stock', 0),
+                precio=precio,
+                ubicacion=data.get('ubicacion')
+            )
+            session.add(nuevo_libro)
+            session.commit()
+            return jsonify({'mensaje': 'Libro creado con éxito'}), 201
 
     except Exception as e:
         session.rollback()
-        return jsonify({'error': 'Error al crear el libro', 'mensaje': str(e)}), 500
+        return jsonify({'error': 'Error al crear o actualizar el libro', 'mensaje': str(e)}), 500
 
 
 # Actualizar libro

@@ -7,11 +7,14 @@ const BajarLibro = () => {
     isbn: "",
     titulo: "",
     autor: "",
+    editorial: "",
     stock: "",
     cantidad: "",
     id: null,
   });
   const [error, setError] = useState("");
+  const [resultado, setResultado] = useState("");
+  const [resultados, setResultados] = useState([]); // <- nuevo estado para lista
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -26,11 +29,9 @@ const BajarLibro = () => {
 
     try {
       const response = await fetch("http://127.0.0.1:5000/libros");
-
       if (!response.ok) throw new Error("No se pudo obtener la lista");
 
       const libros = await response.json();
-
       const libroEncontrado = libros.find(
         (libro) => libro.isbn === formData.isbn
       );
@@ -41,15 +42,22 @@ const BajarLibro = () => {
           id: libroEncontrado.id,
           titulo: libroEncontrado.titulo,
           autor: libroEncontrado.autor,
+          editorial: libroEncontrado.editorial || "",
           stock: libroEncontrado.stock,
         });
         setError("");
+        setResultado("");
+        setResultados([]);
       } else {
         setError("No se encontró un libro con ese ISBN");
+        setResultado("");
+        setResultados([]);
       }
     } catch (err) {
       console.error("Error al buscar el libro:", err);
       setError("Error al buscar el libro.");
+      setResultado("");
+      setResultados([]);
     }
   };
 
@@ -61,7 +69,6 @@ const BajarLibro = () => {
       return;
     }
 
-    // Asegurarse de que 'cantidad' sea un número
     const cantidad = Number(formData.cantidad);
 
     if (isNaN(cantidad) || cantidad <= 0) {
@@ -84,14 +91,32 @@ const BajarLibro = () => {
       const data = await response.json();
 
       if (response.ok) {
-        alert("Stock actualizado exitosamente");
-        navigate("/");
+        setResultado("✅ Stock actualizado exitosamente.");
+        const nuevoStock = formData.stock - cantidad;
+        setFormData((prev) => ({
+          ...prev,
+          stock: nuevoStock,
+          cantidad: "",
+        }));
+
+        // Guardar en resultados para mostrar el resumen
+        setResultados([
+          {
+            titulo: formData.titulo,
+            autor: formData.autor,
+            editorial: formData.editorial,
+            stock: nuevoStock,
+            ubicacion: data.ubicacion || "", // opcional si lo tenés
+          },
+        ]);
       } else {
-        alert(data.error || "Error al bajar el stock");
+        setResultado(`❌ ${data.error || "Error al bajar el stock"}`);
+        setResultados([]);
       }
     } catch (error) {
       console.error("Error en la solicitud:", error);
-      alert("Error de red: " + error.message);
+      setResultado("❌ Error de red: " + error.message);
+      setResultados([]);
     }
   };
 
@@ -135,6 +160,16 @@ const BajarLibro = () => {
           </div>
 
           <div className="mb-3">
+            <label className="form-label">Editorial:</label>
+            <input
+              type="text"
+              className="form-control"
+              value={formData.editorial}
+              readOnly
+            />
+          </div>
+
+          <div className="mb-3">
             <label className="form-label">Stock actual:</label>
             <input
               type="number"
@@ -160,7 +195,7 @@ const BajarLibro = () => {
 
           {error && <div className="text-danger mb-3">{error}</div>}
 
-          <div className="d-flex justify-content-between">
+          <div className="d-flex justify-content-between mb-3">
             <button type="submit" className="btn btn-warning">
               Bajar Stock
             </button>
@@ -172,6 +207,35 @@ const BajarLibro = () => {
               Volver al Inicio
             </button>
           </div>
+
+          {resultado && (
+            <div
+              className={`mt-3 ${
+                resultado.includes("✅") ? "text-success" : "text-danger"
+              }`}
+            >
+              {resultado}
+            </div>
+          )}
+
+          {resultados.length > 0 && (
+            <div className="mt-4">
+              <h4>Resultado:</h4>
+              <ul className="list-group">
+                {resultados.map((libro, index) => (
+                  <li key={index} className="list-group-item">
+                    <strong>Título:</strong> {libro.titulo} <br />
+                    <strong>Autor:</strong> {libro.autor} <br />
+                    <strong>Ubicación:</strong>{" "}
+                    {libro.ubicacion || "No disponible"} <br />
+                    <strong>Stock:</strong> {libro.stock} <br />
+                    <strong>Editorial:</strong>{" "}
+                    {libro.editorial || "No disponible"}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
         </form>
       </div>
     </div>

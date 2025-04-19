@@ -11,20 +11,20 @@ const AgregarLibro = () => {
     ubicacion: "",
   });
 
-  // Función para manejar los cambios de los inputs
+  const [mensaje, setMensaje] = useState(""); // Estado para el mensaje de éxito
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData({
       ...formData,
       [name]: value,
     });
+    setMensaje(""); // ← Esto borra el mensaje al editar
   };
 
-  // Función para autocompletar los datos basados en el ISBN
   const handleAutocomplete = async () => {
     const { isbn } = formData;
 
-    // Realizamos la búsqueda por ISBN
     if (isbn) {
       try {
         const response = await fetch(
@@ -33,20 +33,18 @@ const AgregarLibro = () => {
         const data = await response.json();
 
         if (response.ok && data.length > 0) {
-          const libro = data[0]; // Suponemos que devolvemos solo un libro
+          const libro = data[0];
 
-          // Autocompletar los campos
           setFormData({
             ...formData,
-            autor: libro.autor || "", // Validación de autor
-            editorial: libro.editorial || "", // Validación de editorial
-            stock: libro.stock || 0, // Validación de stock
-            precio: libro.precio || 0, // Validación de precio
-            titulo: libro.titulo || "", // Validación de título
-            ubicacion: libro.ubicacion || "", // Validación de ubicación
+            autor: libro.autor || "",
+            editorial: libro.editorial || "",
+            stock: libro.stock || 0,
+            precio: libro.precio || 0,
+            titulo: libro.titulo || "",
+            ubicacion: libro.ubicacion || "",
           });
         } else {
-          // Si no hay libro con ese ISBN, limpiar los campos para un nuevo libro
           setFormData({
             isbn: formData.isbn,
             titulo: "",
@@ -64,9 +62,7 @@ const AgregarLibro = () => {
     }
   };
 
-  // Detectar el cambio del ISBN y hacer autocompletado
   useEffect(() => {
-    // Si el ISBN está vacío, resetear los campos
     if (!formData.isbn) {
       setFormData({
         isbn: "",
@@ -78,49 +74,94 @@ const AgregarLibro = () => {
         ubicacion: "",
       });
     } else {
-      handleAutocomplete(); // Si el ISBN tiene valor, autocompletar
+      handleAutocomplete();
     }
-  }, [formData.isbn]); // Solo se ejecuta cuando cambia el ISBN
+  }, [formData.isbn]);
 
-  // Función para manejar el envío del formulario
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Validar que todos los campos obligatorios estén presentes
     if (!formData.isbn || !formData.titulo || !formData.autor) {
       alert("Por favor, complete todos los campos obligatorios.");
       return;
     }
 
-    // Validaciones adicionales para los campos numéricos
     if (formData.stock < 0 || formData.precio < 0) {
       alert("El stock y el precio no pueden ser negativos.");
       return;
     }
 
     try {
-      const response = await fetch("http://localhost:5000/libros", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(formData),
-      });
+      // Revisar si el libro ya existe en el sistema
+      const response = await fetch(
+        `http://localhost:5000/libros?isbn=${formData.isbn}`
+      );
+      const data = await response.json();
 
-      if (response.ok) {
-        alert("Libro creado con éxito");
-        setFormData({
-          isbn: "",
-          titulo: "",
-          autor: "",
-          editorial: "",
-          stock: 0,
-          precio: 0,
-          ubicacion: "", // Reseteamos el campo de ubicación
-        });
+      if (response.ok && data.length > 0) {
+        const libroExistente = data[0];
+
+        // Comparamos campos solo para mostrar mensaje
+        let cambios = [];
+
+        if (formData.titulo !== libroExistente.titulo) {
+          cambios.push("título");
+        }
+        if (formData.autor !== libroExistente.autor) {
+          cambios.push("autor");
+        }
+        if (formData.editorial !== libroExistente.editorial) {
+          cambios.push("editorial");
+        }
+        if (formData.stock !== libroExistente.stock) {
+          cambios.push("stock");
+        }
+        if (formData.precio !== libroExistente.precio) {
+          cambios.push("precio");
+        }
+        if (formData.ubicacion !== libroExistente.ubicacion) {
+          cambios.push("ubicación");
+        }
+
+        // Mensaje de éxito
+        let mensajeExito;
+        if (cambios.length > 0) {
+          mensajeExito = `Libro actualizado con éxito. Campos modificados: ${cambios.join(
+            ", "
+          )}.`;
+        } else {
+          mensajeExito = "No se realizaron cambios en el libro.";
+        }
+
+        setMensaje(mensajeExito);
+
+        // Acá podés decidir si querés realmente hacer un PUT/PATCH para actualizar o no.
+        // Por ahora, como vos querés, solo mostramos el mensaje.
       } else {
-        const data = await response.json();
-        alert(data.error || "Hubo un error al crear el libro");
+        // Si el libro es nuevo
+        const responseCrear = await fetch("http://localhost:5000/libros", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(formData),
+        });
+
+        if (responseCrear.ok) {
+          setMensaje("Libro creado con éxito.");
+          setFormData({
+            isbn: "",
+            titulo: "",
+            autor: "",
+            editorial: "",
+            stock: 0,
+            precio: 0,
+            ubicacion: "",
+          });
+        } else {
+          const data = await responseCrear.json();
+          alert(data.error || "Hubo un error al crear el libro");
+        }
       }
     } catch (error) {
       console.error("Error en la solicitud:", error);
@@ -132,6 +173,7 @@ const AgregarLibro = () => {
     <div className="container mt-5">
       <div className="card shadow-lg p-4">
         <h2 className="mb-4 text-center">Crear Nuevo Libro</h2>
+        {mensaje && <div className="alert alert-info">{mensaje}</div>}
         <form onSubmit={handleSubmit}>
           <div className="mb-3">
             <label htmlFor="isbn" className="form-label">
@@ -234,10 +276,32 @@ const AgregarLibro = () => {
             />
           </div>
 
-          <div className="d-grid gap-2">
-            <button type="submit" className="btn btn-primary btn-lg">
-              Crear Libro
-            </button>
+          <div className="row mt-4">
+            <div className="col-9">
+              <button type="submit" className="btn btn-primary btn-lg w-100">
+                Crear Libro
+              </button>
+            </div>
+            <div className="col-3">
+              <button
+                type="button"
+                className="btn btn-warning btn-lg w-100"
+                onClick={() => {
+                  setFormData({
+                    isbn: "",
+                    titulo: "",
+                    autor: "",
+                    editorial: "",
+                    stock: 0,
+                    precio: 0,
+                    ubicacion: "",
+                  });
+                  setMensaje(""); // ← Esto borra el mensaje
+                }}
+              >
+                Refrescar
+              </button>
+            </div>
           </div>
         </form>
       </div>

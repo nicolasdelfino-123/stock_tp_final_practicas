@@ -1,4 +1,3 @@
-// BuscarLibro.jsx
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -8,9 +7,12 @@ const BuscarLibro = () => {
     isbn: "",
     titulo: "",
     autor: "",
+    ubicacion: "",
+    stock: "",
+    editorial: "",
   });
-
   const [resultados, setResultados] = useState([]);
+  const [error, setError] = useState("");
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -20,24 +22,95 @@ const BuscarLibro = () => {
     });
   };
 
+  const handleSearch = async () => {
+    if (!formData.isbn) return;
+
+    try {
+      const response = await fetch("http://127.0.0.1:5000/libros");
+
+      if (!response.ok) throw new Error("No se pudo obtener la lista");
+
+      const libros = await response.json();
+
+      const libroEncontrado = libros.find(
+        (libro) => libro.isbn === formData.isbn
+      );
+
+      if (libroEncontrado) {
+        setFormData({
+          ...formData,
+          id: libroEncontrado.id,
+          titulo: libroEncontrado.titulo,
+          autor: libroEncontrado.autor,
+          stock: libroEncontrado.stock,
+          ubicacion: libroEncontrado.ubicacion || "",
+          editorial: libroEncontrado.editorial || "",
+        });
+        setError("");
+      } else {
+        setError("No se encontró un libro con ese ISBN");
+      }
+    } catch (err) {
+      console.error("Error al buscar el libro:", err);
+      setError("Error al buscar el libro.");
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    const query = new URLSearchParams(formData).toString();
-
     try {
-      const response = await fetch(`http://localhost:5000/libros?${query}`);
-      const data = await response.json();
+      const response = await fetch("http://localhost:5000/libros");
+      const libros = await response.json();
 
       if (response.ok) {
-        setResultados(data);
+        // Filtro por coincidencia parcial en el título
+        const filtro = formData.titulo.toLowerCase();
+        const librosFiltrados = libros.filter((libro) =>
+          libro.titulo.toLowerCase().includes(filtro)
+        );
+
+        if (librosFiltrados.length === 0) {
+          setError("No se encontraron coincidencias por título.");
+        } else {
+          setError("");
+        }
+
+        setResultados(librosFiltrados);
       } else {
-        alert(data.error || "Error al buscar libros");
+        alert("Error al buscar libros");
       }
     } catch (error) {
       console.error("Error en la búsqueda:", error);
       alert("Hubo un error: " + error.message);
     }
+  };
+
+  const limpiarPantalla = () => {
+    setFormData({
+      isbn: "",
+      titulo: "",
+      autor: "",
+      ubicacion: "",
+      stock: "",
+      editorial: "",
+    });
+    setResultados([]);
+    setError("");
+  };
+
+  // Función para seleccionar un libro de los resultados
+  const handleSelectBook = (libro) => {
+    setFormData({
+      ...formData,
+      isbn: libro.isbn,
+      titulo: libro.titulo,
+      autor: libro.autor,
+      ubicacion: libro.ubicacion || "",
+      stock: libro.stock,
+      editorial: libro.editorial || "",
+    });
+    setResultados([]); // Limpiar resultados después de seleccionar
   };
 
   return (
@@ -53,16 +126,20 @@ const BuscarLibro = () => {
               name="isbn"
               value={formData.isbn}
               onChange={handleChange}
+              onBlur={handleSearch}
             />
           </div>
           <div className="mb-3">
-            <label className="form-label">Título:</label>
+            <label className="form-label">
+              Título (buscar por palabra clave):
+            </label>
             <input
               type="text"
               className="form-control"
               name="titulo"
               value={formData.titulo}
               onChange={handleChange}
+              placeholder="Ej: princip"
             />
           </div>
           <div className="mb-3">
@@ -73,6 +150,42 @@ const BuscarLibro = () => {
               name="autor"
               value={formData.autor}
               onChange={handleChange}
+              readOnly
+            />
+          </div>
+          <div className="mb-3">
+            <label className="form-label">Ubicación:</label>
+            <input
+              type="text"
+              className="form-control"
+              name="ubicacion"
+              value={formData.ubicacion}
+              onChange={handleChange}
+              readOnly
+            />
+          </div>
+          <div className="mb-3">
+            <label htmlFor="stock" className="form-label">
+              Stock:
+            </label>
+            <input
+              type="text"
+              className="form-control"
+              id="stock"
+              name="stock"
+              value={formData.stock}
+              readOnly
+            />
+          </div>
+          <div className="mb-3">
+            <label className="form-label">Editorial:</label>
+            <input
+              type="text"
+              className="form-control"
+              name="editorial"
+              value={formData.editorial}
+              onChange={handleChange}
+              readOnly
             />
           </div>
 
@@ -90,6 +203,16 @@ const BuscarLibro = () => {
           </div>
         </form>
 
+        <div className="d-flex justify-content-center mt-3">
+          <button
+            type="button"
+            className="btn btn-danger"
+            onClick={limpiarPantalla}
+          >
+            Limpiar Pantalla
+          </button>
+        </div>
+
         {resultados.length > 0 && (
           <div className="mt-4">
             <h4>Resultados:</h4>
@@ -98,13 +221,24 @@ const BuscarLibro = () => {
                 <li key={index} className="list-group-item">
                   <strong>Título:</strong> {libro.titulo} <br />
                   <strong>Autor:</strong> {libro.autor} <br />
-                  <strong>ISBN:</strong> {libro.isbn} <br />
-                  <strong>Stock:</strong> {libro.stock}
+                  <strong>Ubicación:</strong>{" "}
+                  {libro.ubicacion || "No disponible"} <br />
+                  <strong>Stock:</strong> {libro.stock} <br />
+                  <strong>Editorial:</strong>{" "}
+                  {libro.editorial || "No disponible"} <br />
+                  {/* Botón para seleccionar el libro */}
+                  <button
+                    className="btn btn-success mt-2"
+                    onClick={() => handleSelectBook(libro)}
+                  >
+                    Seleccionar
+                  </button>
                 </li>
               ))}
             </ul>
           </div>
         )}
+        {error && <div className="mt-4 text-danger">{error}</div>}
       </div>
     </div>
   );
