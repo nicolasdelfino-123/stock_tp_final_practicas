@@ -6,7 +6,7 @@ const AgregarLibro = () => {
     titulo: "",
     autor: "",
     editorial: "",
-    stock: 0,
+    stock: 1, // Stock predeterminado en 1
     precio: 0,
     ubicacion: "",
   });
@@ -39,7 +39,7 @@ const AgregarLibro = () => {
             ...formData,
             autor: libro.autor || "",
             editorial: libro.editorial || "",
-            stock: libro.stock || 0,
+            stock: libro.stock || 1, // Si stock es 0, establecer a 1
             precio: libro.precio || 0,
             titulo: libro.titulo || "",
             ubicacion: libro.ubicacion || "",
@@ -50,7 +50,7 @@ const AgregarLibro = () => {
             titulo: "",
             autor: "",
             editorial: "",
-            stock: 0,
+            stock: 1, // Stock predeterminado en 1 para libros nuevos
             precio: 0,
             ubicacion: "",
           });
@@ -69,7 +69,7 @@ const AgregarLibro = () => {
         titulo: "",
         autor: "",
         editorial: "",
-        stock: 0,
+        stock: 1, // Stock predeterminado en 1
         precio: 0,
         ubicacion: "",
       });
@@ -86,8 +86,14 @@ const AgregarLibro = () => {
       return;
     }
 
-    if (formData.stock < 0 || formData.precio < 0) {
-      alert("El stock y el precio no pueden ser negativos.");
+    // Verificar que el stock no sea menor que 1
+    if (formData.stock < 1) {
+      alert("El stock debe ser de al menos 1 unidad.");
+      return;
+    }
+
+    if (formData.precio < 0) {
+      alert("El precio no puede ser negativo.");
       return;
     }
 
@@ -114,7 +120,7 @@ const AgregarLibro = () => {
           cambios.push("editorial");
         }
         if (formData.stock !== libroExistente.stock) {
-          cambios.push("stock");
+          cambios.push(`stock (${libroExistente.stock} → ${formData.stock})`);
         }
         if (formData.precio !== libroExistente.precio) {
           cambios.push("precio");
@@ -161,13 +167,15 @@ const AgregarLibro = () => {
         });
 
         if (responseCrear.ok) {
-          setMensaje("Libro creado con éxito.");
+          setMensaje(
+            `Libro creado con éxito con stock de ${formData.stock} unidad(es).`
+          );
           setFormData({
             isbn: "",
             titulo: "",
             autor: "",
             editorial: "",
-            stock: 0,
+            stock: 1, // Restablecer a 1 después de crear
             precio: 0,
             ubicacion: "",
           });
@@ -249,7 +257,7 @@ const AgregarLibro = () => {
 
           <div className="mb-3">
             <label htmlFor="stock" className="form-label">
-              Stock:
+              Stock (mínimo 1):
             </label>
             <input
               type="number"
@@ -258,6 +266,7 @@ const AgregarLibro = () => {
               name="stock"
               value={formData.stock}
               onChange={handleChange}
+              min="1"
             />
           </div>
 
@@ -305,7 +314,7 @@ const AgregarLibro = () => {
                     titulo: "",
                     autor: "",
                     editorial: "",
-                    stock: 0,
+                    stock: 1, // Restablecer a 1
                     precio: 0,
                     ubicacion: "",
                   });
