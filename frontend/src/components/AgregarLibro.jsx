@@ -123,20 +123,33 @@ const AgregarLibro = () => {
           cambios.push("ubicación");
         }
 
-        // Mensaje de éxito
-        let mensajeExito;
+        // Si hay cambios, actualizar el libro en la base de datos
         if (cambios.length > 0) {
-          mensajeExito = `Libro actualizado con éxito. Campos modificados: ${cambios.join(
-            ", "
-          )}.`;
+          // Aquí realizamos la actualización del libro
+          const responseActualizar = await fetch(
+            `http://localhost:5000/libros/${libroExistente.id}`,
+            {
+              method: "PUT", // O PATCH, dependiendo de tu API
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify(formData),
+            }
+          );
+
+          if (responseActualizar.ok) {
+            // Mensaje de éxito con los campos que se modificaron
+            const mensajeExito = `Libro actualizado con éxito. Campos modificados: ${cambios.join(
+              ", "
+            )}.`;
+            setMensaje(mensajeExito);
+          } else {
+            const errorData = await responseActualizar.json();
+            alert(errorData.error || "Hubo un error al actualizar el libro");
+          }
         } else {
-          mensajeExito = "No se realizaron cambios en el libro.";
+          setMensaje("No se realizaron cambios en el libro.");
         }
-
-        setMensaje(mensajeExito);
-
-        // Acá podés decidir si querés realmente hacer un PUT/PATCH para actualizar o no.
-        // Por ahora, como vos querés, solo mostramos el mensaje.
       } else {
         // Si el libro es nuevo
         const responseCrear = await fetch("http://localhost:5000/libros", {

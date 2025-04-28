@@ -11,7 +11,7 @@ class Libro(Base):
     titulo: Mapped[str] = mapped_column(String(150), nullable=False)
     autor: Mapped[str] = mapped_column(String(100), nullable=False)
     editorial: Mapped[str] = mapped_column(String(100), nullable=True)
-    isbn: Mapped[str] = mapped_column(String(20), unique=True, nullable=True)
+    isbn: Mapped[str] = mapped_column(String(20), unique=True, nullable=False)
     stock: Mapped[int] = mapped_column(Integer, default=0)
     precio: Mapped[float] = mapped_column(Float)
     ubicacion: Mapped[str] = mapped_column(String(40), nullable=False)

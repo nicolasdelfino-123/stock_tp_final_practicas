@@ -136,8 +136,8 @@ def actualizar_libro(libro_id):
         return jsonify({'error': 'Libro no encontrado'}), 404
 
     data = request.json
-    if not data.get('titulo') or not data.get('autor') or not data.get('precio'):
-        return jsonify({'error': 'Faltan campos obligatorios (titulo, autor o precio)'}), 400
+    if not data.get('titulo') or not data.get('autor'):
+        return jsonify({'error': 'Faltan campos obligatorios (titulo o autor)'}), 400
 
     try:
         libro.titulo = data['titulo']
