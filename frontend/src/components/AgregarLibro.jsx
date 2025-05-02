@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from "react";
+import { useAppContext } from "../context/appContext"; // Importamos el contexto
 
 const AgregarLibro = () => {
+  const { store, actions } = useAppContext(); // Usamos el contexto
+
   const [formData, setFormData] = useState({
     isbn: "",
     titulo: "",
@@ -11,7 +14,8 @@ const AgregarLibro = () => {
     ubicacion: "",
   });
 
-  const [mensaje, setMensaje] = useState(""); // Estado para el mensaje de éxito
+  // Usamos el mensaje del contexto
+  const mensaje = store.mensaje;
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -19,7 +23,7 @@ const AgregarLibro = () => {
       ...formData,
       [name]: value,
     });
-    setMensaje(""); // ← Esto borra el mensaje al editar
+    actions.setMensaje(""); // Borra el mensaje al editar usando el contexto
   };
 
   const handleAutocomplete = async () => {
@@ -27,14 +31,10 @@ const AgregarLibro = () => {
 
     if (isbn) {
       try {
-        const response = await fetch(
-          `http://localhost:5000/libros?isbn=${isbn}`
-        );
-        const data = await response.json();
+        // Usamos la función del contexto
+        const libro = await actions.buscarLibroPorISBN(isbn);
 
-        if (response.ok && data.length > 0) {
-          const libro = data[0];
-
+        if (libro) {
           setFormData({
             ...formData,
             autor: libro.autor || "",
@@ -98,15 +98,10 @@ const AgregarLibro = () => {
     }
 
     try {
-      // Revisar si el libro ya existe en el sistema
-      const response = await fetch(
-        `http://localhost:5000/libros?isbn=${formData.isbn}`
-      );
-      const data = await response.json();
+      // Revisar si el libro ya existe en el sistema usando el contexto
+      const libroExistente = await actions.buscarLibroPorISBN(formData.isbn);
 
-      if (response.ok && data.length > 0) {
-        const libroExistente = data[0];
-
+      if (libroExistente) {
         // Comparamos campos solo para mostrar mensaje
         let cambios = [];
 
@@ -131,43 +126,30 @@ const AgregarLibro = () => {
 
         // Si hay cambios, actualizar el libro en la base de datos
         if (cambios.length > 0) {
-          // Aquí realizamos la actualización del libro
-          const responseActualizar = await fetch(
-            `http://localhost:5000/libros/${libroExistente.id}`,
-            {
-              method: "PUT", // O PATCH, dependiendo de tu API
-              headers: {
-                "Content-Type": "application/json",
-              },
-              body: JSON.stringify(formData),
-            }
+          // Aquí realizamos la actualización del libro usando el contexto
+          const resultado = await actions.actualizarLibro(
+            libroExistente.id,
+            formData
           );
 
-          if (responseActualizar.ok) {
+          if (resultado.success) {
             // Mensaje de éxito con los campos que se modificaron
             const mensajeExito = `Libro actualizado con éxito. Campos modificados: ${cambios.join(
               ", "
             )}.`;
-            setMensaje(mensajeExito);
+            actions.setMensaje(mensajeExito);
           } else {
-            const errorData = await responseActualizar.json();
-            alert(errorData.error || "Hubo un error al actualizar el libro");
+            alert(resultado.error || "Hubo un error al actualizar el libro");
           }
         } else {
-          setMensaje("No se realizaron cambios en el libro.");
+          actions.setMensaje("No se realizaron cambios en el libro.");
         }
       } else {
-        // Si el libro es nuevo
-        const responseCrear = await fetch("http://localhost:5000/libros", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(formData),
-        });
+        // Si el libro es nuevo, usamos el contexto
+        const resultado = await actions.crearLibro(formData);
 
-        if (responseCrear.ok) {
-          setMensaje(
+        if (resultado.success) {
+          actions.setMensaje(
             `Libro creado con éxito con stock de ${formData.stock} unidad(es).`
           );
           setFormData({
@@ -180,8 +162,7 @@ const AgregarLibro = () => {
             ubicacion: "",
           });
         } else {
-          const data = await responseCrear.json();
-          alert(data.error || "Hubo un error al crear el libro");
+          alert(resultado.error || "Hubo un error al crear el libro");
         }
       }
     } catch (error) {
@@ -318,7 +299,7 @@ const AgregarLibro = () => {
                     precio: 0,
                     ubicacion: "",
                   });
-                  setMensaje(""); // ← Esto borra el mensaje
+                  actions.setMensaje(""); // Borrar mensaje usando el contexto
                 }}
               >
                 Refrescar

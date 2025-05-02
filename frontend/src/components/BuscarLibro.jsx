@@ -1,8 +1,11 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useAppContext } from "../context/appContext"; // Importamos el contexto
 
 const BuscarLibro = () => {
   const navigate = useNavigate();
+  const { store, actions } = useAppContext(); // Usamos el contexto
+
   const [formData, setFormData] = useState({
     isbn: "",
     titulo: "",
@@ -26,15 +29,8 @@ const BuscarLibro = () => {
     if (!formData.isbn) return;
 
     try {
-      const response = await fetch("http://127.0.0.1:5000/libros");
-
-      if (!response.ok) throw new Error("No se pudo obtener la lista");
-
-      const libros = await response.json();
-
-      const libroEncontrado = libros.find(
-        (libro) => libro.isbn === formData.isbn
-      );
+      // Usamos la función del contexto para buscar por ISBN
+      const libroEncontrado = await actions.buscarLibroPorISBN(formData.isbn);
 
       if (libroEncontrado) {
         setFormData({
@@ -60,13 +56,18 @@ const BuscarLibro = () => {
     e.preventDefault();
 
     try {
-      const response = await fetch("http://localhost:5000/libros");
-      const libros = await response.json();
+      // Usamos el store del contexto para obtener los libros
+      const libros = store.libros;
 
-      if (response.ok) {
-        // Filtro por coincidencia parcial en el título
+      // Si el store está vacío, intentamos obtener los libros
+      if (!libros || libros.length === 0) {
+        await actions.fetchLibros();
+      }
+
+      // Filtro por coincidencia parcial en el título
+      if (formData.titulo) {
         const filtro = formData.titulo.toLowerCase();
-        const librosFiltrados = libros.filter((libro) =>
+        const librosFiltrados = store.libros.filter((libro) =>
           libro.titulo.toLowerCase().includes(filtro)
         );
 
@@ -78,7 +79,7 @@ const BuscarLibro = () => {
 
         setResultados(librosFiltrados);
       } else {
-        alert("Error al buscar libros");
+        setError("Ingrese al menos un título para buscar");
       }
     } catch (error) {
       console.error("Error en la búsqueda:", error);
@@ -221,6 +222,7 @@ const BuscarLibro = () => {
                 <li key={index} className="list-group-item">
                   <strong>Título:</strong> {libro.titulo} <br />
                   <strong>Autor:</strong> {libro.autor} <br />
+                  <strong>ISBN:</strong> {libro.isbn} <br />
                   <strong>Ubicación:</strong>{" "}
                   {libro.ubicacion || "No disponible"} <br />
                   <strong>Stock:</strong> {libro.stock} <br />

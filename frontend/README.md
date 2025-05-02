@@ -1,70 +1,89 @@
-# Getting Started with Create React App
+# 📚 Librería API - Flask
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+Este proyecto es una API RESTful construida con **Flask**, pensada para administrar libros de una librería (alta, baja, modificación, consulta por título, autor o ISBN). Usa **SQLAlchemy** como ORM, soporta **CORS** para conexión con frontends y cuenta con un **panel de administración** básico con Flask-Admin.
 
-## Available Scripts
+---
 
-In the project directory, you can run:
+## ⚙️ Tecnologías usadas
 
-### `npm start`
+- Python 3.11+
+- Flask 3
+- SQLAlchemy 2
+- Flask-Admin
+- Flask-CORS
+- Unidecode
+- SQLite (por defecto)
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+---
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+## 🧾 Instalación
 
-### `npm test`
+### 1. Cloná el proyecto
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+```bash
+git clone https://github.com/tu-usuario/tu-repo.git
+cd tu-repo
 
-### `npm run build`
+2. Creá y activá un entorno virtual
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+python -m venv venv
+source venv/bin/activate  # En Windows: venv\Scripts\activate
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+3. Instalá las dependencias
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+pip install -r requirements.txt
 
-### `npm run eject`
+4. Configurá variables de entorno en un archivo .env (si no existe)
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+DATABASE_URL=sqlite:///db.sqlite3
+FLASK_ENV=development
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+5. Ejecutá la app
+python app.py
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+🧪 Endpoints disponibles
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+| Método | Ruta                | Descripción                                      |
+| ------ | ------------------- | ------------------------------------------------ |
+| GET    | `/`                 | Mensaje de bienvenida                            |
+| GET    | `/libros`           | Lista todos los libros o busca por `q` o `isbn`  |
+| POST   | `/libros`           | Crea un libro o actualiza uno existente por ISBN |
+| PUT    | `/libros/<id>`      | Actualiza un libro por su ID                     |
+| PUT    | `/bajar-libro/<id>` | Resta stock de un libro (simula una venta)       |
+| DELETE | `/libros/<id>`      | Elimina un libro por su ID                       |
 
-## Learn More
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+📁 Estructura del proyecto
+.
+├── app.py                # Código principal de la aplicación Flask
+├── models/
+│   └── libro.py          # Modelo SQLAlchemy del libro
+├── config.py             # Configuraciones del entorno
+├── requirements.txt      # Dependencias del proyecto
+└── README.md             # Este archivo
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+🧠 Consideraciones
+Las búsquedas por título o autor no distinguen mayúsculas ni acentos.
 
-### Code Splitting
+Si un ISBN ya existe, el POST lo actualiza en lugar de duplicar el libro.
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+El precio puede ser null.
 
-### Analyzing the Bundle Size
+El stock nunca se vuelve negativo.
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+A futuro podés conectar esta API con un frontend en React o similar.
 
-### Making a Progressive Web App
+💡 A mejorar en versiones futuras
+Autenticación (login/token)
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
+Paginación en la ruta /libros
 
-### Advanced Configuration
+Validaciones más estrictas
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
+Tests automatizados
 
-### Deployment
+Conexión con base de datos remota (PostgreSQL/MySQL)
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `npm run build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+👨‍💻 Autor
+Hecho con ❤️ por [Nicolás - @nicolasdelfino-123]
+```

@@ -5,11 +5,12 @@ from config import Config
 from models.libro import Base, Libro
 from unidecode import unidecode
 from flask_cors import CORS
+from flask_admin import Admin
+from flask_admin.contrib.sqla import ModelView
 
 def create_app():
     app = Flask(__name__)
     CORS(app)
-
 
     app.config.from_object(Config)
 
@@ -18,10 +19,17 @@ def create_app():
 
     Session = sessionmaker(autocommit=False, autoflush=False, bind=engine)
     app.session = Session()
+    admin = Admin(app, name="Panel de Administración", template_mode="bootstrap3")
+    admin.add_view(ModelView(Libro, app.session))
 
     return app
 
 app = create_app()
+
+@app.route('/')
+def index():
+    return '¡Bienvenido a la aplicación Flask!'  # Asegúrate de tener una ruta base
+
 
 # Obtener todos los libros o filtrar por palabra clave
 @app.route('/libros', methods=['GET'])
@@ -172,7 +180,7 @@ def eliminar_libro(libro_id):
         session.rollback()
         return jsonify({'error': 'Error al eliminar el libro', 'mensaje': str(e)}), 500
     
-    # Bajar Stock de un libro
+# Bajar Stock de un libro
 @app.route('/bajar-libro/<int:libro_id>', methods=['PUT'])
 def bajar_libro(libro_id):
     session = app.session
