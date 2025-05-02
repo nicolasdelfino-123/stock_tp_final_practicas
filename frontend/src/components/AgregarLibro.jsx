@@ -351,7 +351,7 @@ const AgregarLibro = () => {
 
           <div className="row mt-4">
             <div className="col-9">
-              <button type="submit" className="btn btn-primary btn-lg w-100">
+              <button type="submit" className="btn btn-success btn-lg w-100">
                 {formData.id ? "Actualizar Libro" : "Crear Libro"}
               </button>
             </div>
