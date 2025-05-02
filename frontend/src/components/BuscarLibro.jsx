@@ -115,8 +115,17 @@ const BuscarLibro = () => {
   };
 
   return (
-    <div className="container mt-5">
+    <div className="container mt-5 bg-primary">
       <div className="card shadow-lg p-4">
+        <div className="mb-3">
+          <button
+            type="button"
+            className="btn btn-secondary"
+            onClick={() => navigate("/")}
+          >
+            Volver al inicio
+          </button>
+        </div>
         <h2 className="mb-4 text-center">Buscar Libro</h2>
         <form onSubmit={handleSubmit}>
           <div className="mb-3">
@@ -190,29 +199,23 @@ const BuscarLibro = () => {
             />
           </div>
 
-          <div className="d-flex justify-content-between">
-            <button type="submit" className="btn btn-primary">
-              Buscar
-            </button>
-            <button
-              type="button"
-              className="btn btn-secondary"
-              onClick={() => navigate("/")}
-            >
-              Volver al Inicio
-            </button>
+          <div className="row mt-4">
+            <div className="col-6">
+              <button type="submit" className="btn btn-primary btn-lg w-100">
+                Buscar
+              </button>
+            </div>
+            <div className="col-6">
+              <button
+                type="button"
+                className="btn btn-warning btn-lg w-100"
+                onClick={limpiarPantalla}
+              >
+                Limpiar Pantalla
+              </button>
+            </div>
           </div>
         </form>
-
-        <div className="d-flex justify-content-center mt-3">
-          <button
-            type="button"
-            className="btn btn-danger"
-            onClick={limpiarPantalla}
-          >
-            Limpiar Pantalla
-          </button>
-        </div>
 
         {resultados.length > 0 && (
           <div className="mt-4">

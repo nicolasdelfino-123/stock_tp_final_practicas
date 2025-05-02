@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from "react";
 import { useAppContext } from "../context/appContext"; // Importamos el contexto
+import { useNavigate } from "react-router-dom";
 
 const AgregarLibro = () => {
   const { store, actions } = useAppContext(); // Usamos el contexto
-
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     isbn: "",
     titulo: "",
@@ -204,8 +205,17 @@ const AgregarLibro = () => {
   };
 
   return (
-    <div className="container mt-5">
+    <div className="container mt-5 bg-success">
       <div className="card shadow-lg p-4">
+        <div className="mb-3">
+          <button
+            type="button"
+            className="btn btn-secondary"
+            onClick={() => navigate("/")}
+          >
+            Volver al inicio
+          </button>
+        </div>
         <h2 className="mb-4 text-center">Crear Nuevo Libro</h2>
         {mensaje && <div className="alert alert-info">{mensaje}</div>}
         <form onSubmit={handleSubmit}>

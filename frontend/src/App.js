@@ -8,6 +8,7 @@ import AgregarLibro from "./components/AgregarLibro";
 import BajarLibro from "./components/BajarLibro";
 import BuscarLibro from "./components/BuscarLibro";
 import "bootstrap/dist/css/bootstrap.min.css";
+import "@fortawesome/fontawesome-free/css/all.min.css";
 
 function App() {
   return (

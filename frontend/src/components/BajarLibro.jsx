@@ -107,10 +107,29 @@ const BajarLibro = () => {
       setResultados([]);
     }
   };
+  const limpiarPantalla = () => {
+    setFormData({
+      isbn: "",
+      titulo: "",
+      autor: "",
+      ubicacion: "",
+      stock: "",
+      editorial: "",
+    });
+    setResultados([]);
+    setError("");
+  };
 
   return (
-    <div className="container mt-5">
+    <div className="container bajar mt-5 bg-danger">
       <div className="card shadow p-4">
+        <button
+          type="button"
+          className="btn btn-secondary w-auto mx-auto ms-0"
+          onClick={() => navigate("/")}
+        >
+          Volver al Inicio
+        </button>
         <h2 className="mb-4 text-center">Bajar Libro</h2>
         <form onSubmit={handleSubmit}>
           <div className="mb-3">
@@ -184,18 +203,20 @@ const BajarLibro = () => {
           {error && <div className="text-danger mb-3">{error}</div>}
 
           <div className="d-flex justify-content-between mb-3">
-            <button type="submit" className="btn btn-warning">
+            <button
+              type="submit"
+              className="btn btn-danger px-5 btn-lg w-100 mx-3"
+            >
               Bajar Stock
             </button>
             <button
               type="button"
-              className="btn btn-secondary"
-              onClick={() => navigate("/")}
+              className="btn btn-warning px-5 btn-lg w-100"
+              onClick={limpiarPantalla}
             >
-              Volver al Inicio
+              Limpiar Pantalla
             </button>
           </div>
-
           {resultado && (
             <div
               className={`mt-3 ${
