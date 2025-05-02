@@ -14,6 +14,10 @@ const AgregarLibro = () => {
     ubicacion: "",
   });
 
+  const [isLoading, setIsLoading] = useState(false);
+  const [datosCargados, setDatosCargados] = useState(false);
+  const [origen, setOrigen] = useState(""); // Para indicar de dónde vienen los datos ("local" o "externo")
+
   // Usamos el mensaje del contexto
   const mensaje = store.mensaje;
 
@@ -23,60 +27,85 @@ const AgregarLibro = () => {
       ...formData,
       [name]: value,
     });
+
+    // Si cambiamos manualmente el ISBN, reiniciamos el estado de origen
+    if (name === "isbn") {
+      setOrigen("");
+      setDatosCargados(false);
+    }
+
     actions.setMensaje(""); // Borra el mensaje al editar usando el contexto
   };
 
   const handleAutocomplete = async () => {
     const { isbn } = formData;
 
-    if (isbn) {
-      try {
-        // Usamos la función del contexto
-        const libro = await actions.buscarLibroPorISBN(isbn);
+    if (!isbn) return; // Verifica que el ISBN tenga al menos 10 caracteres
 
-        if (libro) {
+    setIsLoading(true);
+    setOrigen("");
+
+    try {
+      // Primero buscamos en nuestra base de datos local
+      const libroLocal = await actions.buscarLibroPorISBN(isbn);
+
+      if (libroLocal) {
+        // Si encontramos el libro en nuestra BD, usamos esos datos
+        setFormData({
+          ...formData,
+          autor: libroLocal.autor || "",
+          editorial: libroLocal.editorial || "",
+          stock: libroLocal.stock || 1,
+          precio: libroLocal.precio || 0,
+          titulo: libroLocal.titulo || "",
+          ubicacion: libroLocal.ubicacion || "",
+        });
+        setOrigen("local");
+        setDatosCargados(true);
+      } else {
+        // Si no lo encontramos localmente, buscamos en las fuentes externas
+        const libroExterno = await actions.buscarLibroExterno(isbn);
+
+        if (libroExterno) {
+          // Si lo encontramos en fuentes externas, usamos esos datos
           setFormData({
             ...formData,
-            autor: libro.autor || "",
-            editorial: libro.editorial || "",
-            stock: libro.stock || 1, // Si stock es 0, establecer a 1
-            precio: libro.precio || 0,
-            titulo: libro.titulo || "",
-            ubicacion: libro.ubicacion || "",
+            titulo: libroExterno.titulo || "",
+            autor: libroExterno.autor || "",
+            editorial: libroExterno.editorial || "",
+            // Mantenemos los valores predeterminados para stock y precio
           });
+          setOrigen("externo");
+          setDatosCargados(true);
+          actions.setMensaje(
+            `Datos obtenidos de ${
+              libroExterno.fuente || "fuente externa"
+            }. Puede editar si es necesario.`
+          );
         } else {
-          setFormData({
-            isbn: formData.isbn,
-            titulo: "",
-            autor: "",
-            editorial: "",
-            stock: 1, // Stock predeterminado en 1 para libros nuevos
-            precio: 0,
-            ubicacion: "",
-          });
+          // Si no lo encontramos en ninguna parte
+          actions.setMensaje(
+            "No se encontró información para este ISBN. Puede ingresar los datos manualmente."
+          );
+          setOrigen("");
+          setDatosCargados(false);
         }
-      } catch (error) {
-        console.error("Error al autocompletar los datos:", error);
-        alert("Hubo un error al intentar obtener los datos del libro.");
       }
+    } catch (error) {
+      console.error("Error al autocompletar los datos:", error);
+      actions.setMensaje("Hubo un error al buscar información del libro.");
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  useEffect(() => {
-    if (!formData.isbn) {
-      setFormData({
-        isbn: "",
-        titulo: "",
-        autor: "",
-        editorial: "",
-        stock: 1, // Stock predeterminado en 1
-        precio: 0,
-        ubicacion: "",
-      });
-    } else {
+  // Resto del componente se mantiene exactamente igual...
+  // Cuando el campo ISBN pierde el foco, intentamos autocompletar
+  const handleIsbnBlur = () => {
+    if (formData.isbn && !datosCargados) {
       handleAutocomplete();
     }
-  }, [formData.isbn]);
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -114,10 +143,10 @@ const AgregarLibro = () => {
         if (formData.editorial !== libroExistente.editorial) {
           cambios.push("editorial");
         }
-        if (formData.stock !== libroExistente.stock) {
+        if (parseInt(formData.stock) !== parseInt(libroExistente.stock)) {
           cambios.push(`stock (${libroExistente.stock} → ${formData.stock})`);
         }
-        if (formData.precio !== libroExistente.precio) {
+        if (parseFloat(formData.precio) !== parseFloat(libroExistente.precio)) {
           cambios.push("precio");
         }
         if (formData.ubicacion !== libroExistente.ubicacion) {
@@ -138,6 +167,7 @@ const AgregarLibro = () => {
               ", "
             )}.`;
             actions.setMensaje(mensajeExito);
+            setOrigen("local"); // Ahora el libro está en la BD local
           } else {
             alert(resultado.error || "Hubo un error al actualizar el libro");
           }
@@ -161,6 +191,8 @@ const AgregarLibro = () => {
             precio: 0,
             ubicacion: "",
           });
+          setOrigen("");
+          setDatosCargados(false);
         } else {
           alert(resultado.error || "Hubo un error al crear el libro");
         }
@@ -181,15 +213,43 @@ const AgregarLibro = () => {
             <label htmlFor="isbn" className="form-label">
               ISBN:
             </label>
-            <input
-              type="text"
-              className="form-control"
-              id="isbn"
-              name="isbn"
-              value={formData.isbn}
-              onChange={handleChange}
-              required
-            />
+            <div className="input-group">
+              <input
+                type="text"
+                className="form-control"
+                id="isbn"
+                name="isbn"
+                value={formData.isbn}
+                onChange={handleChange}
+                onBlur={handleIsbnBlur}
+                required
+              />
+              {isLoading && (
+                <span className="input-group-text">
+                  <div
+                    className="spinner-border spinner-border-sm"
+                    role="status"
+                  >
+                    <span className="visually-hidden">Cargando...</span>
+                  </div>
+                </span>
+              )}
+              {!isLoading && origen && (
+                <span
+                  className={`input-group-text ${
+                    origen === "local"
+                      ? "bg-success text-white"
+                      : "bg-info text-white"
+                  }`}
+                >
+                  {origen === "local" ? "BD Local" : "API Externa"}
+                </span>
+              )}
+            </div>
+            <small className="text-muted">
+              Al ingresar el ISBN, se intentará autocompletar la información del
+              libro.
+            </small>
           </div>
 
           <div className="mb-3">
@@ -282,7 +342,7 @@ const AgregarLibro = () => {
           <div className="row mt-4">
             <div className="col-9">
               <button type="submit" className="btn btn-primary btn-lg w-100">
-                Crear Libro
+                {formData.id ? "Actualizar Libro" : "Crear Libro"}
               </button>
             </div>
             <div className="col-3">
@@ -299,6 +359,8 @@ const AgregarLibro = () => {
                     precio: 0,
                     ubicacion: "",
                   });
+                  setOrigen("");
+                  setDatosCargados(false);
                   actions.setMensaje(""); // Borrar mensaje usando el contexto
                 }}
               >
