@@ -114,6 +114,40 @@ export const AppProvider = ({ children }) => {
     setMensaje: (msg) => {
       setMensaje(msg);
     },
+    // Bajar stock de libro
+    bajarStockLibro: async (id, cantidad) => {
+      try {
+        const response = await fetch(
+          `http://localhost:5000/bajar-libro/${id}`,
+          {
+            method: "PUT",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ cantidad }),
+          }
+        );
+
+        const data = await response.json();
+
+        if (response.ok) {
+          // Actualizar la lista de libros
+          actions.fetchLibros();
+          return {
+            success: true,
+            ubicacion: data.ubicacion || "",
+          };
+        } else {
+          return {
+            success: false,
+            error: data.error || "Error al bajar el stock",
+          };
+        }
+      } catch (error) {
+        console.error("Error en la solicitud:", error);
+        return { success: false, error: error.message };
+      }
+    },
   };
 
   return (

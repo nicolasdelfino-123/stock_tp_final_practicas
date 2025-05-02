@@ -1,8 +1,11 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useAppContext } from "../context/appContext"; // Asegúrate de ajustar la ruta
 
 const BajarLibro = () => {
   const navigate = useNavigate();
+  const { actions } = useAppContext(); // Obtenemos actions del contexto
+
   const [formData, setFormData] = useState({
     isbn: "",
     titulo: "",
@@ -14,7 +17,7 @@ const BajarLibro = () => {
   });
   const [error, setError] = useState("");
   const [resultado, setResultado] = useState("");
-  const [resultados, setResultados] = useState([]); // <- nuevo estado para lista
+  const [resultados, setResultados] = useState([]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -28,13 +31,8 @@ const BajarLibro = () => {
     if (!formData.isbn) return;
 
     try {
-      const response = await fetch("http://127.0.0.1:5000/libros");
-      if (!response.ok) throw new Error("No se pudo obtener la lista");
-
-      const libros = await response.json();
-      const libroEncontrado = libros.find(
-        (libro) => libro.isbn === formData.isbn
-      );
+      // Usamos la función del contexto para buscar por ISBN
+      const libroEncontrado = await actions.buscarLibroPorISBN(formData.isbn);
 
       if (libroEncontrado) {
         setFormData({
@@ -77,20 +75,10 @@ const BajarLibro = () => {
     }
 
     try {
-      const response = await fetch(
-        `http://127.0.0.1:5000/bajar-libro/${formData.id}`,
-        {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ cantidad }),
-        }
-      );
+      // Usamos la función del contexto para bajar stock
+      const response = await actions.bajarStockLibro(formData.id, cantidad);
 
-      const data = await response.json();
-
-      if (response.ok) {
+      if (response.success) {
         setResultado("✅ Stock actualizado exitosamente.");
         const nuevoStock = formData.stock - cantidad;
         setFormData((prev) => ({
@@ -106,11 +94,11 @@ const BajarLibro = () => {
             autor: formData.autor,
             editorial: formData.editorial,
             stock: nuevoStock,
-            ubicacion: data.ubicacion || "", // opcional si lo tenés
+            ubicacion: response.ubicacion || "", // Usamos la ubicación devuelta por la API
           },
         ]);
       } else {
-        setResultado(`❌ ${data.error || "Error al bajar el stock"}`);
+        setResultado(`❌ ${response.error || "Error al bajar el stock"}`);
         setResultados([]);
       }
     } catch (error) {
