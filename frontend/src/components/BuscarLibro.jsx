@@ -1,10 +1,11 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAppContext } from "../context/appContext"; // Importamos el contexto
+import { useAppContext } from "../context/appContext";
 
 const BuscarLibro = () => {
   const navigate = useNavigate();
-  const { store, actions } = useAppContext(); // Usamos el contexto
+  const { store, actions } = useAppContext();
+  const resultadosRef = useRef(null);
 
   const [formData, setFormData] = useState({
     isbn: "",
@@ -14,77 +15,76 @@ const BuscarLibro = () => {
     stock: "",
     editorial: "",
   });
+
   const [resultados, setResultados] = useState([]);
   const [error, setError] = useState("");
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData({
-      ...formData,
-      [name]: value,
-    });
+    setFormData({ ...formData, [name]: value });
   };
 
-  const handleSearch = async () => {
-    if (!formData.isbn) return;
+  const scrollToResultados = () => {
+    setTimeout(() => {
+      resultadosRef.current?.scrollIntoView({ behavior: "smooth" });
+    }, 100);
+  };
+
+  const buscarLibro = async () => {
+    const { isbn, titulo, autor } = formData;
+    setResultados([]);
+    setError("");
 
     try {
-      // Usamos la función del contexto para buscar por ISBN
-      const libroEncontrado = await actions.buscarLibroPorISBN(formData.isbn);
+      if (isbn.trim()) {
+        const libroEncontrado = await actions.buscarLibroPorISBN(isbn.trim());
+        if (libroEncontrado) {
+          setFormData((prev) => ({
+            ...prev,
+            id: libroEncontrado.id,
+            titulo: libroEncontrado.titulo,
+            autor: libroEncontrado.autor,
+            stock: libroEncontrado.stock,
+            ubicacion: libroEncontrado.ubicacion || "",
+            editorial: libroEncontrado.editorial || "",
+          }));
+          setResultados([libroEncontrado]);
+          scrollToResultados();
+          return;
+        } else {
+          setError("No se encontró un libro con ese ISBN");
+          return;
+        }
+      }
 
-      if (libroEncontrado) {
-        setFormData({
-          ...formData,
-          id: libroEncontrado.id,
-          titulo: libroEncontrado.titulo,
-          autor: libroEncontrado.autor,
-          stock: libroEncontrado.stock,
-          ubicacion: libroEncontrado.ubicacion || "",
-          editorial: libroEncontrado.editorial || "",
-        });
-        setError("");
+      // Si no hay ISBN, buscar por título o autor
+      if (!store.libros || store.libros.length === 0) {
+        await actions.fetchLibros();
+      }
+
+      const librosFiltrados = store.libros.filter((libro) => {
+        const matchTitulo =
+          titulo.trim() && libro.titulo.toLowerCase().includes(titulo.toLowerCase());
+        const matchAutor =
+          autor.trim() && libro.autor.toLowerCase().includes(autor.toLowerCase());
+        return matchTitulo || matchAutor;
+      });
+
+      if (librosFiltrados.length === 0) {
+        setError("No se encontraron coincidencias por título o autor.");
       } else {
-        setError("No se encontró un libro con ese ISBN");
+        setResultados(librosFiltrados);
+        scrollToResultados();
       }
     } catch (err) {
-      console.error("Error al buscar el libro:", err);
-      setError("Error al buscar el libro.");
+      console.error("Error al buscar:", err);
+      setError("Hubo un error durante la búsqueda.");
     }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
-    try {
-      // Usamos el store del contexto para obtener los libros
-      const libros = store.libros;
-
-      // Si el store está vacío, intentamos obtener los libros
-      if (!libros || libros.length === 0) {
-        await actions.fetchLibros();
-      }
-
-      // Filtro por coincidencia parcial en el título
-      if (formData.titulo) {
-        const filtro = formData.titulo.toLowerCase();
-        const librosFiltrados = store.libros.filter((libro) =>
-          libro.titulo.toLowerCase().includes(filtro)
-        );
-
-        if (librosFiltrados.length === 0) {
-          setError("No se encontraron coincidencias por título.");
-        } else {
-          setError("");
-        }
-
-        setResultados(librosFiltrados);
-      } else {
-        setError("Ingrese al menos un título para buscar");
-      }
-    } catch (error) {
-      console.error("Error en la búsqueda:", error);
-      alert("Hubo un error: " + error.message);
-    }
+    await buscarLibro();
   };
 
   const limpiarPantalla = () => {
@@ -100,7 +100,6 @@ const BuscarLibro = () => {
     setError("");
   };
 
-  // Función para seleccionar un libro de los resultados
   const handleSelectBook = (libro) => {
     setFormData({
       ...formData,
@@ -111,7 +110,7 @@ const BuscarLibro = () => {
       stock: libro.stock,
       editorial: libro.editorial || "",
     });
-    setResultados([]); // Limpiar resultados después de seleccionar
+    setResultados([]);
   };
 
   return (
@@ -136,20 +135,18 @@ const BuscarLibro = () => {
               name="isbn"
               value={formData.isbn}
               onChange={handleChange}
-              onBlur={handleSearch}
+              placeholder="Ej: 9789870000000"
             />
           </div>
           <div className="mb-3">
-            <label className="form-label">
-              Título (buscar por palabra clave):
-            </label>
+            <label className="form-label">Título:</label>
             <input
               type="text"
               className="form-control"
               name="titulo"
               value={formData.titulo}
               onChange={handleChange}
-              placeholder="Ej: princip"
+              placeholder="Ej: principito"
             />
           </div>
           <div className="mb-3">
@@ -160,7 +157,7 @@ const BuscarLibro = () => {
               name="autor"
               value={formData.autor}
               onChange={handleChange}
-              readOnly
+              placeholder="Ej: Borges"
             />
           </div>
           <div className="mb-3">
@@ -170,14 +167,11 @@ const BuscarLibro = () => {
               className="form-control"
               name="ubicacion"
               value={formData.ubicacion}
-              onChange={handleChange}
               readOnly
             />
           </div>
           <div className="mb-3">
-            <label htmlFor="stock" className="form-label">
-              Stock:
-            </label>
+            <label htmlFor="stock" className="form-label">Stock:</label>
             <input
               type="text"
               className="form-control"
@@ -194,11 +188,9 @@ const BuscarLibro = () => {
               className="form-control"
               name="editorial"
               value={formData.editorial}
-              onChange={handleChange}
               readOnly
             />
           </div>
-
           <div className="row mt-4">
             <div className="col-6">
               <button type="submit" className="btn btn-primary btn-lg w-100">
@@ -217,6 +209,8 @@ const BuscarLibro = () => {
           </div>
         </form>
 
+        <div ref={resultadosRef}></div>
+
         {resultados.length > 0 && (
           <div className="mt-4">
             <h4>Resultados:</h4>
@@ -226,12 +220,9 @@ const BuscarLibro = () => {
                   <strong>Título:</strong> {libro.titulo} <br />
                   <strong>Autor:</strong> {libro.autor} <br />
                   <strong>ISBN:</strong> {libro.isbn} <br />
-                  <strong>Ubicación:</strong>{" "}
-                  {libro.ubicacion || "No disponible"} <br />
+                  <strong>Ubicación:</strong> {libro.ubicacion || "No disponible"} <br />
                   <strong>Stock:</strong> {libro.stock} <br />
-                  <strong>Editorial:</strong>{" "}
-                  {libro.editorial || "No disponible"} <br />
-                  {/* Botón para seleccionar el libro */}
+                  <strong>Editorial:</strong> {libro.editorial || "No disponible"} <br />
                   <button
                     className="btn btn-success mt-2"
                     onClick={() => handleSelectBook(libro)}
@@ -243,10 +234,12 @@ const BuscarLibro = () => {
             </ul>
           </div>
         )}
+
         {error && <div className="mt-4 text-danger">{error}</div>}
       </div>
     </div>
   );
 };
+
 
 export default BuscarLibro;
