@@ -103,6 +103,39 @@ export const AppProvider = ({ children }) => {
         }
       },
 
+      generarIsbnAutomatico: async () => {
+        try {
+          const response = await fetch("http://127.0.0.1:5000/generar-isbn", {
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+          });
+      
+          if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+          }
+      
+          const data = await response.json();
+      
+          if (data.error) {
+            throw new Error(data.error);
+          }
+      
+          return {
+            success: true,
+            isbn: data.isbn,
+          };
+        } catch (error) {
+          console.error("Error al generar ISBN desde servidor:", error);
+          return {
+            success: false,
+            error: "No se pudo conectar al backend para generar ISBN."
+          };
+        }
+      },
+      
+
       actualizarLibro: async (id, formData) => {
         try {
           const response = await fetch(`http://localhost:5000/libros/${id}`, {

@@ -1,26 +1,54 @@
-import React, { useState, useEffect } from "react";
-import { useAppContext } from "../context/appContext"; // Importamos el contexto
+import React, { useState } from "react";
+import { useAppContext } from "../context/appContext";
 import { useNavigate } from "react-router-dom";
 
 const AgregarLibro = () => {
-  const { store, actions } = useAppContext(); // Usamos el contexto
+  // Evita submit con Enter y mueve al siguiente input
+  const handleInputKeyDown = (e) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      const form = e.target.form;
+      const index = Array.prototype.indexOf.call(form, e.target);
+      if (form.elements[index + 1]) {
+        form.elements[index + 1].focus();
+      }
+    }
+  };
+
+  const { store, actions } = useAppContext();
   const navigate = useNavigate();
+
   const [formData, setFormData] = useState({
     isbn: "",
     titulo: "",
     autor: "",
     editorial: "",
-    stock: 1, // Stock predeterminado en 1
+    stock: 1,
     precio: 0,
     ubicacion: "",
   });
 
+  const [sinIsbn, setSinIsbn] = useState(false);
+  const [isbnGenerado, setIsbnGenerado] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [datosCargados, setDatosCargados] = useState(false);
-  const [origen, setOrigen] = useState(""); // Para indicar de dónde vienen los datos ("local" o "externo")
+  const [origen, setOrigen] = useState("");
+  const [generandoIsbn, setGenerandoIsbn] = useState(false);
 
-  // Usamos el mensaje del contexto
   const mensaje = store.mensaje;
+
+  // Función para limpiar los datos del libro excepto el ISBN
+  const limpiarDatosLibro = (isbnValue = formData.isbn) => {
+    setFormData({
+      isbn: isbnValue,
+      titulo: "",
+      autor: "",
+      editorial: "",
+      stock: 1,
+      precio: 0,
+      ubicacion: "",
+    });
+  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -29,19 +57,56 @@ const AgregarLibro = () => {
       [name]: value,
     });
 
-    // Si cambiamos manualmente el ISBN, reiniciamos el estado de origen
+    // Si cambiamos manualmente el ISBN, reiniciamos el estado
     if (name === "isbn") {
       setOrigen("");
       setDatosCargados(false);
+      limpiarDatosLibro(value);
     }
 
-    actions.setMensaje(""); // Borra el mensaje al editar usando el contexto
+    actions.setMensaje("");
   };
+
+  // Función mejorada para generar ISBN automáticamente
+  const generarYMostrarIsbn = async () => {
+    try {
+      setGenerandoIsbn(true);
+      actions.setMensaje("Generando ISBN automáticamente...");
+
+      const resultado = await actions.generarIsbnAutomatico();
+
+      if (resultado.success) {
+        setIsbnGenerado(resultado.isbn);
+        setFormData({
+          ...formData,
+          isbn: resultado.isbn,
+        });
+        actions.setMensaje(`✅ ISBN generado automáticamente: ${resultado.isbn}`);
+        setOrigen("servidor");
+      } else {
+        actions.setMensaje(`❌ ${resultado.error}`);
+        setOrigen("");
+        setSinIsbn(false); // Desactiva el checkbox si falla
+        setFormData({
+          ...formData,
+          isbn: "",
+        });
+      }
+    } catch (error) {
+      console.error("Error al generar ISBN:", error);
+      actions.setMensaje("❌ Error inesperado al generar ISBN.");
+      setOrigen("");
+      setSinIsbn(false);
+    } finally {
+      setGenerandoIsbn(false);
+    }
+  };
+
 
   const handleAutocomplete = async () => {
     const { isbn } = formData;
 
-    if (!isbn) return; // Verifica que el ISBN tenga al menos 10 caracteres
+    if (!isbn) return;
 
     setIsLoading(true);
     setOrigen("");
@@ -51,7 +116,6 @@ const AgregarLibro = () => {
       const libroLocal = await actions.buscarLibroPorISBN(isbn);
 
       if (libroLocal) {
-        // Si encontramos el libro en nuestra BD, usamos esos datos
         setFormData({
           ...formData,
           autor: libroLocal.autor || "",
@@ -68,28 +132,24 @@ const AgregarLibro = () => {
         const libroExterno = await actions.buscarLibroExterno(isbn);
 
         if (libroExterno) {
-          // Si lo encontramos en fuentes externas, usamos esos datos
           setFormData({
             ...formData,
             titulo: libroExterno.titulo || "",
             autor: libroExterno.autor || "",
             editorial: libroExterno.editorial || "",
-            // Mantenemos los valores predeterminados para stock y precio
           });
           setOrigen("externo");
           setDatosCargados(true);
           actions.setMensaje(
-            `Datos obtenidos de ${
-              libroExterno.fuente || "fuente externa"
-            }. Puede editar si es necesario.`
+            `Datos obtenidos de ${libroExterno.fuente || "fuente externa"}. Puede editar si es necesario.`
           );
         } else {
-          // Si no lo encontramos en ninguna parte
           actions.setMensaje(
             "No se encontró información para este ISBN. Puede ingresar los datos manualmente."
           );
           setOrigen("");
           setDatosCargados(false);
+          limpiarDatosLibro(isbn);
         }
       }
     } catch (error) {
@@ -100,25 +160,23 @@ const AgregarLibro = () => {
     }
   };
 
-  // Resto del componente se mantiene exactamente igual...
-  // Cuando el campo ISBN pierde el foco, intentamos autocompletar
   const handleIsbnBlur = () => {
-    if (formData.isbn && !datosCargados) {
+    if (formData.isbn && !datosCargados && !sinIsbn) {
       handleAutocomplete();
     }
   };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!formData.isbn || !formData.titulo || !formData.autor) {
-      alert("Por favor, complete todos los campos obligatorios.");
+    const { isbn, titulo, autor, ubicacion, stock } = formData;
+
+    if (!isbn || !titulo || !autor || !ubicacion) {
+      alert("Por favor, complete los campos obligatorios: ISBN, título, autor y ubicación.");
       return;
     }
 
-    // Verificar que el stock no sea menor que 1
-    if (formData.stock < 1) {
-      alert("El stock debe ser de al menos 1 unidad.");
+    if (stock < 1) {
+      alert("El stock debe ser al menos 1.");
       return;
     }
 
@@ -128,11 +186,9 @@ const AgregarLibro = () => {
     }
 
     try {
-      // Revisar si el libro ya existe en el sistema usando el contexto
       const libroExistente = await actions.buscarLibroPorISBN(formData.isbn);
 
       if (libroExistente) {
-        // Comparamos campos solo para mostrar mensaje
         let cambios = [];
 
         if (formData.titulo !== libroExistente.titulo) {
@@ -154,46 +210,60 @@ const AgregarLibro = () => {
           cambios.push("ubicación");
         }
 
-        // Si hay cambios, actualizar el libro en la base de datos
         if (cambios.length > 0) {
-          // Aquí realizamos la actualización del libro usando el contexto
           const resultado = await actions.actualizarLibro(
             libroExistente.id,
             formData
           );
 
           if (resultado.success) {
-            // Mensaje de éxito con los campos que se modificaron
-            const mensajeExito = `Libro actualizado con éxito. Campos modificados: ${cambios.join(
-              ", "
-            )}.`;
+            const mensajeExito = `Libro actualizado con éxito. Campos modificados: ${cambios.join(", ")}.`;
             actions.setMensaje(mensajeExito);
-            setOrigen("local"); // Ahora el libro está en la BD local
+
+            // Borrar mensaje luego de 5 segundos
+            setTimeout(() => {
+              actions.setMensaje("");
+            }, 10000);
+
+            setOrigen("local");
           } else {
             alert(resultado.error || "Hubo un error al actualizar el libro");
           }
         } else {
           actions.setMensaje("No se realizaron cambios en el libro.");
+
+          // Borrar mensaje luego de 5 segundos
+          setTimeout(() => {
+            actions.setMensaje("");
+          }, 10000);
         }
       } else {
-        // Si el libro es nuevo, usamos el contexto
         const resultado = await actions.crearLibro(formData);
 
         if (resultado.success) {
           actions.setMensaje(
             `Libro creado con éxito con stock de ${formData.stock} unidad(es).`
           );
+
+          // Borrar mensaje luego de 5 segundos
+          setTimeout(() => {
+            actions.setMensaje("");
+          }, 10000);
+
+          // Resetear formulario
           setFormData({
             isbn: "",
             titulo: "",
             autor: "",
             editorial: "",
-            stock: 1, // Restablecer a 1 después de crear
+            stock: 1,
             precio: 0,
             ubicacion: "",
           });
           setOrigen("");
           setDatosCargados(false);
+          setSinIsbn(false);
+          setIsbnGenerado("");
         } else {
           alert(resultado.error || "Hubo un error al crear el libro");
         }
@@ -205,183 +275,398 @@ const AgregarLibro = () => {
   };
 
   return (
-    <div className="container mt-5 bg-success">
-      <div className="card shadow-lg p-4">
+    <div
+      className="container my-4"
+      style={{
+        maxWidth: "800px",
+        backgroundColor: "#d7f0d7", // verde pastel suave
+        borderRadius: "12px",
+        boxShadow: "0 8px 20px rgba(0, 100, 0, 0.1)", // sombra verde suave
+        padding: "30px 25px",
+        fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
+      }}
+    >
+      {/* Contenedor para botón y título en línea */}
+      <div
+        style={{
+          position: "relative",
+          display: "flex",
+          alignItems: "center",
+          marginBottom: "25px",
+          height: "40px", // altura fija para facilitar alineación
+        }}
+      >
+        {/* Botón a la izquierda */}
+        <button
+          type="button"
+          className="btn btn-secondary"
+          onClick={() => navigate("/")}
+          style={{
+            borderRadius: "8px",
+            fontWeight: "600",
+            padding: "10px 20px",
+            boxShadow: "0 4px 8px rgba(0, 100, 0, 0.1)",
+            transition: "background-color 0.3s ease",
+            zIndex: 2,
+
+          }}
+
+        >
+          Volver al Inicio
+        </button>
+
+        {/* Título centrado */}
+        <h2
+          style={{
+            position: "absolute",
+            left: "50%",
+            transform: "translateX(-50%)",
+            color: "#2e7d32", // verde más oscuro
+            fontWeight: "700",
+            margin: 0,
+            fontSize: "1.8rem",
+            userSelect: "none",
+            zIndex: 1,
+          }}
+        >
+          Crear Nuevo Libro
+        </h2>
+
+        {/* Para que el botón "Volver" no empuje el título */}
+        <div style={{ width: "130px" }}></div>
+      </div>
+
+      <form onSubmit={handleSubmit}>
+        {/* Checkbox para crear sin ISBN */}
         <div className="mb-3">
-          <button
-            type="button"
-            className="btn btn-secondary"
-            onClick={() => navigate("/")}
+          <label
+            htmlFor="isbn"
+            className="form-label"
+            style={{ color: "#2e7d32", fontWeight: "600" }}
           >
-            Volver al inicio
-          </button>
-        </div>
-        <h2 className="mb-4 text-center">Crear Nuevo Libro</h2>
-        {mensaje && <div className="alert alert-info">{mensaje}</div>}
-        <form onSubmit={handleSubmit}>
-          <div className="mb-3">
-            <label htmlFor="isbn" className="form-label">
-              ISBN:
-            </label>
-            <div className="input-group">
+            ISBN:
+          </label>
+
+          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+            <div style={{ flexGrow: 1 }}>
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  border: "1.5px solid #2e7d32",
+                  borderRadius: "8px",
+                  boxShadow: "inset 1px 1px 4px rgba(46, 125, 50, 0.15)",
+                  backgroundColor: sinIsbn ? "#d7f0d7" : "#e8f5e9",
+                  overflow: "hidden",
+                }}
+              >
+                <input
+                  type="text"
+                  id="isbn"
+                  name="isbn"
+                  value={formData.isbn}
+                  onChange={handleChange}
+                  onBlur={handleIsbnBlur}
+                  required
+                  onKeyDown={handleInputKeyDown}
+                  readOnly={sinIsbn}
+                  placeholder={
+                    sinIsbn
+                      ? "Se generará automáticamente..."
+                      : "Ingrese el ISBN"
+                  }
+                  style={{
+                    flexGrow: 1,
+                    border: "none",
+                    outline: "none",
+                    padding: "10px 15px",
+                    backgroundColor: "transparent",
+                    color: "#2e7d32",
+                    fontWeight: "500",
+                    fontSize: "1rem",
+                  }}
+                />
+
+                {!isLoading && origen && (
+                  <span
+                    style={{
+                      padding: "0 12px", // un poco más de espacio para que quede bonito
+                      fontWeight: "600",
+                      fontSize: "0.9rem",
+                      userSelect: "none",
+                      backgroundColor:
+                        origen === "local"
+                          ? "#a6d8a8"
+                          : origen === "servidor"
+                            ? "#81c784"
+                            : origen === "fallback"
+                              ? "#c5e1a5"
+                              : "#aed581",
+                      color:
+                        origen === "fallback" ? "#4a4a1a" : "#2e7d32",
+                      borderLeft: "1.5px solid #2e7d32",
+                      display: "flex",
+                      alignItems: "center",
+                      height: "100%",
+                      whiteSpace: "nowrap",
+                      borderTopLeftRadius: "8px",
+                      borderBottomLeftRadius: "8px",
+                    }}
+                  >
+                    {origen === "local"
+                      ? "BD Local"
+                      : origen === "servidor"
+                        ? "Servidor"
+                        : origen === "fallback"
+                          ? "Fallback"
+                          : "API Externa"}
+                  </span>
+                )}
+
+                {isLoading && !sinIsbn && (
+                  <span
+                    style={{
+                      padding: "0 10px",
+                      display: "flex",
+                      alignItems: "center",
+                      borderLeft: "1.5px solid #2e7d32",
+                    }}
+                  >
+                    <div
+                      className="spinner-border spinner-border-sm"
+                      role="status"
+                      style={{ color: "#2e7d32" }}
+                    >
+                      <span className="visually-hidden">Cargando...</span>
+                    </div>
+                  </span>
+                )}
+              </div>
+            </div>
+
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "8px",
+                marginLeft: "10px",
+                userSelect: "none",
+              }}
+            >
               <input
-                type="text"
-                className="form-control"
-                id="isbn"
-                name="isbn"
-                value={formData.isbn}
-                onChange={handleChange}
-                onBlur={handleIsbnBlur}
-                required
+                type="checkbox"
+                id="crearSinIsbn"
+                className="form-check-input"
+                checked={sinIsbn}
+                onChange={async (e) => {
+                  const checked = e.target.checked;
+                  if (checked) {
+                    await generarYMostrarIsbn();
+                    setSinIsbn(true);
+                    setDatosCargados(false);
+                  } else {
+                    setFormData({ ...formData, isbn: "" });
+                    setIsbnGenerado("");
+                    setOrigen("");
+                    setDatosCargados(false);
+                    setSinIsbn(false);
+                    actions.setMensaje("");
+                  }
+                }}
+                disabled={generandoIsbn}
               />
-              {isLoading && (
-                <span className="input-group-text">
+              <label
+                htmlFor="crearSinIsbn"
+                className="form-check-label small"
+                style={{ color: "#2e7d32" }}
+              >
+                Crear sin ISBN
+              </label>
+              {generandoIsbn && (
+                <span style={{ marginLeft: "8px" }}>
                   <div
                     className="spinner-border spinner-border-sm"
                     role="status"
+                    style={{ color: "#2e7d32" }}
                   >
-                    <span className="visually-hidden">Cargando...</span>
+                    <span className="visually-hidden">Generando...</span>
                   </div>
                 </span>
               )}
-              {!isLoading && origen && (
-                <span
-                  className={`input-group-text ${
-                    origen === "local"
-                      ? "bg-success text-white"
-                      : "bg-info text-white"
-                  }`}
-                >
-                  {origen === "local" ? "BD Local" : "API Externa"}
-                </span>
-              )}
-            </div>
-            <small className="text-muted">
-              Al ingresar el ISBN, se intentará autocompletar la información del
-              libro.
-            </small>
-          </div>
-
-          <div className="mb-3">
-            <label htmlFor="titulo" className="form-label">
-              Título:
-            </label>
-            <input
-              type="text"
-              className="form-control"
-              id="titulo"
-              name="titulo"
-              value={formData.titulo}
-              onChange={handleChange}
-              required
-            />
-          </div>
-
-          <div className="mb-3">
-            <label htmlFor="autor" className="form-label">
-              Autor:
-            </label>
-            <input
-              type="text"
-              className="form-control"
-              id="autor"
-              name="autor"
-              value={formData.autor}
-              onChange={handleChange}
-              required
-            />
-          </div>
-
-          <div className="mb-3">
-            <label htmlFor="editorial" className="form-label">
-              Editorial:
-            </label>
-            <input
-              type="text"
-              className="form-control"
-              id="editorial"
-              name="editorial"
-              value={formData.editorial}
-              onChange={handleChange}
-            />
-          </div>
-
-          <div className="mb-3">
-            <label htmlFor="stock" className="form-label">
-              Stock (mínimo 1):
-            </label>
-            <input
-              type="number"
-              className="form-control"
-              id="stock"
-              name="stock"
-              value={formData.stock}
-              onChange={handleChange}
-              min="1"
-            />
-          </div>
-
-          <div className="mb-3">
-            <label htmlFor="precio" className="form-label">
-              Precio:
-            </label>
-            <input
-              type="number"
-              className="form-control"
-              id="precio"
-              name="precio"
-              value={formData.precio}
-              onChange={handleChange}
-            />
-          </div>
-
-          <div className="mb-3">
-            <label htmlFor="ubicacion" className="form-label">
-              Ubicación:
-            </label>
-            <input
-              type="text"
-              className="form-control"
-              id="ubicacion"
-              name="ubicacion"
-              value={formData.ubicacion}
-              onChange={handleChange}
-            />
-          </div>
-
-          <div className="row mt-4">
-            <div className="col-9">
-              <button type="submit" className="btn btn-success btn-lg w-100">
-                {formData.id ? "Actualizar Libro" : "Crear Libro"}
-              </button>
-            </div>
-            <div className="col-3">
-              <button
-                type="button"
-                className="btn btn-warning btn-lg w-100"
-                onClick={() => {
-                  setFormData({
-                    isbn: "",
-                    titulo: "",
-                    autor: "",
-                    editorial: "",
-                    stock: 1, // Restablecer a 1
-                    precio: 0,
-                    ubicacion: "",
-                  });
-                  setOrigen("");
-                  setDatosCargados(false);
-                  actions.setMensaje(""); // Borrar mensaje usando el contexto
-                }}
-              >
-                Refrescar
-              </button>
             </div>
           </div>
-        </form>
-      </div>
+
+          <small
+            className="text-muted"
+            style={{ color: "#4a7f4a", display: "block", marginTop: "5px" }}
+          >
+            {sinIsbn
+              ? "ISBN generado automáticamente. Se asignará el próximo número disponible."
+              : ""}
+          </small>
+        </div>
+
+        {[
+          {
+            label: "Título:",
+            name: "titulo",
+            type: "text",
+            required: true,
+            placeholder: "Ingrese el título del libro",
+          },
+          {
+            label: "Autor:",
+            name: "autor",
+            type: "text",
+            required: true,
+            placeholder: "Ingrese el autor",
+          },
+          {
+            label: "Editorial:",
+            name: "editorial",
+            type: "text",
+            required: false,
+            placeholder: "Ingrese la editorial",
+          },
+          {
+            label: "Stock (mínimo 1):",
+            name: "stock",
+            type: "number",
+            required: false,
+            min: 1,
+            placeholder: "Ingrese la cantidad en stock",
+          },
+          {
+            label: "Precio:",
+            name: "precio",
+            type: "number",
+            required: false,
+            placeholder: "Ingrese el precio",
+          },
+          {
+            label: "Ubicación:",
+            name: "ubicacion",
+            type: "text",
+            required: false,
+            placeholder: "Ingrese la ubicación",
+          },
+        ].map(({ label, name, type, required, placeholder, min }) => (
+          <div className="mb-3" key={name}>
+            <label
+              htmlFor={name}
+              className="form-label"
+              style={{ color: "#2e7d32", fontWeight: "600" }}
+            >
+              {label}
+            </label>
+            <input
+              type={type}
+              id={name}
+              name={name}
+              value={formData[name]}
+              onChange={handleChange}
+              required={required}
+              placeholder={placeholder}
+              min={min}
+              onKeyDown={handleInputKeyDown}
+              style={{
+                width: "100%",
+                padding: "10px 15px",
+                borderRadius: "8px",
+                border: "1.5px solid #2e7d32",
+                backgroundColor: "#e8f5e9",
+                color: "#2e7d32",
+                fontWeight: "500",
+                fontSize: "1rem",
+                boxShadow: "inset 1px 1px 3px rgba(46, 125, 50, 0.15)",
+                transition: "border-color 0.3s ease",
+              }}
+              onFocus={(e) => {
+                e.target.style.borderColor = "#1b4d1b";
+              }}
+              onBlur={(e) => {
+                e.target.style.borderColor = "#2e7d32";
+              }}
+            />
+          </div>
+        ))}
+
+        {mensaje && (
+          <div
+            className="mb-3"
+            style={{ color: "#2e7d32", fontWeight: "700", fontSize: "1rem" }}
+          >
+            ℹ️ {mensaje}
+          </div>
+        )}
+
+        <div className="d-flex gap-3 mb-3">
+          <button
+            type="submit"
+            className="btn"
+            style={{
+              flex: 1,
+              background:
+                "linear-gradient(135deg, #a8d5a8 0%, #6aaa6a 100%)",
+              color: "white",
+              fontWeight: "700",
+              fontSize: "1.25rem",
+              padding: "12px 0",
+              borderRadius: "10px",
+              boxShadow: "0 6px 12px rgba(106, 170, 106, 0.5)",
+              transition: "background 0.3s ease",
+            }}
+            onMouseEnter={(e) => {
+              e.target.style.background =
+                "linear-gradient(135deg, #6aaa6a 0%, #4d8b4d 100%)";
+            }}
+            onMouseLeave={(e) => {
+              e.target.style.background =
+                "linear-gradient(135deg, #a8d5a8 0%, #6aaa6a 100%)";
+            }}
+          >
+            {formData.id ? "Actualizar Libro" : "Crear Libro"}
+          </button>
+
+          <button
+            type="button"
+            className="btn btn-warning"
+            style={{
+              flex: 1,
+              fontWeight: "700",
+              fontSize: "1.25rem",
+              borderRadius: "10px",
+              boxShadow: "0 6px 12px rgba(184,136,50,0.5)",
+              transition: "background-color 0.3s ease",
+              backgroundColor: "#fff9c4", // un amarillo pastel suave para contraste
+              color: "#827717",
+            }}
+            onClick={() => {
+              setFormData({
+                isbn: "",
+                titulo: "",
+                autor: "",
+                editorial: "",
+                stock: 1,
+                precio: 0,
+                ubicacion: "",
+              });
+              setOrigen("");
+              setDatosCargados(false);
+              setSinIsbn(false);
+              setIsbnGenerado("");
+              actions.setMensaje("");
+            }}
+            onMouseEnter={(e) => (e.target.style.backgroundColor = "#f0f4c3")}
+            onMouseLeave={(e) => (e.target.style.backgroundColor = "#fff9c4")}
+          >
+            Refrescar
+          </button>
+        </div>
+      </form>
     </div>
   );
+
 };
 
 export default AgregarLibro;
