@@ -248,6 +248,19 @@ def generar_isbn():
         print(f"Error en /generar-isbn: {str(e)}")
         return jsonify({'error': 'Error al generar ISBN', 'mensaje': str(e)}), 500
 
+@app.route('/api/libros/buscar')
+def buscar_por_titulo_o_autor():
+    titulo = request.args.get('titulo', '')
+    autor = request.args.get('autor', '')
+
+    libros = Libro.query.filter(
+        (Libro.titulo.ilike(f"%{titulo}%")) |
+        (Libro.autor.ilike(f"%{autor}%"))
+    ).all()
+
+    return jsonify({"libros": [libro.to_dict() for libro in libros]})
+
+
 
 if __name__ == '__main__':
     app.run(debug=True)

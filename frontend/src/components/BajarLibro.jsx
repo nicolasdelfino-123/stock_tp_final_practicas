@@ -226,7 +226,7 @@ const BajarLibro = () => {
                 borderRadius: "8px",
                 border: "1.5px solid #a83232",
                 backgroundColor: readOnly ? "#f4dede" : "#fff0f0",
-                color: readOnly ? "#6b3b3b" : "#a83232",
+                color: "#000", // ✅ texto siempre negro
                 fontWeight: "500",
                 fontSize: "1rem",
                 boxShadow: "inset 1px 1px 3px rgba(168,50,50,0.15)",
