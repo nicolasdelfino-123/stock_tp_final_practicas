@@ -273,306 +273,320 @@ const AgregarLibro = () => {
       alert("Hubo un error con la solicitud: " + error.message);
     }
   };
+  const fondoURL = "/fondo-3.jpg"
 
   return (
     <div
-      className="container my-4"
       style={{
-        maxWidth: "800px",
-        backgroundColor: "#d7f0d7",
-        borderRadius: "12px",
-        boxShadow: "0 8px 20px rgba(0, 100, 0, 0.1)",
-        padding: "30px 25px",
-        fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
+        backgroundImage: `linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), url(${fondoURL})`,
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+        height: "100vh",
+        paddingTop: "10px", // rompe el colapso del margin
+        boxSizing: "border-box",
+
       }}
     >
-      {/* Título y botón */}
       <div
+        className="container"
         style={{
-          position: "relative",
-          display: "flex",
-          alignItems: "center",
-          marginBottom: "25px",
-          height: "40px",
+          maxWidth: "800px",
+          backgroundColor: "#d7f0d7",
+          borderRadius: "12px",
+          boxShadow: "0 8px 20px rgba(0, 100, 0, 0.1)",
+          padding: "30px 25px",
+          fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
         }}
       >
-        <button
-          type="button"
-          className="btn btn-secondary"
-          onClick={() => navigate("/")}
+        {/* Título y botón */}
+        <div
           style={{
-            borderRadius: "8px",
-            fontWeight: "600",
-            padding: "10px 20px",
-            boxShadow: "0 4px 8px rgba(0, 100, 0, 0.1)",
-            transition: "background-color 0.3s ease",
-            zIndex: 2,
+            position: "relative",
+            display: "flex",
+            alignItems: "center",
+            marginBottom: "25px",
+            height: "40px",
           }}
         >
-          Volver al Inicio
-        </button>
-
-        <h2
-          style={{
-            position: "absolute",
-            left: "50%",
-            transform: "translateX(-50%)",
-            color: "#2e7d32",
-            fontWeight: "700",
-            margin: 0,
-            fontSize: "1.8rem",
-            userSelect: "none",
-            zIndex: 1,
-          }}
-        >
-          Crear Nuevo Libro
-        </h2>
-
-        <div style={{ width: "130px" }}></div>
-      </div>
-
-      <form onSubmit={handleSubmit}>
-        {/* ISBN + checkbox */}
-        <div className="mb-3">
-          <label htmlFor="isbn" className="form-label" style={{ color: "#2e7d32", fontWeight: "600" }}>
-            ISBN:
-          </label>
-
-          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-            <div style={{ flexGrow: 1 }}>
-              <input
-                type="text"
-                id="isbn"
-                name="isbn"
-                value={formData.isbn}
-                onChange={handleChange}
-                onBlur={handleIsbnBlur}
-                required
-                onKeyDown={handleInputKeyDown}
-                readOnly={sinIsbn}
-                placeholder={
-                  sinIsbn
-                    ? "Se generará automáticamente..."
-                    : "Ingrese el ISBN"
-                }
-                style={{
-                  width: "100%",
-                  padding: "10px 15px",
-                  borderRadius: "8px",
-                  border: "1.5px solid #2e7d32",
-                  backgroundColor: sinIsbn ? "#d7f0d7" : "#e8f5e9",
-                  color: "#2e7d32",
-                  fontWeight: "500",
-                  fontSize: "1rem",
-                }}
-              />
-            </div>
-
-            <div style={{ display: "flex", alignItems: "center", gap: "8px", marginLeft: "10px" }}>
-              <input
-                type="checkbox"
-                id="crearSinIsbn"
-                className="form-check-input"
-                checked={sinIsbn}
-                onChange={async (e) => {
-                  const checked = e.target.checked;
-                  if (checked) {
-                    await generarYMostrarIsbn();
-                    setSinIsbn(true);
-                    setDatosCargados(false);
-                  } else {
-                    setFormData({ ...formData, isbn: "" });
-                    setIsbnGenerado("");
-                    setOrigen("");
-                    setDatosCargados(false);
-                    setSinIsbn(false);
-                    actions.setMensaje("");
-                  }
-                }}
-                disabled={generandoIsbn}
-              />
-              <label htmlFor="crearSinIsbn" className="form-check-label small" style={{ color: "#2e7d32" }}>
-                Crear sin ISBN
-              </label>
-              {generandoIsbn && (
-                <span style={{ marginLeft: "8px" }}>
-                  <div className="spinner-border spinner-border-sm" role="status" style={{ color: "#2e7d32" }}>
-                    <span className="visually-hidden">Generando...</span>
-                  </div>
-                </span>
-              )}
-            </div>
-          </div>
-
-          <small
-            className="text-muted"
-            style={{ color: "#4a7f4a", display: "block", marginTop: "5px" }}
-          >
-            {sinIsbn
-              ? "ISBN generado automáticamente. Se asignará el próximo número disponible."
-              : ""}
-          </small>
-        </div>
-
-        {/* CAMPOS */}
-        <div className="row">
-          {[
-            {
-              label: "Título:",
-              name: "titulo",
-              type: "text",
-              required: true,
-              placeholder: "Ingrese el título del libro",
-              col: 12,
-            },
-            {
-              label: "Autor:",
-              name: "autor",
-              type: "text",
-              required: true,
-              placeholder: "Ingrese el autor",
-              col: 12,
-            },
-            {
-              label: "Editorial:",
-              name: "editorial",
-              type: "text",
-              required: false,
-              placeholder: "Ingrese la editorial",
-              col: 12,
-            },
-            {
-              label: "Stock (mínimo 1):",
-              name: "stock",
-              type: "number",
-              required: false,
-              placeholder: "Ingrese la cantidad en stock",
-              min: 1,
-              col: 6,
-            },
-            {
-              label: "Precio:",
-              name: "precio",
-              type: "number",
-              required: false,
-              placeholder: "Ingrese el precio",
-              col: 6,
-            },
-            {
-              label: "Ubicación:",
-              name: "ubicacion",
-              type: "text",
-              required: false,
-              placeholder: "Ingrese la ubicación",
-              col: 12,
-            },
-          ].map(({ label, name, type, required, placeholder, min, col }) => (
-            <div className={`mb-3 col-${col}`} key={name}>
-              <label htmlFor={name} className="form-label" style={{ color: "#2e7d32", fontWeight: "600" }}>
-                {label}
-              </label>
-              <input
-                type={type}
-                id={name}
-                name={name}
-                value={formData[name]}
-                onChange={handleChange}
-                required={required}
-                placeholder={placeholder}
-                min={min}
-                onKeyDown={handleInputKeyDown}
-                style={{
-                  width: "100%",
-                  padding: "10px 15px",
-                  borderRadius: "8px",
-                  border: "1.5px solid #2e7d32",
-                  backgroundColor: "#e8f5e9",
-                  color: "black",
-                  fontWeight: "500",
-                  fontSize: "1rem",
-                  boxShadow: "inset 1px 1px 3px rgba(46, 125, 50, 0.15)",
-                  transition: "border-color 0.3s ease",
-                }}
-                onFocus={(e) => {
-                  e.target.style.borderColor = "#1b4d1b";
-                }}
-                onBlur={(e) => {
-                  e.target.style.borderColor = "#2e7d32";
-                }}
-              />
-            </div>
-          ))}
-        </div>
-
-        {/* Mensaje */}
-        {mensaje && (
-          <div className="mb-3" style={{ color: "#2e7d32", fontWeight: "700", fontSize: "1rem" }}>
-            ℹ️ {mensaje}
-          </div>
-        )}
-
-        {/* Botones */}
-        <div className="d-flex gap-3 mb-3">
-          <button
-            type="submit"
-            className="btn"
-            style={{
-              flex: 1,
-              background: "linear-gradient(135deg, #a8d5a8 0%, #6aaa6a 100%)",
-              color: "black",
-              fontWeight: "700",
-              fontSize: "1.25rem",
-              padding: "12px 0",
-              borderRadius: "10px",
-              boxShadow: "0 6px 12px rgba(106, 170, 106, 0.5)",
-              transition: "background 0.3s ease",
-            }}
-            onMouseEnter={(e) => {
-              e.target.style.background = "linear-gradient(135deg, #6aaa6a 0%, #4d8b4d 100%)";
-            }}
-            onMouseLeave={(e) => {
-              e.target.style.background = "linear-gradient(135deg, #a8d5a8 0%, #6aaa6a 100%)";
-            }}
-          >
-            {formData.id ? "Actualizar Libro" : "Crear Libro"}
-          </button>
-
           <button
             type="button"
-            className="btn btn-warning"
+            className="btn btn-secondary"
+            onClick={() => navigate("/")}
             style={{
-              flex: 1,
-              fontWeight: "700",
-              fontSize: "1.25rem",
-              borderRadius: "10px",
-              boxShadow: "0 6px 12px rgba(184,136,50,0.5)",
+              borderRadius: "8px",
+              fontWeight: "600",
+              padding: "10px 20px",
+              boxShadow: "0 4px 8px rgba(0, 100, 0, 0.1)",
               transition: "background-color 0.3s ease",
-              backgroundColor: "#fff933",
-              color: "black",
+              zIndex: 2,
             }}
-            onClick={() => {
-              setFormData({
-                isbn: "",
-                titulo: "",
-                autor: "",
-                editorial: "",
-                stock: 1,
-                precio: 0,
-                ubicacion: "",
-              });
-              setOrigen("");
-              setDatosCargados(false);
-              setSinIsbn(false);
-              setIsbnGenerado("");
-              actions.setMensaje("");
-            }}
-            onMouseEnter={(e) => (e.target.style.backgroundColor = "#c26f3c")}
-            onMouseLeave={(e) => (e.target.style.backgroundColor = "#fff933")}
           >
-            Refrescar
+            Volver al Inicio
           </button>
+
+          <h2
+            style={{
+              position: "absolute",
+              left: "50%",
+              transform: "translateX(-50%)",
+              color: "#2e7d32",
+              fontWeight: "700",
+              margin: 0,
+              fontSize: "1.8rem",
+              userSelect: "none",
+              zIndex: 1,
+            }}
+          >
+            Crear Nuevo Libro
+          </h2>
+
+          <div style={{ width: "130px" }}></div>
         </div>
-      </form>
+
+        <form onSubmit={handleSubmit}>
+          {/* ISBN + checkbox */}
+          <div className="mb-3">
+            <label htmlFor="isbn" className="form-label" style={{ color: "#2e7d32", fontWeight: "600" }}>
+              ISBN:
+            </label>
+
+            <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+              <div style={{ flexGrow: 1 }}>
+                <input
+                  type="text"
+                  id="isbn"
+                  name="isbn"
+                  value={formData.isbn}
+                  onChange={handleChange}
+                  onBlur={handleIsbnBlur}
+                  required
+                  onKeyDown={handleInputKeyDown}
+                  readOnly={sinIsbn}
+                  placeholder={
+                    sinIsbn
+                      ? "Se generará automáticamente..."
+                      : "Ingrese el ISBN"
+                  }
+                  style={{
+                    width: "100%",
+                    padding: "10px 15px",
+                    borderRadius: "8px",
+                    border: "1.5px solid #2e7d32",
+                    backgroundColor: sinIsbn ? "#d7f0d7" : "#e8f5e9",
+                    color: "#2e7d32",
+                    fontWeight: "500",
+                    fontSize: "1rem",
+                  }}
+                />
+              </div>
+
+              <div style={{ display: "flex", alignItems: "center", gap: "8px", marginLeft: "10px" }}>
+                <input
+                  type="checkbox"
+                  id="crearSinIsbn"
+                  className="form-check-input"
+                  checked={sinIsbn}
+                  onChange={async (e) => {
+                    const checked = e.target.checked;
+                    if (checked) {
+                      await generarYMostrarIsbn();
+                      setSinIsbn(true);
+                      setDatosCargados(false);
+                    } else {
+                      setFormData({ ...formData, isbn: "" });
+                      setIsbnGenerado("");
+                      setOrigen("");
+                      setDatosCargados(false);
+                      setSinIsbn(false);
+                      actions.setMensaje("");
+                    }
+                  }}
+                  disabled={generandoIsbn}
+                />
+                <label htmlFor="crearSinIsbn" className="form-check-label small" style={{ color: "#2e7d32" }}>
+                  Crear sin ISBN
+                </label>
+                {generandoIsbn && (
+                  <span style={{ marginLeft: "8px" }}>
+                    <div className="spinner-border spinner-border-sm" role="status" style={{ color: "#2e7d32" }}>
+                      <span className="visually-hidden">Generando...</span>
+                    </div>
+                  </span>
+                )}
+              </div>
+            </div>
+
+            <small
+              className="text-muted"
+              style={{ color: "#4a7f4a", display: "block", marginTop: "5px" }}
+            >
+              {sinIsbn
+                ? "ISBN generado automáticamente. Se asignará el próximo número disponible."
+                : ""}
+            </small>
+          </div>
+
+          {/* CAMPOS */}
+          <div className="row">
+            {[
+              {
+                label: "Título:",
+                name: "titulo",
+                type: "text",
+                required: true,
+                placeholder: "Ingrese el título del libro",
+                col: 12,
+              },
+              {
+                label: "Autor:",
+                name: "autor",
+                type: "text",
+                required: true,
+                placeholder: "Ingrese el autor",
+                col: 12,
+              },
+              {
+                label: "Editorial:",
+                name: "editorial",
+                type: "text",
+                required: false,
+                placeholder: "Ingrese la editorial",
+                col: 12,
+              },
+              {
+                label: "Stock (mínimo 1):",
+                name: "stock",
+                type: "number",
+                required: false,
+                placeholder: "Ingrese la cantidad en stock",
+                min: 1,
+                col: 6,
+              },
+              {
+                label: "Precio:",
+                name: "precio",
+                type: "number",
+                required: false,
+                placeholder: "Ingrese el precio",
+                col: 6,
+              },
+              {
+                label: "Ubicación:",
+                name: "ubicacion",
+                type: "text",
+                required: false,
+                placeholder: "Ingrese la ubicación",
+                col: 12,
+              },
+            ].map(({ label, name, type, required, placeholder, min, col }) => (
+              <div className={`mb-3 col-${col}`} key={name}>
+                <label htmlFor={name} className="form-label" style={{ color: "#2e7d32", fontWeight: "600" }}>
+                  {label}
+                </label>
+                <input
+                  type={type}
+                  id={name}
+                  name={name}
+                  value={formData[name]}
+                  onChange={handleChange}
+                  required={required}
+                  placeholder={placeholder}
+                  min={min}
+                  onKeyDown={handleInputKeyDown}
+                  style={{
+                    width: "100%",
+                    padding: "10px 15px",
+                    borderRadius: "8px",
+                    border: "1.5px solid #2e7d32",
+                    backgroundColor: "#e8f5e9",
+                    color: "black",
+                    fontWeight: "500",
+                    fontSize: "1rem",
+                    boxShadow: "inset 1px 1px 3px rgba(46, 125, 50, 0.15)",
+                    transition: "border-color 0.3s ease",
+                  }}
+                  onFocus={(e) => {
+                    e.target.style.borderColor = "#1b4d1b";
+                  }}
+                  onBlur={(e) => {
+                    e.target.style.borderColor = "#2e7d32";
+                  }}
+                />
+              </div>
+            ))}
+          </div>
+
+          {/* Mensaje */}
+          {mensaje && (
+            <div className="mb-3" style={{ color: "#2e7d32", fontWeight: "700", fontSize: "1rem" }}>
+              ℹ️ {mensaje}
+            </div>
+          )}
+
+          {/* Botones */}
+          <div className="d-flex gap-3 mb-3">
+            <button
+              type="submit"
+              className="btn"
+              style={{
+                flex: 1,
+                background: "linear-gradient(135deg, #a8d5a8 0%, #6aaa6a 100%)",
+                color: "black",
+                fontWeight: "700",
+                fontSize: "1.25rem",
+                padding: "12px 0",
+                borderRadius: "10px",
+                boxShadow: "0 6px 12px rgba(106, 170, 106, 0.5)",
+                transition: "background 0.3s ease",
+              }}
+              onMouseEnter={(e) => {
+                e.target.style.background = "linear-gradient(135deg, #6aaa6a 0%, #4d8b4d 100%)";
+              }}
+              onMouseLeave={(e) => {
+                e.target.style.background = "linear-gradient(135deg, #a8d5a8 0%, #6aaa6a 100%)";
+              }}
+            >
+              {formData.id ? "Actualizar Libro" : "Crear Libro"}
+            </button>
+
+            <button
+              type="button"
+              className="btn btn-warning"
+              style={{
+                flex: 1,
+                fontWeight: "700",
+                fontSize: "1.25rem",
+                borderRadius: "10px",
+                boxShadow: "0 6px 12px rgba(184,136,50,0.5)",
+                transition: "background-color 0.3s ease",
+                backgroundColor: "#fff933",
+                color: "black",
+              }}
+              onClick={() => {
+                setFormData({
+                  isbn: "",
+                  titulo: "",
+                  autor: "",
+                  editorial: "",
+                  stock: 1,
+                  precio: 0,
+                  ubicacion: "",
+                });
+                setOrigen("");
+                setDatosCargados(false);
+                setSinIsbn(false);
+                setIsbnGenerado("");
+                actions.setMensaje("");
+              }}
+              onMouseEnter={(e) => (e.target.style.backgroundColor = "#c26f3c")}
+              onMouseLeave={(e) => (e.target.style.backgroundColor = "#fff933")}
+            >
+              Refrescar
+            </button>
+          </div>
+
+        </form>
+      </div>
     </div>
   );
 
