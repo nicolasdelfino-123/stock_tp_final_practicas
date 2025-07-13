@@ -608,7 +608,7 @@ const AgregarLibro = () => {
               flex: 1,
               background:
                 "linear-gradient(135deg, #a8d5a8 0%, #6aaa6a 100%)",
-              color: "white",
+              color: "black",
               fontWeight: "700",
               fontSize: "1.25rem",
               padding: "12px 0",
@@ -638,8 +638,8 @@ const AgregarLibro = () => {
               borderRadius: "10px",
               boxShadow: "0 6px 12px rgba(184,136,50,0.5)",
               transition: "background-color 0.3s ease",
-              backgroundColor: "#fff9c4", // un amarillo pastel suave para contraste
-              color: "#827717",
+              backgroundColor: "#fff933", // un amarillo pastel suave para contraste
+              color: "black",
             }}
             onClick={() => {
               setFormData({
@@ -657,8 +657,8 @@ const AgregarLibro = () => {
               setIsbnGenerado("");
               actions.setMensaje("");
             }}
-            onMouseEnter={(e) => (e.target.style.backgroundColor = "#f0f4c3")}
-            onMouseLeave={(e) => (e.target.style.backgroundColor = "#fff9c4")}
+            onMouseEnter={(e) => (e.target.style.backgroundColor = "#c26f3c")}
+            onMouseLeave={(e) => (e.target.style.backgroundColor = "#fff933")}
           >
             Refrescar
           </button>

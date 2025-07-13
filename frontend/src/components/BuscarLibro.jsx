@@ -160,8 +160,8 @@ const BuscarLibro = () => {
             position: "absolute",
             left: "50%",
             transform: "translateX(-50%)",
-            color: "#1e88e5", // azul fuerte
-            fontWeight: "700",
+            color: "#114470", // azul fuerte
+            fontWeight: "900",
             margin: 0,
             fontSize: "1.8rem",
             userSelect: "none",
@@ -190,7 +190,7 @@ const BuscarLibro = () => {
           <div className="mb-3" key={name}>
             <label
               className="form-label"
-              style={{ color: "#1e88e5", fontWeight: "600" }}
+              style={{ color: "black", fontWeight: "800" }}
             >
               {label}
             </label>
@@ -207,7 +207,7 @@ const BuscarLibro = () => {
                 borderRadius: "8px",
                 border: `1.5px solid #1e88e5`,
                 backgroundColor: readOnly ? "#d3e3fc" : "#e8f1fc",
-                color: readOnly ? "#3563a1" : "#1e88e5",
+                color: readOnly ? "black" : "black",
                 fontWeight: "500",
                 fontSize: "1rem",
                 boxShadow: "inset 1px 1px 3px rgba(30, 136, 229, 0.15)",
@@ -279,7 +279,7 @@ const BuscarLibro = () => {
         </div>
 
         {resultados.length > 0 && (
-          <div className="mt-4" style={{ color: "#1e88e5" }}>
+          <div className="mt-4" style={{ color: "#114470" }}>
             <h4 style={{ fontWeight: "700", marginBottom: "15px" }}>Resultados:</h4>
             <ul
               className="list-group"
@@ -301,10 +301,10 @@ const BuscarLibro = () => {
                     marginBottom: "10px",
                     border: "1px solid #90caf9",
                     backgroundColor: "#90caf9",
-                    color: "#1565c0",
+                    color: "black",
                   }}
                 >
-                  <strong>Título:</strong> {libro.titulo} <br />
+                  <strong >Título:</strong> {libro.titulo} <br />
                   <strong>Autor:</strong> {libro.autor} <br />
                   <strong>ISBN:</strong> {libro.isbn} <br />
                   <strong>Ubicación:</strong> {libro.ubicacion || "No disponible"} <br />
