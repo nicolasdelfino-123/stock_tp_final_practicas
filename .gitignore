@@ -1,0 +1,67 @@
+# === Node (Frontend) ===
+node_modules/
+build/
+dist/
+
+# === Python (Backend - Flask) ===
+venv/
+__pycache__/
+*.py[cod]
+*.sqlite3
+*.log
+
+# === Entornos y variables ===
+.env
+.env.*.local
+*.env
+
+# === VSCode y editores ===
+.vscode/
+.idea/
+*.sublime-workspace
+*.sublime-project
+
+# === Archivos del sistema ===
+.DS_Store
+Thumbs.db
+
+# === Logs ===
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pip-log.txt
+
+# === Testing ===
+coverage/
+*.cover
+.hypothesis/
+.pytest_cache/
+
+# === Otros ===
+*.bak
+*.tmp
+*.swp
+.pnp
+.pnp.js
+# Ignorar cache de herramientas como ESLint, Babel, Webpack, etc.
+frontend/node_modules/.cache/
+# Ignorar node_modules completo
+frontend/node_modules/
+
+# Ignorar base de datos
+backend/libros.db
+
+# Ignorar cachés de node y babel
+frontend/node_modules/
+
+# Ignorar base de datos
+backend/libros.db
+
+# Ignorar herramientas
+
+*.pack
+*.json
+.eslintcache
+# Ignorar base de datos y node_modules específicas
+/backend/libros.db
+/frontend/node_modules/
