@@ -107,7 +107,7 @@ const AgregarLibro = () => {
       setMostrarDropdown(true);
     }
 
-    actions.setMensaje("");
+
   };
 
   // Manejar selección de editorial del dropdown
@@ -285,10 +285,10 @@ const AgregarLibro = () => {
             const mensajeExito = `Libro actualizado con éxito. Campos modificados: ${cambios.join(", ")}.`;
             actions.setMensaje(mensajeExito);
 
-            // Borrar mensaje luego de 5 segundos
-            setTimeout(() => {
-              actions.setMensaje("");
-            }, 10000);
+            /*  // Borrar mensaje luego de 10 segundos
+             setTimeout(() => {
+               actions.setMensaje("");
+             }, 8000); */
 
             setOrigen("local");
 
@@ -352,255 +352,237 @@ const AgregarLibro = () => {
   const fondoURL = "/fondo-3.jpg"
 
   return (
-    <div
-      style={{
-        backgroundImage: `linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), url(${fondoURL})`,
-        backgroundSize: "cover",
-        backgroundPosition: "center",
-        minHeight: "100vh",
-        paddingTop: "10px", // rompe el colapso del margin
-        boxSizing: "border-box",
-      }}
-    >
-      <div
-        className="container"
-        style={{
-          maxWidth: "800px",
-          backgroundColor: "#d7f0d7",
-          borderRadius: "12px",
-          boxShadow: "0 8px 20px rgba(0, 100, 0, 0.1)",
-          padding: "30px 25px",
-          fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
-        }}
-      >
-        {/* Título y botón */}
+    <>
+      {mensaje && (
         <div
           style={{
-            position: "relative",
+            position: "fixed",
+            top: 0,
+            left: 0,
+            width: "100vw",
+            height: "100vh",
+            backgroundColor: "rgba(0, 0, 0, 0.4)",
+            zIndex: 9999,
             display: "flex",
-            alignItems: "center",
-            marginBottom: "25px",
-            height: "40px",
+            justifyContent: "center",
+            alignItems: "center"
           }}
         >
-          <button
-            type="button"
-            className="btn btn-secondary"
-            onClick={() => navigate("/")}
+          <div
+            className="alert alert-success"
+            role="alert"
             style={{
-              borderRadius: "8px",
+              maxWidth: "500px",
+              width: "90%",
+              borderRadius: "12px",
+              padding: "25px 30px",
+              fontSize: "1.1rem",
               fontWeight: "600",
-              padding: "10px 20px",
-              boxShadow: "0 4px 8px rgba(0, 100, 0, 0.1)",
-              transition: "background-color 0.3s ease",
-              zIndex: 2,
+              backgroundColor: "#d4edda",
+              color: "#155724",
+              border: "1px solid #c3e6cb",
+              boxShadow: "0 10px 20px rgba(0,0,0,0.25)",
+              textAlign: "center"
             }}
           >
-            Volver al Inicio
-          </button>
-
-          <h2
-            style={{
-              position: "absolute",
-              left: "50%",
-              transform: "translateX(-50%)",
-              color: "#183d1b",
-              fontWeight: "700",
-              margin: 0,
-              fontSize: "1.8rem",
-              userSelect: "none",
-              zIndex: 1,
-            }}
-          >
-            Agregar Libro
-          </h2>
-
-          <div style={{ width: "130px" }}></div>
-        </div>
-
-        <form onSubmit={handleSubmit}>
-          {/* ISBN + checkbox */}
-          <div className="mb-3">
-            <label htmlFor="isbn" className="form-label" style={{ color: "black", fontWeight: "600" }}>
-              ISBN:
-            </label>
-
-            <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-              <div style={{ flexGrow: 1 }}>
-                <input
-                  type="text"
-                  id="isbn"
-                  name="isbn"
-                  value={formData.isbn}
-                  onChange={handleChange}
-                  onBlur={handleIsbnBlur}
-                  autoFocus
-                  required
-                  onKeyDown={handleInputKeyDown}
-                  readOnly={sinIsbn}
-                  placeholder={
-                    sinIsbn
-                      ? "Se generará automáticamente..."
-                      : "Ingrese el ISBN"
-                  }
-                  style={{
-                    width: "100%",
-                    padding: "10px 15px",
-                    borderRadius: "8px",
-                    border: "1.5px solid #2e7d32",
-                    backgroundColor: sinIsbn ? "#d7f0d7" : "#e8f5e9",
-                    color: "black",
-                    fontWeight: "500",
-                    fontSize: "1rem",
-                  }}
-                />
-              </div>
-
-              <div style={{ display: "flex", alignItems: "center", gap: "8px", marginLeft: "10px" }}>
-                <input
-                  style={{
-                    width: "20px",
-                    height: "20px",
-                    border: "2px solid #b0bec5", // borde pastel
-                    borderRadius: "4px",
-                    accentColor: "#4caf50", // ✅ color del tilde
-                  }}
-                  type="checkbox"
-                  id="crearSinIsbn"
-                  className="form-check-input"
-                  checked={sinIsbn}
-                  onChange={async (e) => {
-                    const checked = e.target.checked;
-                    if (checked) {
-                      await generarYMostrarIsbn();
-                      setSinIsbn(true);
-                      setDatosCargados(false);
-                    } else {
-                      setFormData({ ...formData, isbn: "" });
-                      setIsbnGenerado("");
-                      setOrigen("");
-                      setDatosCargados(false);
-                      setSinIsbn(false);
-                      actions.setMensaje("");
-                    }
-                  }}
-                  disabled={generandoIsbn}
-                />
-                <label htmlFor="crearSinIsbn" className="form-check-label small" style={{ color: "black" }}>
-                  Crear sin ISBN
-                </label>
-                {generandoIsbn && (
-                  <span style={{ marginLeft: "8px" }}>
-                    <div className="spinner-border spinner-border-sm" role="status" style={{ color: "#2e7d32" }}>
-                      <span className="visually-hidden">Generando...</span>
-                    </div>
-                  </span>
-                )}
-              </div>
-            </div>
-
-            <small
-              className="text-muted"
-              style={{ color: "#4a7f4a", display: "block", marginTop: "5px" }}
+            <div style={{ marginBottom: "20px" }}>✅ {mensaje}</div>
+            <button
+              type="button"
+              className="btn btn-success"
+              style={{
+                borderRadius: "8px",
+                fontWeight: "700",
+                padding: "10px 20px",
+                fontSize: "1rem",
+                backgroundColor: "#28a745",
+                border: "none"
+              }}
+              onClick={() => actions.setMensaje("")}
             >
-              {sinIsbn
-                ? "ISBN generado automáticamente. Se asignará el próximo número disponible."
-                : ""}
-            </small>
+              Ok
+            </button>
+          </div>
+        </div>
+      )}
+
+      <div
+        style={{
+          backgroundImage: `linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), url(${fondoURL})`,
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+          minHeight: "100vh",
+          paddingTop: "10px", // rompe el colapso del margin
+          boxSizing: "border-box",
+        }}
+      >
+        <div
+          className="container"
+          style={{
+            maxWidth: "800px",
+            backgroundColor: "#d7f0d7",
+            borderRadius: "12px",
+            boxShadow: "0 8px 20px rgba(0, 100, 0, 0.1)",
+            padding: "30px 25px",
+            fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
+          }}
+        >
+          {/* Título y botón */}
+          <div
+            style={{
+              position: "relative",
+              display: "flex",
+              alignItems: "center",
+              marginBottom: "25px",
+              height: "40px",
+            }}
+          >
+            <button
+              type="button"
+              className="btn btn-secondary"
+              onClick={() => navigate("/")}
+              style={{
+                borderRadius: "8px",
+                fontWeight: "600",
+                padding: "10px 20px",
+                boxShadow: "0 4px 8px rgba(0, 100, 0, 0.1)",
+                transition: "background-color 0.3s ease",
+                zIndex: 2,
+              }}
+            >
+              Volver al Inicio
+            </button>
+
+            <h2
+              style={{
+                position: "absolute",
+                left: "50%",
+                transform: "translateX(-50%)",
+                color: "#183d1b",
+                fontWeight: "700",
+                margin: 0,
+                fontSize: "1.8rem",
+                userSelect: "none",
+                zIndex: 1,
+              }}
+            >
+              Agregar Libro
+            </h2>
+
+            <div style={{ width: "130px" }}></div>
           </div>
 
-          {/* CAMPOS */}
-          <div className="row">
-            {/* Título */}
-            <div className="mb-3 col-12">
-              <label htmlFor="titulo" className="form-label" style={{ color: "black", fontWeight: "600" }}>
-                Título:
+          <form onSubmit={handleSubmit}>
+            {/* ISBN + checkbox */}
+            <div className="mb-3">
+              <label htmlFor="isbn" className="form-label" style={{ color: "black", fontWeight: "600" }}>
+                ISBN:
               </label>
-              <input
-                type="text"
-                id="titulo"
-                name="titulo"
-                value={formData.titulo}
-                onChange={handleChange}
-                required
-                placeholder="Ingrese el título del libro"
-                onKeyDown={handleInputKeyDown}
-                style={{
-                  width: "100%",
-                  padding: "10px 15px",
-                  borderRadius: "8px",
-                  border: "1.5px solid #2e7d32",
-                  backgroundColor: "#e8f5e9",
-                  color: "black",
-                  fontWeight: "500",
-                  fontSize: "1rem",
-                  boxShadow: "inset 1px 1px 3px rgba(46, 125, 50, 0.15)",
-                  transition: "border-color 0.3s ease",
-                }}
-                onFocus={(e) => {
-                  e.target.style.borderColor = "#1b4d1b";
-                }}
-                onBlur={(e) => {
-                  e.target.style.borderColor = "#2e7d32";
-                }}
-              />
-            </div>
-
-            {/* Autor */}
-            <div className="mb-3 col-12">
-              <label htmlFor="autor" className="form-label" style={{ color: "black", fontWeight: "600" }}>
-                Autor:
-              </label>
-              <input
-                type="text"
-                id="autor"
-                name="autor"
-                value={formData.autor}
-                onChange={handleChange}
-                required
-                placeholder="Ingrese el autor"
-                onKeyDown={handleInputKeyDown}
-                style={{
-                  width: "100%",
-                  padding: "10px 15px",
-                  borderRadius: "8px",
-                  border: "1.5px solid #2e7d32",
-                  backgroundColor: "#e8f5e9",
-                  color: "black",
-                  fontWeight: "500",
-                  fontSize: "1rem",
-                  boxShadow: "inset 1px 1px 3px rgba(46, 125, 50, 0.15)",
-                  transition: "border-color 0.3s ease",
-                }}
-                onFocus={(e) => {
-                  e.target.style.borderColor = "#1b4d1b";
-                }}
-                onBlur={(e) => {
-                  e.target.style.borderColor = "#2e7d32";
-                }}
-              />
-            </div>
-
-            {/* Editorial con dropdown */}
-            <div className="mb-3 col-12">
-              <label htmlFor="editorial" className="form-label" style={{ color: "black", fontWeight: "600" }}>
-                Editorial:
-              </label>
-              <div style={{ position: "relative" }}>
-                <input
-                  ref={editorialInputRef}
-                  type="text"
-                  id="editorial"
-                  name="editorial"
-                  value={formData.editorial}
-                  onChange={handleChange}
-                  placeholder="Ingrese la editorial"
-                  onKeyDown={handleEditorialKeyDown}
-                  onFocus={() => {
-                    if (editorialesFiltradas.length > 0) {
-                      setMostrarDropdown(true);
+              {/* Mensaje */}
+              {mensaje && (
+                <div className="mb-3" style={{ color: "#2e7d32", fontWeight: "700", fontSize: "1rem" }}>
+                  ℹ️ {mensaje}
+                </div>
+              )}
+              <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                <div style={{ flexGrow: 1 }}>
+                  <input
+                    type="text"
+                    id="isbn"
+                    name="isbn"
+                    value={formData.isbn}
+                    onChange={handleChange}
+                    onBlur={handleIsbnBlur}
+                    autoFocus
+                    required
+                    onKeyDown={handleInputKeyDown}
+                    readOnly={sinIsbn}
+                    placeholder={
+                      sinIsbn
+                        ? "Se generará automáticamente..."
+                        : "Ingrese el ISBN"
                     }
-                  }}
+                    style={{
+                      width: "100%",
+                      padding: "10px 15px",
+                      borderRadius: "8px",
+                      border: "1.5px solid #2e7d32",
+                      backgroundColor: sinIsbn ? "#d7f0d7" : "#e8f5e9",
+                      color: "black",
+                      fontWeight: "500",
+                      fontSize: "1rem",
+                    }}
+                  />
+                </div>
+
+                <div style={{ display: "flex", alignItems: "center", gap: "8px", marginLeft: "10px" }}>
+                  <input
+                    style={{
+                      width: "20px",
+                      height: "20px",
+                      border: "2px solid #b0bec5", // borde pastel
+                      borderRadius: "4px",
+                      accentColor: "#4caf50", // ✅ color del tilde
+                    }}
+                    type="checkbox"
+                    id="crearSinIsbn"
+                    className="form-check-input"
+                    checked={sinIsbn}
+                    onChange={async (e) => {
+                      const checked = e.target.checked;
+                      if (checked) {
+                        await generarYMostrarIsbn();
+                        setSinIsbn(true);
+                        setDatosCargados(false);
+                      } else {
+                        setFormData({ ...formData, isbn: "" });
+                        setIsbnGenerado("");
+                        setOrigen("");
+                        setDatosCargados(false);
+                        setSinIsbn(false);
+                        actions.setMensaje("");
+                      }
+                    }}
+                    disabled={generandoIsbn}
+                  />
+                  <label htmlFor="crearSinIsbn" className="form-check-label small" style={{ color: "black" }}>
+                    Crear sin ISBN
+                  </label>
+                  {generandoIsbn && (
+                    <span style={{ marginLeft: "8px" }}>
+                      <div className="spinner-border spinner-border-sm" role="status" style={{ color: "#2e7d32" }}>
+                        <span className="visually-hidden">Generando...</span>
+                      </div>
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              <small
+                className="text-muted"
+                style={{ color: "#4a7f4a", display: "block", marginTop: "5px" }}
+              >
+                {sinIsbn
+                  ? "ISBN generado automáticamente. Se asignará el próximo número disponible."
+                  : ""}
+              </small>
+            </div>
+
+            {/* CAMPOS */}
+            <div className="row">
+              {/* Título */}
+              <div className="mb-3 col-12">
+                <label htmlFor="titulo" className="form-label" style={{ color: "black", fontWeight: "600" }}>
+                  Título:
+                </label>
+                <input
+                  type="text"
+                  id="titulo"
+                  name="titulo"
+                  value={formData.titulo}
+                  onChange={handleChange}
+                  required
+                  placeholder="Ingrese el título del libro"
+                  onKeyDown={handleInputKeyDown}
                   style={{
                     width: "100%",
                     padding: "10px 15px",
@@ -613,230 +595,302 @@ const AgregarLibro = () => {
                     boxShadow: "inset 1px 1px 3px rgba(46, 125, 50, 0.15)",
                     transition: "border-color 0.3s ease",
                   }}
+                  onFocus={(e) => {
+                    e.target.style.borderColor = "#1b4d1b";
+                  }}
+                  onBlur={(e) => {
+                    e.target.style.borderColor = "#2e7d32";
+                  }}
                 />
+              </div>
 
-                {/* Dropdown de editoriales */}
-                {mostrarDropdown && editorialesFiltradas.length > 0 && (
-                  <div
-                    ref={dropdownRef}
-                    style={{
-                      position: "absolute",
-                      top: "100%",
-                      left: 0,
-                      right: 0,
-                      backgroundColor: "#fff",
-                      border: "1px solid #2e7d32",
-                      borderRadius: "8px",
-                      boxShadow: "0 4px 8px rgba(0, 0, 0, 0.1)",
-                      zIndex: 1000,
-                      maxHeight: "150px",
-                      overflowY: "auto",
+              {/* Autor */}
+              <div className="mb-3 col-12">
+                <label htmlFor="autor" className="form-label" style={{ color: "black", fontWeight: "600" }}>
+                  Autor:
+                </label>
+                <input
+                  type="text"
+                  id="autor"
+                  name="autor"
+                  value={formData.autor}
+                  onChange={handleChange}
+                  required
+                  placeholder="Ingrese el autor"
+                  onKeyDown={handleInputKeyDown}
+                  style={{
+                    width: "100%",
+                    padding: "10px 15px",
+                    borderRadius: "8px",
+                    border: "1.5px solid #2e7d32",
+                    backgroundColor: "#e8f5e9",
+                    color: "black",
+                    fontWeight: "500",
+                    fontSize: "1rem",
+                    boxShadow: "inset 1px 1px 3px rgba(46, 125, 50, 0.15)",
+                    transition: "border-color 0.3s ease",
+                  }}
+                  onFocus={(e) => {
+                    e.target.style.borderColor = "#1b4d1b";
+                  }}
+                  onBlur={(e) => {
+                    e.target.style.borderColor = "#2e7d32";
+                  }}
+                />
+              </div>
+
+              {/* Editorial con dropdown */}
+              <div className="mb-3 col-12">
+                <label htmlFor="editorial" className="form-label" style={{ color: "black", fontWeight: "600" }}>
+                  Editorial:
+                </label>
+                <div style={{ position: "relative" }}>
+                  <input
+                    ref={editorialInputRef}
+                    type="text"
+                    id="editorial"
+                    name="editorial"
+                    value={formData.editorial}
+                    onChange={handleChange}
+                    placeholder="Ingrese la editorial"
+                    onKeyDown={handleEditorialKeyDown}
+                    onFocus={() => {
+                      if (editorialesFiltradas.length > 0) {
+                        setMostrarDropdown(true);
+                      }
                     }}
-                  >
-                    {editorialesFiltradas.map((editorial, index) => (
-                      <div
-                        key={index}
-                        onClick={() => handleEditorialSelect(editorial)}
-                        style={{
-                          padding: "8px 15px",
-                          cursor: "pointer",
-                          borderBottom: index < editorialesFiltradas.length - 1 ? "1px solid #eee" : "none",
-                          fontSize: "1rem",
-                          color: "black",
-                          backgroundColor: "#fff",
-                          transition: "background-color 0.2s ease",
-                        }}
-                        onMouseEnter={(e) => {
-                          e.target.style.backgroundColor = "#f5f5f5";
-                        }}
-                        onMouseLeave={(e) => {
-                          e.target.style.backgroundColor = "#fff";
-                        }}
-                      >
-                        {editorial}
-                      </div>
-                    ))}
-                  </div>
-                )}
+                    style={{
+                      width: "100%",
+                      padding: "10px 15px",
+                      borderRadius: "8px",
+                      border: "1.5px solid #2e7d32",
+                      backgroundColor: "#e8f5e9",
+                      color: "black",
+                      fontWeight: "500",
+                      fontSize: "1rem",
+                      boxShadow: "inset 1px 1px 3px rgba(46, 125, 50, 0.15)",
+                      transition: "border-color 0.3s ease",
+                    }}
+                  />
+
+                  {/* Dropdown de editoriales */}
+                  {mostrarDropdown && editorialesFiltradas.length > 0 && (
+                    <div
+                      ref={dropdownRef}
+                      style={{
+                        position: "absolute",
+                        top: "100%",
+                        left: 0,
+                        right: 0,
+                        backgroundColor: "#fff",
+                        border: "1px solid #2e7d32",
+                        borderRadius: "8px",
+                        boxShadow: "0 4px 8px rgba(0, 0, 0, 0.1)",
+                        zIndex: 1000,
+                        maxHeight: "150px",
+                        overflowY: "auto",
+                      }}
+                    >
+                      {editorialesFiltradas.map((editorial, index) => (
+                        <div
+                          key={index}
+                          onClick={() => handleEditorialSelect(editorial)}
+                          style={{
+                            padding: "8px 15px",
+                            cursor: "pointer",
+                            borderBottom: index < editorialesFiltradas.length - 1 ? "1px solid #eee" : "none",
+                            fontSize: "1rem",
+                            color: "black",
+                            backgroundColor: "#fff",
+                            transition: "background-color 0.2s ease",
+                          }}
+                          onMouseEnter={(e) => {
+                            e.target.style.backgroundColor = "#f5f5f5";
+                          }}
+                          onMouseLeave={(e) => {
+                            e.target.style.backgroundColor = "#fff";
+                          }}
+                        >
+                          {editorial}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Stock */}
+              <div className="mb-3 col-6">
+                <label htmlFor="stock" className="form-label" style={{ color: "black", fontWeight: "600" }}>
+                  Stock (mínimo 1):
+                </label>
+                <input
+                  type="number"
+                  id="stock"
+                  name="stock"
+                  value={formData.stock}
+                  onChange={handleChange}
+                  placeholder="Ingrese la cantidad en stock"
+                  min="1"
+                  onKeyDown={handleInputKeyDown}
+                  style={{
+                    width: "100%",
+                    padding: "10px 15px",
+                    borderRadius: "8px",
+                    border: "1.5px solid #2e7d32",
+                    backgroundColor: "#e8f5e9",
+                    color: "black",
+                    fontWeight: "500",
+                    fontSize: "1rem",
+                    boxShadow: "inset 1px 1px 3px rgba(46, 125, 50, 0.15)",
+                    transition: "border-color 0.3s ease",
+                  }}
+                  onFocus={(e) => {
+                    e.target.style.borderColor = "#1b4d1b";
+                  }}
+                  onBlur={(e) => {
+                    e.target.style.borderColor = "#2e7d32";
+                  }}
+                />
+              </div>
+
+              {/* Precio */}
+              <div className="mb-3 col-6">
+                <label htmlFor="precio" className="form-label" style={{ color: "black", fontWeight: "600" }}>
+                  Precio:
+                </label>
+                <input
+                  type="number"
+                  id="precio"
+                  name="precio"
+                  value={formData.precio}
+                  onChange={handleChange}
+                  placeholder="Ingrese el precio"
+                  onKeyDown={handleInputKeyDown}
+                  style={{
+                    width: "100%",
+                    padding: "10px 15px",
+                    borderRadius: "8px",
+                    border: "1.5px solid #2e7d32",
+                    backgroundColor: "#e8f5e9",
+                    color: "black",
+                    fontWeight: "500",
+                    fontSize: "1rem",
+                    boxShadow: "inset 1px 1px 3px rgba(46, 125, 50, 0.15)",
+                    transition: "border-color 0.3s ease",
+                  }}
+                  onFocus={(e) => {
+                    e.target.style.borderColor = "#1b4d1b";
+                  }}
+                  onBlur={(e) => {
+                    e.target.style.borderColor = "#2e7d32";
+                  }}
+                />
+              </div>
+
+              {/* Ubicación */}
+              <div className="mb-3 col-12">
+                <label htmlFor="ubicacion" className="form-label" style={{ color: "black", fontWeight: "600" }}>
+                  Ubicación:
+                </label>
+                <input
+                  type="text"
+                  id="ubicacion"
+                  name="ubicacion"
+                  value={formData.ubicacion}
+                  onChange={handleChange}
+                  placeholder="Ingrese la ubicación"
+                  onKeyDown={handleInputKeyDown}
+                  style={{
+                    width: "100%",
+                    padding: "10px 15px",
+                    borderRadius: "8px",
+                    border: "1.5px solid #2e7d32",
+                    backgroundColor: "#e8f5e9",
+                    color: "black",
+                    fontWeight: "500",
+                    fontSize: "1rem",
+                    boxShadow: "inset 1px 1px 3px rgba(46, 125, 50, 0.15)",
+                    transition: "border-color 0.3s ease",
+                  }}
+                  onFocus={(e) => {
+                    e.target.style.borderColor = "#1b4d1b";
+                  }}
+                  onBlur={(e) => {
+                    e.target.style.borderColor = "#2e7d32";
+                  }}
+                />
               </div>
             </div>
 
-            {/* Stock */}
-            <div className="mb-3 col-6">
-              <label htmlFor="stock" className="form-label" style={{ color: "black", fontWeight: "600" }}>
-                Stock (mínimo 1):
-              </label>
-              <input
-                type="number"
-                id="stock"
-                name="stock"
-                value={formData.stock}
-                onChange={handleChange}
-                placeholder="Ingrese la cantidad en stock"
-                min="1"
-                onKeyDown={handleInputKeyDown}
+
+
+            {/* Botones */}
+            <div className="d-flex gap-3 mb-3">
+              <button
+                type="submit"
+                className="btn"
                 style={{
-                  width: "100%",
-                  padding: "10px 15px",
-                  borderRadius: "8px",
-                  border: "1.5px solid #2e7d32",
-                  backgroundColor: "#e8f5e9",
+                  flex: 1,
+                  background: "linear-gradient(135deg, #a8d5a8 0%, #6aaa6a 100%)",
                   color: "black",
-                  fontWeight: "500",
-                  fontSize: "1rem",
-                  boxShadow: "inset 1px 1px 3px rgba(46, 125, 50, 0.15)",
-                  transition: "border-color 0.3s ease",
+                  fontWeight: "700",
+                  fontSize: "1.25rem",
+                  padding: "12px 0",
+                  borderRadius: "10px",
+                  boxShadow: "0 6px 12px rgba(106, 170, 106, 0.5)",
+                  transition: "background 0.3s ease",
                 }}
-                onFocus={(e) => {
-                  e.target.style.borderColor = "#1b4d1b";
+                onMouseEnter={(e) => {
+                  e.target.style.background = "linear-gradient(135deg, #6aaa6a 0%, #4d8b4d 100%)";
                 }}
-                onBlur={(e) => {
-                  e.target.style.borderColor = "#2e7d32";
+                onMouseLeave={(e) => {
+                  e.target.style.background = "linear-gradient(135deg, #a8d5a8 0%, #6aaa6a 100%)";
                 }}
-              />
-            </div>
+              >
+                {formData.id ? "Actualizar Libro" : "Crear Libro"}
+              </button>
 
-            {/* Precio */}
-            <div className="mb-3 col-6">
-              <label htmlFor="precio" className="form-label" style={{ color: "black", fontWeight: "600" }}>
-                Precio:
-              </label>
-              <input
-                type="number"
-                id="precio"
-                name="precio"
-                value={formData.precio}
-                onChange={handleChange}
-                placeholder="Ingrese el precio"
-                onKeyDown={handleInputKeyDown}
+              <button
+                type="button"
+                className="btn btn-warning"
                 style={{
-                  width: "100%",
-                  padding: "10px 15px",
-                  borderRadius: "8px",
-                  border: "1.5px solid #2e7d32",
-                  backgroundColor: "#e8f5e9",
+                  flex: 1,
+                  fontWeight: "700",
+                  fontSize: "1.25rem",
+                  borderRadius: "10px",
+                  boxShadow: "0 6px 12px rgba(184,136,50,0.5)",
+                  transition: "background-color 0.3s ease",
+                  backgroundColor: "#fff933",
                   color: "black",
-                  fontWeight: "500",
-                  fontSize: "1rem",
-                  boxShadow: "inset 1px 1px 3px rgba(46, 125, 50, 0.15)",
-                  transition: "border-color 0.3s ease",
                 }}
-                onFocus={(e) => {
-                  e.target.style.borderColor = "#1b4d1b";
+                onClick={() => {
+                  setFormData({
+                    isbn: "",
+                    titulo: "",
+                    autor: "",
+                    editorial: "",
+                    stock: 1,
+                    precio: 0,
+                    ubicacion: "",
+                  });
+                  setOrigen("");
+                  setDatosCargados(false);
+                  setSinIsbn(false);
+                  setIsbnGenerado("");
+                  actions.setMensaje("");
                 }}
-                onBlur={(e) => {
-                  e.target.style.borderColor = "#2e7d32";
-                }}
-              />
+                onMouseEnter={(e) => (e.target.style.backgroundColor = "#c26f3c")}
+                onMouseLeave={(e) => (e.target.style.backgroundColor = "#fff933")}
+              >
+                Refrescar
+              </button>
             </div>
 
-            {/* Ubicación */}
-            <div className="mb-3 col-12">
-              <label htmlFor="ubicacion" className="form-label" style={{ color: "black", fontWeight: "600" }}>
-                Ubicación:
-              </label>
-              <input
-                type="text"
-                id="ubicacion"
-                name="ubicacion"
-                value={formData.ubicacion}
-                onChange={handleChange}
-                placeholder="Ingrese la ubicación"
-                onKeyDown={handleInputKeyDown}
-                style={{
-                  width: "100%",
-                  padding: "10px 15px",
-                  borderRadius: "8px",
-                  border: "1.5px solid #2e7d32",
-                  backgroundColor: "#e8f5e9",
-                  color: "black",
-                  fontWeight: "500",
-                  fontSize: "1rem",
-                  boxShadow: "inset 1px 1px 3px rgba(46, 125, 50, 0.15)",
-                  transition: "border-color 0.3s ease",
-                }}
-                onFocus={(e) => {
-                  e.target.style.borderColor = "#1b4d1b";
-                }}
-                onBlur={(e) => {
-                  e.target.style.borderColor = "#2e7d32";
-                }}
-              />
-            </div>
-          </div>
-
-          {/* Mensaje */}
-          {mensaje && (
-            <div className="mb-3" style={{ color: "#2e7d32", fontWeight: "700", fontSize: "1rem" }}>
-              ℹ️ {mensaje}
-            </div>
-          )}
-
-          {/* Botones */}
-          <div className="d-flex gap-3 mb-3">
-            <button
-              type="submit"
-              className="btn"
-              style={{
-                flex: 1,
-                background: "linear-gradient(135deg, #a8d5a8 0%, #6aaa6a 100%)",
-                color: "black",
-                fontWeight: "700",
-                fontSize: "1.25rem",
-                padding: "12px 0",
-                borderRadius: "10px",
-                boxShadow: "0 6px 12px rgba(106, 170, 106, 0.5)",
-                transition: "background 0.3s ease",
-              }}
-              onMouseEnter={(e) => {
-                e.target.style.background = "linear-gradient(135deg, #6aaa6a 0%, #4d8b4d 100%)";
-              }}
-              onMouseLeave={(e) => {
-                e.target.style.background = "linear-gradient(135deg, #a8d5a8 0%, #6aaa6a 100%)";
-              }}
-            >
-              {formData.id ? "Actualizar Libro" : "Crear Libro"}
-            </button>
-
-            <button
-              type="button"
-              className="btn btn-warning"
-              style={{
-                flex: 1,
-                fontWeight: "700",
-                fontSize: "1.25rem",
-                borderRadius: "10px",
-                boxShadow: "0 6px 12px rgba(184,136,50,0.5)",
-                transition: "background-color 0.3s ease",
-                backgroundColor: "#fff933",
-                color: "black",
-              }}
-              onClick={() => {
-                setFormData({
-                  isbn: "",
-                  titulo: "",
-                  autor: "",
-                  editorial: "",
-                  stock: 1,
-                  precio: 0,
-                  ubicacion: "",
-                });
-                setOrigen("");
-                setDatosCargados(false);
-                setSinIsbn(false);
-                setIsbnGenerado("");
-                actions.setMensaje("");
-              }}
-              onMouseEnter={(e) => (e.target.style.backgroundColor = "#c26f3c")}
-              onMouseLeave={(e) => (e.target.style.backgroundColor = "#fff933")}
-            >
-              Refrescar
-            </button>
-          </div>
-
-        </form>
+          </form>
+        </div>
       </div>
-    </div>
+    </>
   );
 
 
