@@ -6,6 +6,7 @@ class Base(DeclarativeBase):
 
 class Libro(Base):
     __tablename__ = "libros"
+    __table_args__ = {'schema': 'stock_charles_schema'}
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     titulo: Mapped[str] = mapped_column(String(150), nullable=False)

@@ -8,14 +8,19 @@ from flask_cors import CORS
 from flask_admin import Admin
 from flask_admin.contrib.sqla import ModelView
 from sqlalchemy import func
+from models.libro import Base
+
 
 def create_app():
     app = Flask(__name__)
     CORS(app)
-
     app.config.from_object(Config)
-
+    
     engine = create_engine(app.config["SQLALCHEMY_DATABASE_URI"], echo=True)
+    
+    # Especifica el esquema que quieres usar
+    #Base.metadata.schema = 'nico'  # o cualquier otro esquema que tengas permiso
+    
     Base.metadata.create_all(engine)
 
     Session = sessionmaker(autocommit=False, autoflush=False, bind=engine)
@@ -294,6 +299,8 @@ def obtener_editoriales():
 
 
 if __name__ == '__main__':
+    from database import init_db
+    init_db()  # Esto crea las tablas en PostgreSQL
     app.run(debug=True)
 
 
