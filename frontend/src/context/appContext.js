@@ -5,70 +5,8 @@ export const AppContext = createContext();
 export const AppProvider = ({ children }) => {
   const [libros, setLibros] = useState([]);
   const [mensaje, setMensaje] = useState("");
+  const [editoriales, setEditoriales] = useState([]);
 
-  // Función para buscar en librerías argentinas usando nuestro backend
-  const buscarEnLibreriasArgentinas = async (isbn) => {
-    try {
-      const [cuspide, santafe, tematika] = await Promise.allSettled([
-        buscarEnCuspide(isbn),
-        buscarEnSantaFe(isbn),
-        buscarEnTematika(isbn),
-      ]);
-
-      if (cuspide.status === "fulfilled" && cuspide.value) {
-        console.log("DATOS TRAIDOS DE CUSPIDE:", cuspide.value);
-        return cuspide.value;
-      }
-      if (santafe.status === "fulfilled" && santafe.value) {
-        console.log("DATOS TRAIDOS DE SANTAFE:", santafe.value);
-        return santafe.value;
-      }
-      if (tematika.status === "fulfilled" && tematika.value) {
-        console.log("DATOS TRAIDOS DE TEMATIKA:", tematika.value);
-        return tematika.value;
-      }
-
-      return null;
-    } catch (error) {
-      console.error("ERROR AL BUSCAR EN LIBRERÍAS ARGENTINAS:", error);
-      return null;
-    }
-  };
-
-  const buscarEnCuspide = async (isbn) => {
-    try {
-      const response = await fetch(`http://localhost:5001/api/cuspide/${isbn}`);
-      if (!response.ok) return null;
-      return await response.json();
-    } catch (error) {
-      console.error("ERROR AL BUSCAR EN CÚSPIDE:", error);
-      return null;
-    }
-  };
-
-  const buscarEnSantaFe = async (isbn) => {
-    try {
-      const response = await fetch(`http://localhost:5001/api/santafe/${isbn}`);
-      if (!response.ok) return null;
-      return await response.json();
-    } catch (error) {
-      console.error("ERROR AL BUSCAR EN SANTA FE:", error);
-      return null;
-    }
-  };
-
-  const buscarEnTematika = async (isbn) => {
-    try {
-      const response = await fetch(
-        `http://localhost:5001/api/tematika/${isbn}`
-      );
-      if (!response.ok) return null;
-      return await response.json();
-    } catch (error) {
-      console.error("ERROR AL BUSCAR EN TEMATIKA:", error);
-      return null;
-    }
-  };
 
   const actions = useMemo(
     () => ({
@@ -83,6 +21,25 @@ export const AppProvider = ({ children }) => {
           console.error("Error al cargar libros:", error);
         }
       },
+
+
+      obtenerEditoriales: async () => {
+        try {
+          const response = await fetch("http://localhost:5000/api/editoriales"); // o getStore().apiUrl si lo tienes
+          const data = await response.json();
+    
+          if (data.success) {
+            setEditoriales(data.editoriales); // actualizo el estado directamente
+            return { success: true, editoriales: data.editoriales };
+          } else {
+            return { success: false, error: data.error };
+          }
+        } catch (error) {
+          console.error("Error al obtener editoriales:", error);
+          return { success: false, error: error.message };
+        }
+      },
+
 
       buscarLibroPorISBN: async (isbn) => {
         if (!isbn) return null;
@@ -257,18 +214,7 @@ export const AppProvider = ({ children }) => {
           };
         }
 
-        // Si no está localmente, buscamos en APIs externas
-        console.log("INTENTANDO CON LIBRERÍAS ARGENTINAS...");
-        const resultadoLocal = await buscarEnLibreriasArgentinas(isbnLimpio);
-        if (resultadoLocal && !resultadoLocal.error) {
-          console.log(
-            "DATOS OBTENIDOS DE:",
-            resultadoLocal.fuente,
-            resultadoLocal
-          );
-          return resultadoLocal;
-        }
-
+    
         console.log("INTENTANDO CON GOOGLE BOOKS...");
         try {
           const googleResponse = await fetch(

@@ -1,11 +1,11 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useAppContext } from "../context/appContext";
 import { useNavigate } from "react-router-dom";
 
 const AgregarLibro = () => {
   // Evita submit con Enter y mueve al siguiente input
   const handleInputKeyDown = (e) => {
-    if (e.key === "Enter") {
+    if (e.key === "Enter" && e.target.name !== "isbn") {
       e.preventDefault();
       const form = e.target.form;
       const index = Array.prototype.indexOf.call(form, e.target);
@@ -35,7 +35,45 @@ const AgregarLibro = () => {
   const [origen, setOrigen] = useState("");
   const [generandoIsbn, setGenerandoIsbn] = useState(false);
 
+  // Estados para el autocompletado de editoriales
+  const [mostrarDropdown, setMostrarDropdown] = useState(false);
+  const [editorialesFiltradas, setEditorialesFiltradas] = useState([]);
+  const editorialInputRef = useRef(null);
+  const dropdownRef = useRef(null);
+
   const mensaje = store.mensaje;
+
+  // Cargar editoriales al montar el componente
+  useEffect(() => {
+    actions.obtenerEditoriales();
+  }, []);
+
+  // Filtrar editoriales cuando cambia el input o las editoriales disponibles
+  useEffect(() => {
+    if (formData.editorial && store.editoriales) {
+      const filtradas = store.editoriales.filter(editorial =>
+        editorial.toLowerCase().includes(formData.editorial.toLowerCase())
+      );
+      setEditorialesFiltradas(filtradas);
+    } else {
+      setEditorialesFiltradas([]);
+    }
+  }, [formData.editorial, store.editoriales]);
+
+  // Cerrar dropdown cuando se hace clic fuera
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target) &&
+        editorialInputRef.current && !editorialInputRef.current.contains(event.target)) {
+        setMostrarDropdown(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
 
   // Función para limpiar los datos del libro excepto el ISBN
   const limpiarDatosLibro = (isbnValue = formData.isbn) => {
@@ -64,7 +102,34 @@ const AgregarLibro = () => {
       limpiarDatosLibro(value);
     }
 
+    // Si estamos escribiendo en editorial, mostrar dropdown
+    if (name === "editorial") {
+      setMostrarDropdown(true);
+    }
+
     actions.setMensaje("");
+  };
+
+  // Manejar selección de editorial del dropdown
+  const handleEditorialSelect = (editorial) => {
+    setFormData({
+      ...formData,
+      editorial: editorial
+    });
+    setMostrarDropdown(false);
+    editorialInputRef.current.focus();
+  };
+
+  // Manejar teclas en el input de editorial
+  const handleEditorialKeyDown = (e) => {
+    if (e.key === "ArrowDown" && editorialesFiltradas.length > 0) {
+      e.preventDefault();
+      setMostrarDropdown(true);
+    } else if (e.key === "Escape") {
+      setMostrarDropdown(false);
+    } else {
+      handleInputKeyDown(e);
+    }
   };
 
   // Función mejorada para generar ISBN automáticamente
@@ -101,7 +166,6 @@ const AgregarLibro = () => {
       setGenerandoIsbn(false);
     }
   };
-
 
   const handleAutocomplete = async () => {
     const { isbn } = formData;
@@ -165,6 +229,7 @@ const AgregarLibro = () => {
       handleAutocomplete();
     }
   };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -226,6 +291,11 @@ const AgregarLibro = () => {
             }, 10000);
 
             setOrigen("local");
+
+            // Actualizar editoriales después de guardar
+            if (formData.editorial) {
+              actions.obtenerEditoriales();
+            }
           } else {
             alert(resultado.error || "Hubo un error al actualizar el libro");
           }
@@ -250,6 +320,11 @@ const AgregarLibro = () => {
             actions.setMensaje("");
           }, 10000);
 
+          // Actualizar editoriales después de crear
+          if (formData.editorial) {
+            actions.obtenerEditoriales();
+          }
+
           // Resetear formulario
           setFormData({
             isbn: "",
@@ -273,6 +348,7 @@ const AgregarLibro = () => {
       alert("Hubo un error con la solicitud: " + error.message);
     }
   };
+
   const fondoURL = "/fondo-3.jpg"
 
   return (
@@ -284,7 +360,6 @@ const AgregarLibro = () => {
         minHeight: "100vh",
         paddingTop: "10px", // rompe el colapso del margin
         boxSizing: "border-box",
-
       }}
     >
       <div
@@ -359,6 +434,7 @@ const AgregarLibro = () => {
                   value={formData.isbn}
                   onChange={handleChange}
                   onBlur={handleIsbnBlur}
+                  autoFocus
                   required
                   onKeyDown={handleInputKeyDown}
                   readOnly={sinIsbn}
@@ -408,7 +484,6 @@ const AgregarLibro = () => {
                       actions.setMensaje("");
                     }
                   }}
-
                   disabled={generandoIsbn}
                 />
                 <label htmlFor="crearSinIsbn" className="form-check-label small" style={{ color: "black" }}>
@@ -436,71 +511,96 @@ const AgregarLibro = () => {
 
           {/* CAMPOS */}
           <div className="row">
-            {[
-              {
-                label: "Título:",
-                name: "titulo",
-                type: "text",
-                required: true,
-                placeholder: "Ingrese el título del libro",
-                col: 12,
-              },
-              {
-                label: "Autor:",
-                name: "autor",
-                type: "text",
-                required: true,
-                placeholder: "Ingrese el autor",
-                col: 12,
-              },
-              {
-                label: "Editorial:",
-                name: "editorial",
-                type: "text",
-                required: false,
-                placeholder: "Ingrese la editorial",
-                col: 12,
-              },
-              {
-                label: "Stock (mínimo 1):",
-                name: "stock",
-                type: "number",
-                required: false,
-                placeholder: "Ingrese la cantidad en stock",
-                min: 1,
-                col: 6,
-              },
-              {
-                label: "Precio:",
-                name: "precio",
-                type: "number",
-                required: false,
-                placeholder: "Ingrese el precio",
-                col: 6,
-              },
-              {
-                label: "Ubicación:",
-                name: "ubicacion",
-                type: "text",
-                required: false,
-                placeholder: "Ingrese la ubicación",
-                col: 12,
-              },
-            ].map(({ label, name, type, required, placeholder, min, col }) => (
-              <div className={`mb-3 col-${col}`} key={name}>
-                <label htmlFor={name} className="form-label" style={{ color: "black", fontWeight: "600" }}>
-                  {label}
-                </label>
+            {/* Título */}
+            <div className="mb-3 col-12">
+              <label htmlFor="titulo" className="form-label" style={{ color: "black", fontWeight: "600" }}>
+                Título:
+              </label>
+              <input
+                type="text"
+                id="titulo"
+                name="titulo"
+                value={formData.titulo}
+                onChange={handleChange}
+                required
+                placeholder="Ingrese el título del libro"
+                onKeyDown={handleInputKeyDown}
+                style={{
+                  width: "100%",
+                  padding: "10px 15px",
+                  borderRadius: "8px",
+                  border: "1.5px solid #2e7d32",
+                  backgroundColor: "#e8f5e9",
+                  color: "black",
+                  fontWeight: "500",
+                  fontSize: "1rem",
+                  boxShadow: "inset 1px 1px 3px rgba(46, 125, 50, 0.15)",
+                  transition: "border-color 0.3s ease",
+                }}
+                onFocus={(e) => {
+                  e.target.style.borderColor = "#1b4d1b";
+                }}
+                onBlur={(e) => {
+                  e.target.style.borderColor = "#2e7d32";
+                }}
+              />
+            </div>
+
+            {/* Autor */}
+            <div className="mb-3 col-12">
+              <label htmlFor="autor" className="form-label" style={{ color: "black", fontWeight: "600" }}>
+                Autor:
+              </label>
+              <input
+                type="text"
+                id="autor"
+                name="autor"
+                value={formData.autor}
+                onChange={handleChange}
+                required
+                placeholder="Ingrese el autor"
+                onKeyDown={handleInputKeyDown}
+                style={{
+                  width: "100%",
+                  padding: "10px 15px",
+                  borderRadius: "8px",
+                  border: "1.5px solid #2e7d32",
+                  backgroundColor: "#e8f5e9",
+                  color: "black",
+                  fontWeight: "500",
+                  fontSize: "1rem",
+                  boxShadow: "inset 1px 1px 3px rgba(46, 125, 50, 0.15)",
+                  transition: "border-color 0.3s ease",
+                }}
+                onFocus={(e) => {
+                  e.target.style.borderColor = "#1b4d1b";
+                }}
+                onBlur={(e) => {
+                  e.target.style.borderColor = "#2e7d32";
+                }}
+              />
+            </div>
+
+            {/* Editorial con dropdown */}
+            <div className="mb-3 col-12">
+              <label htmlFor="editorial" className="form-label" style={{ color: "black", fontWeight: "600" }}>
+                Editorial:
+              </label>
+              <div style={{ position: "relative" }}>
                 <input
-                  type={type}
-                  id={name}
-                  name={name}
-                  value={formData[name]}
+                  ref={editorialInputRef}
+                  type="text"
+                  id="editorial"
+                  name="editorial"
+                  value={formData.editorial}
                   onChange={handleChange}
-                  required={required}
-                  placeholder={placeholder}
-                  min={min}
-                  onKeyDown={handleInputKeyDown}
+                  placeholder="Ingrese la editorial"
+                  onKeyDown={handleEditorialKeyDown}
+                  onFocus={() => {
+                    if (editorialesFiltradas.length > 0) {
+                      setMostrarDropdown(true);
+                    }
+                  }}
                   style={{
                     width: "100%",
                     padding: "10px 15px",
@@ -513,15 +613,156 @@ const AgregarLibro = () => {
                     boxShadow: "inset 1px 1px 3px rgba(46, 125, 50, 0.15)",
                     transition: "border-color 0.3s ease",
                   }}
-                  onFocus={(e) => {
-                    e.target.style.borderColor = "#1b4d1b";
-                  }}
-                  onBlur={(e) => {
-                    e.target.style.borderColor = "#2e7d32";
-                  }}
                 />
+
+                {/* Dropdown de editoriales */}
+                {mostrarDropdown && editorialesFiltradas.length > 0 && (
+                  <div
+                    ref={dropdownRef}
+                    style={{
+                      position: "absolute",
+                      top: "100%",
+                      left: 0,
+                      right: 0,
+                      backgroundColor: "#fff",
+                      border: "1px solid #2e7d32",
+                      borderRadius: "8px",
+                      boxShadow: "0 4px 8px rgba(0, 0, 0, 0.1)",
+                      zIndex: 1000,
+                      maxHeight: "150px",
+                      overflowY: "auto",
+                    }}
+                  >
+                    {editorialesFiltradas.map((editorial, index) => (
+                      <div
+                        key={index}
+                        onClick={() => handleEditorialSelect(editorial)}
+                        style={{
+                          padding: "8px 15px",
+                          cursor: "pointer",
+                          borderBottom: index < editorialesFiltradas.length - 1 ? "1px solid #eee" : "none",
+                          fontSize: "1rem",
+                          color: "black",
+                          backgroundColor: "#fff",
+                          transition: "background-color 0.2s ease",
+                        }}
+                        onMouseEnter={(e) => {
+                          e.target.style.backgroundColor = "#f5f5f5";
+                        }}
+                        onMouseLeave={(e) => {
+                          e.target.style.backgroundColor = "#fff";
+                        }}
+                      >
+                        {editorial}
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
-            ))}
+            </div>
+
+            {/* Stock */}
+            <div className="mb-3 col-6">
+              <label htmlFor="stock" className="form-label" style={{ color: "black", fontWeight: "600" }}>
+                Stock (mínimo 1):
+              </label>
+              <input
+                type="number"
+                id="stock"
+                name="stock"
+                value={formData.stock}
+                onChange={handleChange}
+                placeholder="Ingrese la cantidad en stock"
+                min="1"
+                onKeyDown={handleInputKeyDown}
+                style={{
+                  width: "100%",
+                  padding: "10px 15px",
+                  borderRadius: "8px",
+                  border: "1.5px solid #2e7d32",
+                  backgroundColor: "#e8f5e9",
+                  color: "black",
+                  fontWeight: "500",
+                  fontSize: "1rem",
+                  boxShadow: "inset 1px 1px 3px rgba(46, 125, 50, 0.15)",
+                  transition: "border-color 0.3s ease",
+                }}
+                onFocus={(e) => {
+                  e.target.style.borderColor = "#1b4d1b";
+                }}
+                onBlur={(e) => {
+                  e.target.style.borderColor = "#2e7d32";
+                }}
+              />
+            </div>
+
+            {/* Precio */}
+            <div className="mb-3 col-6">
+              <label htmlFor="precio" className="form-label" style={{ color: "black", fontWeight: "600" }}>
+                Precio:
+              </label>
+              <input
+                type="number"
+                id="precio"
+                name="precio"
+                value={formData.precio}
+                onChange={handleChange}
+                placeholder="Ingrese el precio"
+                onKeyDown={handleInputKeyDown}
+                style={{
+                  width: "100%",
+                  padding: "10px 15px",
+                  borderRadius: "8px",
+                  border: "1.5px solid #2e7d32",
+                  backgroundColor: "#e8f5e9",
+                  color: "black",
+                  fontWeight: "500",
+                  fontSize: "1rem",
+                  boxShadow: "inset 1px 1px 3px rgba(46, 125, 50, 0.15)",
+                  transition: "border-color 0.3s ease",
+                }}
+                onFocus={(e) => {
+                  e.target.style.borderColor = "#1b4d1b";
+                }}
+                onBlur={(e) => {
+                  e.target.style.borderColor = "#2e7d32";
+                }}
+              />
+            </div>
+
+            {/* Ubicación */}
+            <div className="mb-3 col-12">
+              <label htmlFor="ubicacion" className="form-label" style={{ color: "black", fontWeight: "600" }}>
+                Ubicación:
+              </label>
+              <input
+                type="text"
+                id="ubicacion"
+                name="ubicacion"
+                value={formData.ubicacion}
+                onChange={handleChange}
+                placeholder="Ingrese la ubicación"
+                onKeyDown={handleInputKeyDown}
+                style={{
+                  width: "100%",
+                  padding: "10px 15px",
+                  borderRadius: "8px",
+                  border: "1.5px solid #2e7d32",
+                  backgroundColor: "#e8f5e9",
+                  color: "black",
+                  fontWeight: "500",
+                  fontSize: "1rem",
+                  boxShadow: "inset 1px 1px 3px rgba(46, 125, 50, 0.15)",
+                  transition: "border-color 0.3s ease",
+                }}
+                onFocus={(e) => {
+                  e.target.style.borderColor = "#1b4d1b";
+                }}
+                onBlur={(e) => {
+                  e.target.style.borderColor = "#2e7d32";
+                }}
+              />
+            </div>
           </div>
 
           {/* Mensaje */}

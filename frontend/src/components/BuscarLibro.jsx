@@ -112,9 +112,29 @@ const BuscarLibro = () => {
     });
     setResultados([]);
   };
+
+  // Función para navegar a BajarLibro con los datos del formulario
+  const irABajarLibro = () => {
+    // Verificar que hay datos suficientes para bajar el libro
+    if (!formData.isbn || !formData.titulo || !formData.stock) {
+      alert("Primero debe buscar un libro para poder bajar su stock.");
+      return;
+    }
+
+    // Navegar a BajarLibro pasando los datos como state
+    navigate("/bajarlibro", {
+      state: {
+        isbn: formData.isbn,
+        titulo: formData.titulo,
+        autor: formData.autor,
+        editorial: formData.editorial,
+        stock: formData.stock,
+        id: formData.id,
+      }
+    });
+  };
+
   const fondoURL = "/fondo-3.jpg"
-
-
 
   return (
     <div
@@ -145,6 +165,7 @@ const BuscarLibro = () => {
             position: "relative",
             display: "flex",
             alignItems: "center",
+            justifyContent: "space-between",
             marginBottom: "25px",
             height: "40px",
           }}
@@ -184,6 +205,31 @@ const BuscarLibro = () => {
           >
             Buscar Libro
           </h2>
+
+          {/* Botón Bajar Libro a la derecha */}
+          <button
+            type="button"
+            className="btn"
+            onClick={irABajarLibro}
+            style={{
+              background: "linear-gradient(135deg, #d95c5c 0%, #b83232 100%)",
+              color: "white",
+              fontWeight: "700",
+              padding: "10px 20px",
+              borderRadius: "8px",
+              boxShadow: "0 4px 8px rgba(184,50,50,0.3)",
+              transition: "background 0.3s ease",
+              zIndex: 2,
+            }}
+            onMouseEnter={(e) => {
+              e.target.style.background = "linear-gradient(135deg, #b83232 0%, #a12a2a 100%)";
+            }}
+            onMouseLeave={(e) => {
+              e.target.style.background = "linear-gradient(135deg, #d95c5c 0%, #b83232 100%)";
+            }}
+          >
+            Bajar Libro
+          </button>
         </div>
 
         <form onSubmit={handleSubmit}>
@@ -222,6 +268,7 @@ const BuscarLibro = () => {
                 readOnly={readOnly}
                 placeholder={placeholder}
                 onBlur={onBlur}
+                autoFocus={name === "isbn"}
                 style={{
                   width: "100%",
                   padding: "10px 15px",

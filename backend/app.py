@@ -235,7 +235,7 @@ def generar_isbn():
         else:
             nuevo_numero = 1
 
-        nuevo_isbn = f"ISBN-{nuevo_numero:05d}"
+        nuevo_isbn = f"{nuevo_numero:05d}"
 
         # Verificar que no exista duplicado
         while session.query(Libro).filter(Libro.isbn == nuevo_isbn).first():
@@ -259,6 +259,37 @@ def buscar_por_titulo_o_autor():
     ).all()
 
     return jsonify({"libros": [libro.to_dict() for libro in libros]})
+
+
+
+
+@app.route('/api/editoriales', methods=['GET'])
+def obtener_editoriales():
+    """
+    Obtiene todas las editoriales únicas de la base de datos usando SQLAlchemy
+    """
+    session = app.session
+    try:
+        # Consulta para obtener editoriales distintas, no nulas ni vacías
+        editoriales = (
+            session.query(Libro.editorial)
+            .filter(Libro.editorial.isnot(None), Libro.editorial != "")
+            .distinct()
+            .order_by(Libro.editorial.asc())
+            .all()
+        )
+
+        lista_editoriales = [e[0] for e in editoriales]
+
+        return jsonify({
+            "success": True,
+            "editoriales": lista_editoriales
+        })
+    except Exception as e:
+        return jsonify({
+            "success": False,
+            "error": str(e)
+        }), 500
 
 
 

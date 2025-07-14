@@ -1,9 +1,10 @@
-import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useState, useEffect } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useAppContext } from "../context/appContext";
 
 const BajarLibro = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { actions } = useAppContext();
 
   const [formData, setFormData] = useState({
@@ -18,6 +19,21 @@ const BajarLibro = () => {
   const [error, setError] = useState("");
   const [resultado, setResultado] = useState("");
   const [resultados, setResultados] = useState([]);
+
+  // Efecto para cargar datos cuando se viene desde BuscarLibro
+  useEffect(() => {
+    if (location.state) {
+      setFormData((prev) => ({
+        ...prev,
+        isbn: location.state.isbn || "",
+        titulo: location.state.titulo || "",
+        autor: location.state.autor || "",
+        editorial: location.state.editorial || "",
+        stock: location.state.stock || "",
+        id: location.state.id || null,
+      }));
+    }
+  }, [location.state]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -122,7 +138,6 @@ const BajarLibro = () => {
 
   const fondoURL = "/fondo-3.jpg"
 
-
   return (
     <div
       style={{
@@ -146,7 +161,7 @@ const BajarLibro = () => {
           fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
         }}
       >
-        {/* Contenedor para botón y título en línea */}
+        {/* Contenedor para botón volver al inicio y título en línea */}
         <div
           style={{
             position: "relative",
@@ -201,10 +216,10 @@ const BajarLibro = () => {
               type: "text",
               readOnly: false,
               placeholder: "Ingrese el ISBN del libro",
-              required: true,
+              required: false,
             },
-            { label: "Título:", name: "titulo", type: "text", readOnly: true },
-            { label: "Autor:", name: "autor", type: "text", readOnly: true },
+            { label: "Título:", name: "titulo", type: "text", readOnly: false },
+            { label: "Autor:", name: "autor", type: "text", readOnly: false },
             { label: "Editorial:", name: "editorial", type: "text", readOnly: true },
             { label: "Stock actual:", name: "stock", type: "number", readOnly: true },
             {
@@ -232,6 +247,7 @@ const BajarLibro = () => {
                 readOnly={readOnly}
                 placeholder={placeholder}
                 required={required}
+                autoFocus={name === "isbn"}
                 min={min}
                 onBlur={name === "isbn" ? handleSearch : undefined}
                 style={{
