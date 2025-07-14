@@ -281,7 +281,7 @@ const AgregarLibro = () => {
         backgroundImage: `linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), url(${fondoURL})`,
         backgroundSize: "cover",
         backgroundPosition: "center",
-        height: "100vh",
+        minHeight: "100vh",
         paddingTop: "10px", // rompe el colapso del margin
         boxSizing: "border-box",
 
@@ -329,7 +329,7 @@ const AgregarLibro = () => {
               position: "absolute",
               left: "50%",
               transform: "translateX(-50%)",
-              color: "#2e7d32",
+              color: "#183d1b",
               fontWeight: "700",
               margin: 0,
               fontSize: "1.8rem",
@@ -346,7 +346,7 @@ const AgregarLibro = () => {
         <form onSubmit={handleSubmit}>
           {/* ISBN + checkbox */}
           <div className="mb-3">
-            <label htmlFor="isbn" className="form-label" style={{ color: "#2e7d32", fontWeight: "600" }}>
+            <label htmlFor="isbn" className="form-label" style={{ color: "black", fontWeight: "600" }}>
               ISBN:
             </label>
 
@@ -373,7 +373,7 @@ const AgregarLibro = () => {
                     borderRadius: "8px",
                     border: "1.5px solid #2e7d32",
                     backgroundColor: sinIsbn ? "#d7f0d7" : "#e8f5e9",
-                    color: "#2e7d32",
+                    color: "black",
                     fontWeight: "500",
                     fontSize: "1rem",
                   }}
@@ -411,7 +411,7 @@ const AgregarLibro = () => {
 
                   disabled={generandoIsbn}
                 />
-                <label htmlFor="crearSinIsbn" className="form-check-label small" style={{ color: "#2e7d32" }}>
+                <label htmlFor="crearSinIsbn" className="form-check-label small" style={{ color: "black" }}>
                   Crear sin ISBN
                 </label>
                 {generandoIsbn && (
@@ -488,7 +488,7 @@ const AgregarLibro = () => {
               },
             ].map(({ label, name, type, required, placeholder, min, col }) => (
               <div className={`mb-3 col-${col}`} key={name}>
-                <label htmlFor={name} className="form-label" style={{ color: "#2e7d32", fontWeight: "600" }}>
+                <label htmlFor={name} className="form-label" style={{ color: "black", fontWeight: "600" }}>
                   {label}
                 </label>
                 <input
