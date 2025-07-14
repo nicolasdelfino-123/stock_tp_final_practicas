@@ -337,7 +337,7 @@ const AgregarLibro = () => {
               zIndex: 1,
             }}
           >
-            Crear Nuevo Libro
+            Agregar Libro
           </h2>
 
           <div style={{ width: "130px" }}></div>
@@ -382,6 +382,13 @@ const AgregarLibro = () => {
 
               <div style={{ display: "flex", alignItems: "center", gap: "8px", marginLeft: "10px" }}>
                 <input
+                  style={{
+                    width: "20px",
+                    height: "20px",
+                    border: "2px solid #b0bec5", // borde pastel
+                    borderRadius: "4px",
+                    accentColor: "#4caf50", // ✅ color del tilde
+                  }}
                   type="checkbox"
                   id="crearSinIsbn"
                   className="form-check-input"
@@ -401,6 +408,7 @@ const AgregarLibro = () => {
                       actions.setMensaje("");
                     }
                   }}
+
                   disabled={generandoIsbn}
                 />
                 <label htmlFor="crearSinIsbn" className="form-check-label small" style={{ color: "#2e7d32" }}>
