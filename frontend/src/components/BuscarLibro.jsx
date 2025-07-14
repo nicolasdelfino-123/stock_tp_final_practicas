@@ -122,10 +122,9 @@ const BuscarLibro = () => {
         backgroundImage: `linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), url(${fondoURL})`,
         backgroundSize: "cover",
         backgroundPosition: "center",
-        minHeight: "100vh",
+        minHeight: "100%",
         paddingTop: "10px", // rompe el colapso del margin
         boxSizing: "border-box",
-
       }}
     >
       <div
@@ -135,8 +134,9 @@ const BuscarLibro = () => {
           backgroundColor: "#e3f2fd", // azul pastel claro
           borderRadius: "12px",
           boxShadow: "0 8px 20px rgba(0,0,0,0.1)",
-          padding: "30px 25px",
+          padding: "30px 25px 20px 25px", // reducido padding bottom
           fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
+          marginBottom: resultados.length > 0 ? "20px" : "0", // margin bottom solo si hay resultados
         }}
       >
         {/* Contenedor para botón y título en línea */}
@@ -253,7 +253,7 @@ const BuscarLibro = () => {
             </div>
           )}
 
-          <div className="d-flex gap-3 mb-3">
+          <div className="d-flex gap-3" style={{ marginBottom: "0" }}>
             <button
               type="submit"
               className="btn"
@@ -298,58 +298,152 @@ const BuscarLibro = () => {
               Limpiar Pantalla
             </button>
           </div>
-
-          {resultados.length > 0 && (
-            <div className="mt-4" style={{ color: "#114470" }}>
-              <h4 style={{ fontWeight: "700", marginBottom: "15px" }}>Resultados:</h4>
-              <ul
-                className="list-group"
-                style={{
-                  borderRadius: "10px",
-                  boxShadow: "0 3px 10px rgba(30,136,229,0.2)",
-                  backgroundColor: "#e3f2fd",
-                  padding: "15px",
-                  fontWeight: "600",
-                  fontSize: "1rem",
-                }}
-              >
-                {resultados.map((libro, index) => (
-                  <li
-                    key={index}
-                    className="list-group-item"
-                    style={{
-                      borderRadius: "8px",
-                      marginBottom: "10px",
-                      border: "1px solid #90caf9",
-                      backgroundColor: "#90caf9",
-                      color: "black",
-                    }}
-                  >
-                    <strong >Título:</strong> {libro.titulo} <br />
-                    <strong>Autor:</strong> {libro.autor} <br />
-                    <strong>ISBN:</strong> {libro.isbn} <br />
-                    <strong>Ubicación:</strong> {libro.ubicacion || "No disponible"} <br />
-                    <strong>Stock:</strong> {libro.stock} <br />
-                    <strong>Editorial:</strong> {libro.editorial || "No disponible"} <br />
-                    <button
-                      className="btn btn-success mt-2"
-                      onClick={() => handleSelectBook(libro)}
-                    >
-                      Seleccionar
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-
-          {error && (
-            <div className="mt-4" style={{ color: "#1565c0", fontWeight: "700" }}>
-              {error}
-            </div>
-          )}
         </form>
       </div>
+
+      {/* Sección de resultados en una línea */}
+      {resultados.length > 0 && (
+        <div
+          style={{
+            marginTop: "24px",
+            marginLeft: "10px",
+            marginRight: "10px",
+            marginBottom: "60px",
+            backgroundColor: "#e3f2fd",
+            borderRadius: "10px",
+            padding: "20px",
+            boxShadow: "0 4px 10px rgba(30,136,229,0.1)",
+          }}
+        >
+          <h4
+            style={{
+              fontWeight: "700",
+              color: "#114470",
+              marginBottom: "20px",
+              textAlign: "center",
+            }}
+          >
+            Resultados:
+          </h4>
+
+          <ul
+            className="list-group"
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              gap: "12px",
+            }}
+          >
+            {resultados.map((libro, index) => (
+              <li
+                key={index}
+                className="list-group-item"
+                style={{
+                  display: "flex",
+                  alignItems: "flex-start",
+                  flexWrap: "wrap",
+                  justifyContent: "space-between",
+                  gap: "10px",
+                  padding: "15px 20px",
+                  border: "1px solid #90caf9",
+                  backgroundColor: "#bbdefb",
+                  borderRadius: "12px",
+                  boxShadow: "0 4px 8px rgba(30, 136, 229, 0.1)",
+                  fontSize: "0.95rem",
+                  color: "black",
+                  fontWeight: "500",
+                }}
+              >
+                <div style={{
+                  flex: "1 1 auto",
+                  minWidth: "0",
+                  display: "flex",
+                  flexWrap: "wrap",
+                  gap: "10px 30px",
+                  alignItems: "center"
+                }}>
+                  <div style={{
+                    wordWrap: "break-word",
+                    wordBreak: "break-word",
+                    overflowWrap: "break-word"
+                  }}>
+                    <strong>Título:</strong> 📘 {libro.titulo}
+                  </div>
+
+                  <div style={{
+                    wordWrap: "break-word",
+                    wordBreak: "break-word",
+                    overflowWrap: "break-word"
+                  }}>
+                    <strong>Autor:</strong> {libro.autor}
+                  </div>
+
+                  <div style={{
+                    wordWrap: "break-word",
+                    wordBreak: "break-word",
+                    overflowWrap: "break-word"
+                  }}>
+                    <strong>Editorial:</strong> {libro.editorial || "No disponible"}
+                  </div>
+
+                  <div style={{
+                    wordWrap: "break-word",
+                    wordBreak: "break-word",
+                    overflowWrap: "break-word"
+                  }}>
+                    <strong>ISBN:</strong> {libro.isbn}
+                  </div>
+
+                  <div style={{
+                    wordWrap: "break-word",
+                    wordBreak: "break-word",
+                    overflowWrap: "break-word"
+                  }}>
+                    <strong>Stock:</strong> {libro.stock}
+                  </div>
+
+                  <div style={{
+                    wordWrap: "break-word",
+                    wordBreak: "break-word",
+                    overflowWrap: "break-word"
+                  }}>
+                    <strong style={{ fontWeight: "900" }}>Ubicación:</strong> {libro.ubicacion || "No disponible"}
+                  </div>
+                </div>
+
+                <button
+                  className="btn btn-sm btn-success"
+                  style={{
+                    padding: "6px 12px",
+                    fontSize: "0.9rem",
+                    fontWeight: "600",
+                    borderRadius: "6px",
+                    whiteSpace: "nowrap",
+                    flexShrink: 0
+                  }}
+                  onClick={() => handleSelectBook(libro)}
+                >
+                  Seleccionar
+                </button>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+      {/* Mensaje de error separado */}
+      {error && resultados.length === 0 && (
+        <div
+          style={{
+            color: "#1565c0",
+            fontWeight: "700",
+            textAlign: "center",
+            marginTop: "20px",
+            padding: "0 20px"
+          }}
+        >
+          {error}
+        </div>
+      )}
     </div>
   );
 }
