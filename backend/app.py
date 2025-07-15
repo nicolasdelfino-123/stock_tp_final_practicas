@@ -1,7 +1,7 @@
 from flask import Flask, jsonify, request
 from sqlalchemy import create_engine, or_, func
 from sqlalchemy.orm import sessionmaker
-from config import Config
+from config import ProductionConfig  # usamos configuración segura desde .env
 from models.libro import Base, Libro
 from unidecode import unidecode
 from flask_cors import CORS
@@ -14,7 +14,8 @@ from models.libro import Base
 def create_app():
     app = Flask(__name__)
     CORS(app)
-    app.config.from_object(Config)
+    app.config.from_object(ProductionConfig)
+
     
     engine = create_engine(app.config["SQLALCHEMY_DATABASE_URI"], echo=True)
     

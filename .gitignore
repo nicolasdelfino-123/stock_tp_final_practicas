@@ -65,3 +65,16 @@ backend/libros.db
 # Ignorar base de datos y node_modules específicas
 /backend/libros.db
 /frontend/node_modules/
+
+
+
+# Entornos virtuales
+venv/
+.env
+
+# Archivos de caché de Python
+__pycache__/
+*.pyc
+
+# Archivos del sistema
+.DS_Store
