@@ -6,6 +6,9 @@ export const AppProvider = ({ children }) => {
   const [libros, setLibros] = useState([]);
   const [mensaje, setMensaje] = useState("");
   const [editoriales, setEditoriales] = useState([]);
+  const [user, setUser] = useState(null);
+  const [token, setToken] = useState(null);
+  const API_BASE = process.env.REACT_APP_API_BASE;
 
 
   const actions = useMemo(
@@ -144,6 +147,57 @@ export const AppProvider = ({ children }) => {
       setMensaje: (msg) => {
         setMensaje(msg);
       },
+
+ 
+
+    loginUser: async (username, password) => {
+        try {
+            const res = await fetch(`${API_BASE}/login`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({ username, password })
+            });
+
+            const data = await res.json();
+
+            if (res.ok) {
+                // Guardamos token en localStorage y store
+                localStorage.setItem("token", data.token);
+                localStorage.setItem("user", data.user);
+                setUser(data.user);
+                setToken(data.token);
+
+                return { success: true };
+            } else {
+                return { success: false, error: data.error || "Login fallido" };
+            }
+        } catch (err) {
+            return { success: false, error: "Error de red o servidor" };
+        }
+    },
+
+    logout: () => {
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
+        setUser(null);
+        setToken(null);
+    },
+
+    isAuthenticated: () => {
+        const token = localStorage.getItem("token");
+        if (!token) return false;
+
+        try {
+            const payload = JSON.parse(atob(token.split('.')[1]));
+            const exp = payload.exp * 1000;
+            return Date.now() < exp;
+        } catch (e) {
+            return false;
+        }
+    },
+
 
       bajarStockLibro: async (id, cantidad) => {
         try {

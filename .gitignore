@@ -5,7 +5,7 @@ dist/
 
 # === Python (Backend - Flask) ===
 venv/
-__pycache__/
+
 *.py[cod]
 *.sqlite3
 *.log
@@ -78,3 +78,11 @@ __pycache__/
 
 # Archivos del sistema
 .DS_Store
+
+# === PYTHON ===
+
+*.py[cod]
+
+# === BACKEND (evitar rastreo desde frontend) ===
+../backend/__pycache__/
+../backend/models/__pycache__/

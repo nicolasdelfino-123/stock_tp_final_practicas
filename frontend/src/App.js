@@ -9,12 +9,13 @@ import BajarLibro from "./components/BajarLibro";
 import BuscarLibro from "./components/BuscarLibro";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "@fortawesome/fontawesome-free/css/all.min.css";
-
+import Login from "./components/Login";
 function App() {
   return (
     <AppProvider>
       <Router>
         <Routes>
+          <Route path="/login" element={<Login />} />
           <Route path="/" element={<Home />} />
           <Route path="/agregarlibro" element={<AgregarLibro />} />
           <Route path="/bajarlibro" element={<BajarLibro />} />

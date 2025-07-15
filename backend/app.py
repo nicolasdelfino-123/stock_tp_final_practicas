@@ -9,6 +9,10 @@ from flask_admin import Admin
 from flask_admin.contrib.sqla import ModelView
 from sqlalchemy import func
 from models.libro import Base
+import jwt 
+import datetime
+from config import Config
+
 
 
 def create_app():
@@ -36,6 +40,34 @@ app = create_app()
 @app.route('/')
 def index():
     return '¡Bienvenido a la aplicación Flask!'  # Asegúrate de tener una ruta base
+
+
+
+
+@app.route('/login', methods=['POST'])
+def login():
+    data = request.json
+    username = data.get('username')
+    password = data.get('password')
+
+    # ⚠️ Login fijo (después lo cambiamos por usuarios reales de DB)
+    if username == 'admin' and password == '1234':
+        try:
+            payload = {
+                'user': username,
+                'exp': datetime.datetime.utcnow() + datetime.timedelta(hours=2)  # 2 HORAS DE DURACIÓN
+            }
+            token = jwt.encode(payload, Config.SECRET_KEY, algorithm='HS256')
+
+            return jsonify({
+                'message': 'Login exitoso',
+                'token': token,
+                'user': username
+            }), 200
+        except Exception as e:
+            return jsonify({'error': 'Error generando token', 'detalle': str(e)}), 500
+    else:
+        return jsonify({'error': 'Credenciales inválidas'}), 401
 
 
 # Obtener todos los libros o filtrar por palabra clave
