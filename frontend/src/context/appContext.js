@@ -8,14 +8,47 @@ export const AppProvider = ({ children }) => {
   const [editoriales, setEditoriales] = useState([]);
   const [user, setUser] = useState(null);
   const [token, setToken] = useState(null);
-  const API_BASE = process.env.REACT_APP_API_BASE;
+  const [isLoading, setIsLoading] = useState(true);
+  const API_BASE = process.env.REACT_APP_API_BASE || "http://localhost:5000";
 
+  // Inicializar datos desde localStorage al cargar la aplicación
+  useEffect(() => {
+    const initializeAuth = () => {
+      const storedToken = localStorage.getItem("token");
+      const storedUser = localStorage.getItem("user");
+      
+      if (storedToken && storedUser) {
+        // Verificar si el token no ha expirado
+        try {
+          const payload = JSON.parse(atob(storedToken.split('.')[1]));
+          const exp = payload.exp * 1000;
+          
+          if (Date.now() < exp) {
+            setToken(storedToken);
+            setUser(storedUser);
+          } else {
+            // Token expirado, limpiar localStorage
+            localStorage.removeItem("token");
+            localStorage.removeItem("user");
+          }
+        } catch (e) {
+          // Token inválido, limpiar localStorage
+          localStorage.removeItem("token");
+          localStorage.removeItem("user");
+        }
+      }
+      
+      setIsLoading(false);
+    };
+
+    initializeAuth();
+  }, []);
 
   const actions = useMemo(
     () => ({
       fetchLibros: async () => {
         try {
-          const response = await fetch("http://localhost:5000/libros");
+          const response = await fetch(`${API_BASE}/libros`);
           if (response.ok) {
             const data = await response.json();
             setLibros(data);
@@ -25,14 +58,13 @@ export const AppProvider = ({ children }) => {
         }
       },
 
-
       obtenerEditoriales: async () => {
         try {
-          const response = await fetch("http://localhost:5000/api/editoriales"); // o getStore().apiUrl si lo tienes
+          const response = await fetch(`${API_BASE}/api/editoriales`);
           const data = await response.json();
     
           if (data.success) {
-            setEditoriales(data.editoriales); // actualizo el estado directamente
+            setEditoriales(data.editoriales);
             return { success: true, editoriales: data.editoriales };
           } else {
             return { success: false, error: data.error };
@@ -43,13 +75,10 @@ export const AppProvider = ({ children }) => {
         }
       },
 
-
       buscarLibroPorISBN: async (isbn) => {
         if (!isbn) return null;
         try {
-          const response = await fetch(
-            `http://localhost:5000/libros?isbn=${isbn}`
-          );
+          const response = await fetch(`${API_BASE}/libros?isbn=${isbn}`);
           const data = await response.json();
           if (response.ok && data.length > 0) {
             console.log("LIBRO ENCONTRADO EN BD LOCAL:", data[0]);
@@ -65,7 +94,7 @@ export const AppProvider = ({ children }) => {
 
       generarIsbnAutomatico: async () => {
         try {
-          const response = await fetch("http://127.0.0.1:5000/generar-isbn", {
+          const response = await fetch(`${API_BASE}/generar-isbn`, {
             method: 'GET',
             headers: {
               'Content-Type': 'application/json',
@@ -94,11 +123,10 @@ export const AppProvider = ({ children }) => {
           };
         }
       },
-      
 
       actualizarLibro: async (id, formData) => {
         try {
-          const response = await fetch(`http://localhost:5000/libros/${id}`, {
+          const response = await fetch(`${API_BASE}/libros/${id}`, {
             method: "PUT",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(formData),
@@ -122,7 +150,7 @@ export const AppProvider = ({ children }) => {
 
       crearLibro: async (formData) => {
         try {
-          const response = await fetch("http://localhost:5000/libros", {
+          const response = await fetch(`${API_BASE}/libros`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(formData),
@@ -148,10 +176,10 @@ export const AppProvider = ({ children }) => {
         setMensaje(msg);
       },
 
- 
-
-    loginUser: async (username, password) => {
+      loginUser: async (username, password) => {
         try {
+            console.log("Intentando login con:", { username, API_BASE });
+            
             const res = await fetch(`${API_BASE}/login`, {
                 method: "POST",
                 headers: {
@@ -159,36 +187,42 @@ export const AppProvider = ({ children }) => {
                 },
                 body: JSON.stringify({ username, password })
             });
-
+    
+            console.log("Respuesta del servidor:", res.status);
+            
             const data = await res.json();
-
+            console.log("Datos recibidos:", data);
+    
             if (res.ok) {
                 // Guardamos token en localStorage y store
                 localStorage.setItem("token", data.token);
                 localStorage.setItem("user", data.user);
                 setUser(data.user);
                 setToken(data.token);
-
-                return { success: true };
+                
+                // Forzar una actualización del estado
+                setIsLoading(false);
+                
+                return { success: true, user: data.user };
             } else {
                 return { success: false, error: data.error || "Login fallido" };
             }
         } catch (err) {
+            console.error("Error en loginUser:", err);
             return { success: false, error: "Error de red o servidor" };
         }
     },
-
-    logout: () => {
+      logout: () => {
         localStorage.removeItem("token");
         localStorage.removeItem("user");
         setUser(null);
         setToken(null);
-    },
+      },
 
-    isAuthenticated: () => {
+      isAuthenticated: () => {
         const token = localStorage.getItem("token");
         if (!token) return false;
-
+        
         try {
             const payload = JSON.parse(atob(token.split('.')[1]));
             const exp = payload.exp * 1000;
@@ -198,17 +232,13 @@ export const AppProvider = ({ children }) => {
         }
     },
 
-
       bajarStockLibro: async (id, cantidad) => {
         try {
-          const response = await fetch(
-            `http://localhost:5000/bajar-libro/${id}`,
-            {
-              method: "PUT",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ cantidad }),
-            }
-          );
+          const response = await fetch(`${API_BASE}/bajar-libro/${id}`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ cantidad }),
+          });
 
           const data = await response.json();
 
@@ -236,9 +266,7 @@ export const AppProvider = ({ children }) => {
           const resultados = [];
 
           for (let fuente of fuentes) {
-            const res = await fetch(
-              `http://localhost:5001/api/${fuente}/${isbn}`
-            );
+            const res = await fetch(`http://localhost:5001/api/${fuente}/${isbn}`);
             if (res.ok) {
               const data = await res.json();
               resultados.push(data);
@@ -268,7 +296,6 @@ export const AppProvider = ({ children }) => {
           };
         }
 
-    
         console.log("INTENTANDO CON GOOGLE BOOKS...");
         try {
           const googleResponse = await fetch(
@@ -295,16 +322,22 @@ export const AppProvider = ({ children }) => {
         return null;
       },
     }),
-    []
+    [API_BASE]
   );
 
   useEffect(() => {
-    actions.fetchLibros();
-  }, [actions]);
+    if (token) {
+      actions.fetchLibros();
+    }
+  }, [token, actions]);
 
   const store = {
     libros,
     mensaje,
+    editoriales,
+    user,
+    token,
+    isLoading,
   };
 
   return (

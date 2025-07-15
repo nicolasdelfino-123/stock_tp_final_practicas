@@ -4,6 +4,19 @@ import './index.css';
 import App from './App';
 import reportWebVitals from './reportWebVitals';
 
+// SOLUCIÓN PARA PRODUCCIÓN - Verificar si el servidor se reinició
+const checkServerReset = () => {
+  const lastServerReset = localStorage.getItem('lastServerReset');
+  const currentServerReset = process.env.REACT_APP_SERVER_START_TIME || new Date().getTime().toString();
+  
+  if (!lastServerReset || lastServerReset !== currentServerReset) {
+    localStorage.clear();
+    localStorage.setItem('lastServerReset', currentServerReset);
+  }
+};
+
+checkServerReset(); // Ejecuta la verificación
+
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
   <React.StrictMode>
@@ -11,7 +24,4 @@ root.render(
   </React.StrictMode>
 );
 
-// If you want to start measuring performance in your app, pass a function
-// to log results (for example: reportWebVitals(console.log))
-// or send to an analytics endpoint. Learn more: https://bit.ly/CRA-vitals
 reportWebVitals();

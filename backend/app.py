@@ -11,6 +11,7 @@ from sqlalchemy import func
 from models.libro import Base
 import jwt 
 import datetime
+import time
 
 
 
@@ -19,6 +20,7 @@ def create_app():
     app = Flask(__name__)
     CORS(app)
     app.config.from_object(ProductionConfig)
+    
 
     
     engine = create_engine(app.config["SQLALCHEMY_DATABASE_URI"], echo=True)
@@ -43,7 +45,7 @@ def index():
 
 
 
-
+SERVER_START_TIME = time.time()
 @app.route('/login', methods=['POST'])
 def login():
     data = request.json
@@ -54,17 +56,18 @@ def login():
     if username == 'admin' and password == '1234':
         try:
             payload = {
-                'user': username,
-                'exp': datetime.datetime.utcnow() + datetime.timedelta(hours=2)  # 2 HORAS DE DURACIÓN
-            }
+                        'user': username,
+                        'exp': datetime.datetime.utcnow() + datetime.timedelta(hours=2)
+}
             token = jwt.encode(payload, app.config["SECRET_KEY"], algorithm='HS256')
 
 
             return jsonify({
                 'message': 'Login exitoso',
                 'token': token,
-                'user': username
-            }), 200
+                'user': username,
+                'server_start': SERVER_START_TIME  # Agrega esto
+                 }), 200
         except Exception as e:
             return jsonify({'error': 'Error generando token', 'detalle': str(e)}), 500
     else:

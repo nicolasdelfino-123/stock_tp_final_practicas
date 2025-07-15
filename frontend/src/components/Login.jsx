@@ -5,20 +5,31 @@ import { useNavigate } from 'react-router-dom';
 const Login = () => {
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
+    const [loading, setLoading] = useState(false);
     const { actions } = useAppContext();
     const navigate = useNavigate();
     const [error, setError] = useState(null);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        setLoading(true);
+        setError(null);
 
-        const result = await actions.loginUser(username, password);
+        try {
+            const result = await actions.loginUser(username, password);
 
-        if (result.success) {
-            setError(null);
-            navigate('/'); // Redirecciona al home o donde quieras
-        } else {
-            setError(result.error || 'Error al iniciar sesión');
+            if (result.success) {
+                // Espera un ciclo de renderizado para asegurar que el estado se actualizó
+                setTimeout(() => {
+                    navigate('/');
+                }, 0);
+            } else {
+                setError(result.error || 'Error al iniciar sesión');
+            }
+        } catch (err) {
+            setError('Error inesperado al iniciar sesión');
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -26,7 +37,7 @@ const Login = () => {
         <div style={styles.container}>
             <div style={styles.blurBackground}></div>
             <form style={styles.form} onSubmit={handleSubmit}>
-                <h2 style={{ marginBottom: '20px' }}>Iniciar Sesión</h2>
+                <h2 style={{ marginBottom: '20px', textAlign: 'center' }}>Iniciar Sesión</h2>
                 {error && <p style={styles.error}>{error}</p>}
                 <input
                     style={styles.input}
@@ -35,6 +46,7 @@ const Login = () => {
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
                     required
+                    disabled={loading}
                 />
                 <input
                     style={styles.input}
@@ -43,8 +55,19 @@ const Login = () => {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
+                    disabled={loading}
                 />
-                <button style={styles.button} type="submit">Entrar</button>
+                <button
+                    style={{
+                        ...styles.button,
+                        backgroundColor: loading ? '#ccc' : '#1976d2',
+                        cursor: loading ? 'not-allowed' : 'pointer'
+                    }}
+                    type="submit"
+                    disabled={loading}
+                >
+                    {loading ? 'Iniciando...' : 'Entrar'}
+                </button>
             </form>
         </div>
     );
@@ -99,11 +122,17 @@ const styles = {
         fontWeight: 'bold',
         fontSize: '16px',
         cursor: 'pointer',
+        transition: 'background-color 0.2s',
     },
     error: {
         color: 'red',
         marginBottom: '10px',
         textAlign: 'center',
+        fontSize: '14px',
+        padding: '8px',
+        backgroundColor: 'rgba(255, 0, 0, 0.1)',
+        borderRadius: '4px',
+        border: '1px solid rgba(255, 0, 0, 0.3)',
     }
 };
 
