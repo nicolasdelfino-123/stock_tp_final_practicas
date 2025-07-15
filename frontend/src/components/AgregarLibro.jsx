@@ -175,54 +175,50 @@ const AgregarLibro = () => {
     setIsLoading(true);
     setOrigen("");
 
-    try {
-      // Primero buscamos en nuestra base de datos local
-      const libroLocal = await actions.buscarLibroPorISBN(isbn);
+    actions.setMensaje("🔍 Buscando datos del libro...");
 
-      if (libroLocal) {
+    try {
+      const libro = await actions.buscarLibroPorISBN(isbn);
+
+      if (libro) {
         setFormData({
           ...formData,
-          autor: libroLocal.autor || "",
-          editorial: libroLocal.editorial || "",
-          stock: libroLocal.stock || 1,
-          precio: libroLocal.precio || 0,
-          titulo: libroLocal.titulo || "",
-          ubicacion: libroLocal.ubicacion || "",
+          titulo: libro.titulo || "",
+          autor: libro.autor || "",
+          editorial: libro.editorial || "",
+          stock: libro.stock || 1,
+          precio: libro.precio || 0,
+          ubicacion: libro.ubicacion || "",
         });
-        setOrigen("local");
-        setDatosCargados(true);
-      } else {
-        // Si no lo encontramos localmente, buscamos en las fuentes externas
-        const libroExterno = await actions.buscarLibroExterno(isbn);
 
-        if (libroExterno) {
-          setFormData({
-            ...formData,
-            titulo: libroExterno.titulo || "",
-            autor: libroExterno.autor || "",
-            editorial: libroExterno.editorial || "",
-          });
-          setOrigen("externo");
-          setDatosCargados(true);
+        const origenDetectado = libro.fuente === "Google Books" ? "externo" : "local";
+        setOrigen(origenDetectado);
+        setDatosCargados(true);
+
+        if (origenDetectado === "externo") {
           actions.setMensaje(
-            `Datos obtenidos de ${libroExterno.fuente || "fuente externa"}. Puede editar si es necesario.`
+            `Datos obtenidos de Google Books. Puede editar si es necesario.`
           );
-        } else {
-          actions.setMensaje(
-            "No se encontró información para este ISBN. Puede ingresar los datos manualmente."
-          );
-          setOrigen("");
-          setDatosCargados(false);
-          limpiarDatosLibro(isbn);
         }
+      } else {
+        actions.setMensaje("No se encontró información para este ISBN. Puede ingresar los datos manualmente.");
+        setOrigen("");
+        setDatosCargados(false);
+        limpiarDatosLibro(isbn);
       }
     } catch (error) {
-      console.error("Error al autocompletar los datos:", error);
-      actions.setMensaje("Hubo un error al buscar información del libro.");
+      console.error("❌ Error al autocompletar los datos:", error);
+      actions.setMensaje("❌ Hubo un error al buscar información del libro.");
     } finally {
       setIsLoading(false);
+      setTimeout(() => {
+        if (store.mensaje === "🔍 Buscando datos del libro...") {
+          actions.setMensaje("");
+        }
+      }, 2000);
     }
   };
+
 
   const handleIsbnBlur = () => {
     if (formData.isbn && !datosCargados && !sinIsbn) {
@@ -251,9 +247,20 @@ const AgregarLibro = () => {
     }
 
     try {
-      const libroExistente = await actions.buscarLibroPorISBN(formData.isbn);
+      // Primero verificamos si el libro existe en NUESTRA base de datos
+      let libroExistente = null;
+      try {
+        const resultadoBusqueda = await actions.buscarLibroPorISBN(formData.isbn);
+        // Solo consideramos que existe si viene de nuestra BD local
+        if (resultadoBusqueda && resultadoBusqueda.fuente === "Base de datos local") {
+          libroExistente = resultadoBusqueda;
+        }
+      } catch (error) {
+        console.log("No se encontró el libro en BD local, continuamos con creación");
+      }
 
       if (libroExistente) {
+        // Lógica de actualización (igual a tu versión original)
         let cambios = [];
 
         if (formData.titulo !== libroExistente.titulo) {
@@ -284,15 +291,8 @@ const AgregarLibro = () => {
           if (resultado.success) {
             const mensajeExito = `Libro actualizado con éxito. Campos modificados: ${cambios.join(", ")}.`;
             actions.setMensaje(mensajeExito);
-
-            /*  // Borrar mensaje luego de 10 segundos
-             setTimeout(() => {
-               actions.setMensaje("");
-             }, 8000); */
-
             setOrigen("local");
 
-            // Actualizar editoriales después de guardar
             if (formData.editorial) {
               actions.obtenerEditoriales();
             }
@@ -301,26 +301,18 @@ const AgregarLibro = () => {
           }
         } else {
           actions.setMensaje("No se realizaron cambios en el libro.");
-
-          // Borrar mensaje luego de 5 segundos
-          setTimeout(() => {
-            actions.setMensaje("");
-          }, 10000);
+          setTimeout(() => actions.setMensaje(""), 10000);
         }
       } else {
+        // Creación de nuevo libro (con mejor manejo de errores)
         const resultado = await actions.crearLibro(formData);
 
         if (resultado.success) {
           actions.setMensaje(
             `Libro creado con éxito con stock de ${formData.stock} unidad(es).`
           );
+          setTimeout(() => actions.setMensaje(""), 10000);
 
-          // Borrar mensaje luego de 5 segundos
-          setTimeout(() => {
-            actions.setMensaje("");
-          }, 10000);
-
-          // Actualizar editoriales después de crear
           if (formData.editorial) {
             actions.obtenerEditoriales();
           }
@@ -345,7 +337,7 @@ const AgregarLibro = () => {
       }
     } catch (error) {
       console.error("Error en la solicitud:", error);
-      alert("Hubo un error con la solicitud: " + error.message);
+      alert("Hubo un error con la solicitud: " + (error.message || "Intente nuevamente"));
     }
   };
 
@@ -365,7 +357,8 @@ const AgregarLibro = () => {
             zIndex: 9999,
             display: "flex",
             justifyContent: "center",
-            alignItems: "center"
+            alignItems: "center",
+            paddingBottom: "300px"
           }}
         >
           <div

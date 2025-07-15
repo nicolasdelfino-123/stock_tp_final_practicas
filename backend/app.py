@@ -96,7 +96,7 @@ def obtener_libros():
                     'ubicacion': libro.ubicacion
                 }])
             else:
-                return jsonify({'error': 'Libro con ese ISBN no encontrado'}), 404
+                return jsonify([])  # Cambio clave: Devuelve array vacío en lugar de error 404
         
         # Si no se pasa ISBN, busca por palabra clave
         if palabra_clave:
@@ -125,7 +125,6 @@ def obtener_libros():
 
     except Exception as e:
         return jsonify({'error': 'Ocurrió un error al obtener los libros', 'mensaje': str(e)}), 500
-
 
 # Crear nuevo libro con validación
 @app.route('/libros', methods=['POST'])
