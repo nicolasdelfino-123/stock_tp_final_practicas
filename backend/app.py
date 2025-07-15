@@ -11,7 +11,7 @@ from sqlalchemy import func
 from models.libro import Base
 import jwt 
 import datetime
-from config import Config
+
 
 
 
@@ -57,7 +57,8 @@ def login():
                 'user': username,
                 'exp': datetime.datetime.utcnow() + datetime.timedelta(hours=2)  # 2 HORAS DE DURACIÓN
             }
-            token = jwt.encode(payload, Config.SECRET_KEY, algorithm='HS256')
+            token = jwt.encode(payload, app.config["SECRET_KEY"], algorithm='HS256')
+
 
             return jsonify({
                 'message': 'Login exitoso',
