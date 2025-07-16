@@ -3,18 +3,6 @@ import { useAppContext } from "../context/appContext";
 import { useNavigate } from "react-router-dom";
 
 const AgregarLibro = () => {
-  // Evita submit con Enter y mueve al siguiente input
-  const handleInputKeyDown = (e) => {
-    if (e.key === "Enter" && e.target.name !== "isbn") {
-      e.preventDefault();
-      const form = e.target.form;
-      const index = Array.prototype.indexOf.call(form, e.target);
-      if (form.elements[index + 1]) {
-        form.elements[index + 1].focus();
-      }
-    }
-  };
-
   const { store, actions } = useAppContext();
   const navigate = useNavigate();
 
@@ -34,14 +22,76 @@ const AgregarLibro = () => {
   const [datosCargados, setDatosCargados] = useState(false);
   const [origen, setOrigen] = useState("");
   const [generandoIsbn, setGenerandoIsbn] = useState(false);
+  const isbnInputRef = useRef(null);
 
   // Estados para el autocompletado de editoriales
   const [mostrarDropdown, setMostrarDropdown] = useState(false);
   const [editorialesFiltradas, setEditorialesFiltradas] = useState([]);
   const editorialInputRef = useRef(null);
   const dropdownRef = useRef(null);
+  const [indiceSeleccionado, setIndiceSeleccionado] = useState(-1);
+
+  const stockInputRef = useRef(null);
+  const modalActivoRef = useRef(false);
 
   const mensaje = store.mensaje;
+
+  // Función para mover al siguiente campo
+  const moveToNextField = (currentTarget) => {
+    const form = currentTarget.form;
+    const index = Array.prototype.indexOf.call(form, currentTarget);
+    if (form.elements[index + 1]) {
+      form.elements[index + 1].focus();
+    }
+  };
+
+  // Función general para manejar Enter en los campos
+  const handleInputKeyDown = (e) => {
+    // Si el modal está activo, bloqueamos cualquier acción con Enter
+    if (modalActivoRef.current && e.key === "Enter") {
+      e.preventDefault();
+      return;
+    }
+
+    if (e.key === "Enter") {
+      e.preventDefault();
+
+      const fieldName = e.target.name;
+
+      // Casos especiales por campo
+      switch (fieldName) {
+        case "isbn":
+          // Para ISBN, si hay contenido y no se han cargado datos, disparar búsqueda
+          if (formData.isbn && !datosCargados && !sinIsbn) {
+            handleAutocomplete();
+          } else {
+            // Si ya se cargaron datos o no hay ISBN, mover al siguiente campo
+            moveToNextField(e.target);
+          }
+          break;
+
+        case "editorial":
+          // Si hay una selección en el dropdown, aplicarla
+          if (mostrarDropdown && indiceSeleccionado >= 0) {
+            const seleccion = editorialesFiltradas[indiceSeleccionado];
+            handleEditorialSelect(seleccion);
+            setIndiceSeleccionado(-1);
+            if (stockInputRef.current) {
+              stockInputRef.current.focus();
+            }
+          } else {
+            // Si no hay selección, mover al siguiente campo
+            moveToNextField(e.target);
+          }
+          break;
+
+        default:
+          // Para todos los demás campos, mover al siguiente
+          moveToNextField(e.target);
+          break;
+      }
+    }
+  };
 
   // Cargar editoriales al montar el componente
   useEffect(() => {
@@ -106,8 +156,6 @@ const AgregarLibro = () => {
     if (name === "editorial") {
       setMostrarDropdown(true);
     }
-
-
   };
 
   // Manejar selección de editorial del dropdown
@@ -120,14 +168,44 @@ const AgregarLibro = () => {
     editorialInputRef.current.focus();
   };
 
+  // Función para hacer scroll automático en el dropdown
+  const scrollToSelectedItem = (index) => {
+    if (dropdownRef.current) {
+      const dropdown = dropdownRef.current;
+      const selectedItem = dropdown.children[index];
+      if (selectedItem) {
+        const dropdownRect = dropdown.getBoundingClientRect();
+        const itemRect = selectedItem.getBoundingClientRect();
+
+        if (itemRect.bottom > dropdownRect.bottom) {
+          dropdown.scrollTop += itemRect.bottom - dropdownRect.bottom;
+        } else if (itemRect.top < dropdownRect.top) {
+          dropdown.scrollTop -= dropdownRect.top - itemRect.top;
+        }
+      }
+    }
+  };
+
   // Manejar teclas en el input de editorial
   const handleEditorialKeyDown = (e) => {
-    if (e.key === "ArrowDown" && editorialesFiltradas.length > 0) {
+    if (!mostrarDropdown || editorialesFiltradas.length === 0) {
+      // Si no hay dropdown activo, usar la función general
+      handleInputKeyDown(e);
+      return;
+    }
+
+    if (e.key === "ArrowDown") {
       e.preventDefault();
-      setMostrarDropdown(true);
-    } else if (e.key === "Escape") {
-      setMostrarDropdown(false);
-    } else {
+      const newIndex = indiceSeleccionado < editorialesFiltradas.length - 1 ? indiceSeleccionado + 1 : 0;
+      setIndiceSeleccionado(newIndex);
+      scrollToSelectedItem(newIndex);
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      const newIndex = indiceSeleccionado > 0 ? indiceSeleccionado - 1 : editorialesFiltradas.length - 1;
+      setIndiceSeleccionado(newIndex);
+      scrollToSelectedItem(newIndex);
+    } else if (e.key === "Enter") {
+      // Usar la función general que ya maneja el caso de editorial
       handleInputKeyDown(e);
     }
   };
@@ -151,7 +229,7 @@ const AgregarLibro = () => {
       } else {
         actions.setMensaje(`❌ ${resultado.error}`);
         setOrigen("");
-        setSinIsbn(false); // Desactiva el checkbox si falla
+        setSinIsbn(false);
         setFormData({
           ...formData,
           isbn: "",
@@ -167,6 +245,7 @@ const AgregarLibro = () => {
     }
   };
 
+  // Función de autocompletado
   const handleAutocomplete = async () => {
     const { isbn } = formData;
 
@@ -196,35 +275,38 @@ const AgregarLibro = () => {
         setDatosCargados(true);
 
         if (origenDetectado === "externo") {
-          actions.setMensaje(
-            `Datos obtenidos de Google Books. Puede editar si es necesario.`
-          );
+          actions.setMensaje("✅ Datos obtenidos de Google Books. Puede editar si es necesario.");
+        } else {
+          actions.setMensaje("");
+          // Enfocar el campo título después de cargar datos locales
+          setTimeout(() => {
+            document.getElementById("titulo")?.focus();
+          }, 100);
         }
       } else {
-        actions.setMensaje("No se encontró información para este ISBN. Puede ingresar los datos manualmente.");
+        actions.setMensaje("✅ No se encontró información para este ISBN. Puede ingresar los datos manualmente.");
         setOrigen("");
         setDatosCargados(false);
         limpiarDatosLibro(isbn);
+        // Enfocar el campo título cuando no se encuentran datos
+        setTimeout(() => {
+          document.getElementById("titulo")?.focus();
+        }, 100);
       }
     } catch (error) {
       console.error("❌ Error al autocompletar los datos:", error);
       actions.setMensaje("❌ Hubo un error al buscar información del libro.");
     } finally {
       setIsLoading(false);
-      setTimeout(() => {
-        if (store.mensaje === "🔍 Buscando datos del libro...") {
-          actions.setMensaje("");
-        }
-      }, 2000);
     }
   };
 
-
-  const handleIsbnBlur = () => {
-    if (formData.isbn && !datosCargados && !sinIsbn) {
-      handleAutocomplete();
-    }
-  };
+  // Eliminar handleIsbnBlur ya que ahora la búsqueda se dispara con Enter
+  // const handleIsbnBlur = () => {
+  //   if (formData.isbn && !datosCargados && !sinIsbn) {
+  //     handleAutocomplete();
+  //   }
+  // };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -260,7 +342,7 @@ const AgregarLibro = () => {
       }
 
       if (libroExistente) {
-        // Lógica de actualización (igual a tu versión original)
+        // Lógica de actualización
         let cambios = [];
 
         if (formData.titulo !== libroExistente.titulo) {
@@ -289,7 +371,7 @@ const AgregarLibro = () => {
           );
 
           if (resultado.success) {
-            const mensajeExito = `Libro actualizado con éxito. Campos modificados: ${cambios.join(", ")}.`;
+            const mensajeExito = `✅ Libro actualizado con éxito. Campos modificados: ${cambios.join(", ")}.`;
             actions.setMensaje(mensajeExito);
             setOrigen("local");
 
@@ -300,18 +382,17 @@ const AgregarLibro = () => {
             alert(resultado.error || "Hubo un error al actualizar el libro");
           }
         } else {
-          actions.setMensaje("No se realizaron cambios en el libro.");
+          actions.setMensaje("✅ No se realizaron cambios en el libro.");
           setTimeout(() => actions.setMensaje(""), 10000);
         }
       } else {
-        // Creación de nuevo libro (con mejor manejo de errores)
+        // Creación de nuevo libro
         const resultado = await actions.crearLibro(formData);
 
         if (resultado.success) {
           actions.setMensaje(
-            `Libro creado con éxito con stock de ${formData.stock} unidad(es).`
+            `✅ Libro creado con éxito con stock de ${formData.stock} unidad(es).`
           );
-          setTimeout(() => actions.setMensaje(""), 10000);
 
           if (formData.editorial) {
             actions.obtenerEditoriales();
@@ -340,6 +421,27 @@ const AgregarLibro = () => {
       alert("Hubo un error con la solicitud: " + (error.message || "Intente nuevamente"));
     }
   };
+
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (mensaje && e.key === "Enter") {
+        e.preventDefault();
+        e.stopPropagation();
+        actions.setMensaje("");
+
+        setTimeout(() => {
+          modalActivoRef.current = false;
+        }, 100);
+      }
+    };
+
+    if (mensaje) {
+      modalActivoRef.current = true;
+    }
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [mensaje]);
 
   const fondoURL = "/fondo-3.jpg"
 
@@ -378,22 +480,26 @@ const AgregarLibro = () => {
               textAlign: "center"
             }}
           >
-            <div style={{ marginBottom: "20px" }}>✅ {mensaje}</div>
-            <button
-              type="button"
-              className="btn btn-success"
-              style={{
-                borderRadius: "8px",
-                fontWeight: "700",
-                padding: "10px 20px",
-                fontSize: "1rem",
-                backgroundColor: "#28a745",
-                border: "none"
-              }}
-              onClick={() => actions.setMensaje("")}
-            >
-              Ok
-            </button>
+            <div style={{ marginBottom: mensaje.startsWith("🔍") ? "0" : "20px" }}>
+              {mensaje}
+            </div>
+            {!mensaje.startsWith("🔍") && (
+              <button
+                type="button"
+                className="btn btn-success"
+                style={{
+                  borderRadius: "8px",
+                  fontWeight: "700",
+                  padding: "10px 20px",
+                  fontSize: "1rem",
+                  backgroundColor: "#28a745",
+                  border: "none"
+                }}
+                onClick={() => actions.setMensaje("")}
+              >
+                Ok
+              </button>
+            )}
           </div>
         </div>
       )}
@@ -404,7 +510,7 @@ const AgregarLibro = () => {
           backgroundSize: "cover",
           backgroundPosition: "center",
           minHeight: "100vh",
-          paddingTop: "10px", // rompe el colapso del margin
+          paddingTop: "10px",
           boxSizing: "border-box",
         }}
       >
@@ -470,12 +576,6 @@ const AgregarLibro = () => {
               <label htmlFor="isbn" className="form-label" style={{ color: "black", fontWeight: "600" }}>
                 ISBN:
               </label>
-              {/* Mensaje */}
-              {mensaje && (
-                <div className="mb-3" style={{ color: "#2e7d32", fontWeight: "700", fontSize: "1rem" }}>
-                  ℹ️ {mensaje}
-                </div>
-              )}
               <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
                 <div style={{ flexGrow: 1 }}>
                   <input
@@ -484,15 +584,15 @@ const AgregarLibro = () => {
                     name="isbn"
                     value={formData.isbn}
                     onChange={handleChange}
-                    onBlur={handleIsbnBlur}
                     autoFocus
                     required
+                    ref={isbnInputRef}
                     onKeyDown={handleInputKeyDown}
                     readOnly={sinIsbn}
                     placeholder={
                       sinIsbn
                         ? "Se generará automáticamente..."
-                        : "Ingrese el ISBN"
+                        : "Ingrese el ISBN y presione Enter"
                     }
                     style={{
                       width: "100%",
@@ -512,9 +612,9 @@ const AgregarLibro = () => {
                     style={{
                       width: "20px",
                       height: "20px",
-                      border: "2px solid #b0bec5", // borde pastel
+                      border: "2px solid #b0bec5",
                       borderRadius: "4px",
-                      accentColor: "#4caf50", // ✅ color del tilde
+                      accentColor: "#4caf50",
                     }}
                     type="checkbox"
                     id="crearSinIsbn"
@@ -556,7 +656,7 @@ const AgregarLibro = () => {
               >
                 {sinIsbn
                   ? "ISBN generado automáticamente. Se asignará el próximo número disponible."
-                  : ""}
+                  : "Ingrese el ISBN y presione Enter para buscar automáticamente"}
               </small>
             </div>
 
@@ -642,13 +742,14 @@ const AgregarLibro = () => {
                     ref={editorialInputRef}
                     type="text"
                     id="editorial"
+                    autoComplete="off"
                     name="editorial"
                     value={formData.editorial}
                     onChange={handleChange}
                     placeholder="Ingrese la editorial"
                     onKeyDown={handleEditorialKeyDown}
                     onFocus={() => {
-                      if (editorialesFiltradas.length > 0) {
+                      if (formData.editorial.trim() !== "" && editorialesFiltradas.length > 0) {
                         setMostrarDropdown(true);
                       }
                     }}
@@ -694,14 +795,18 @@ const AgregarLibro = () => {
                             borderBottom: index < editorialesFiltradas.length - 1 ? "1px solid #eee" : "none",
                             fontSize: "1rem",
                             color: "black",
-                            backgroundColor: "#fff",
+                            backgroundColor: index === indiceSeleccionado ? "#9bc29c" : "#fff",
                             transition: "background-color 0.2s ease",
                           }}
                           onMouseEnter={(e) => {
-                            e.target.style.backgroundColor = "#f5f5f5";
+                            if (index !== indiceSeleccionado) {
+                              e.target.style.backgroundColor = "#f5f5f5";
+                            }
                           }}
                           onMouseLeave={(e) => {
-                            e.target.style.backgroundColor = "#fff";
+                            if (index !== indiceSeleccionado) {
+                              e.target.style.backgroundColor = "#fff";
+                            }
                           }}
                         >
                           {editorial}
@@ -711,7 +816,6 @@ const AgregarLibro = () => {
                   )}
                 </div>
               </div>
-
               {/* Stock */}
               <div className="mb-3 col-6">
                 <label htmlFor="stock" className="form-label" style={{ color: "black", fontWeight: "600" }}>
@@ -719,6 +823,7 @@ const AgregarLibro = () => {
                 </label>
                 <input
                   type="number"
+                  ref={stockInputRef}
                   id="stock"
                   name="stock"
                   value={formData.stock}
@@ -746,7 +851,6 @@ const AgregarLibro = () => {
                   }}
                 />
               </div>
-
               {/* Precio */}
               <div className="mb-3 col-6">
                 <label htmlFor="precio" className="form-label" style={{ color: "black", fontWeight: "600" }}>
@@ -833,6 +937,21 @@ const AgregarLibro = () => {
                   borderRadius: "10px",
                   boxShadow: "0 6px 12px rgba(106, 170, 106, 0.5)",
                   transition: "background 0.3s ease",
+                }}
+                // Añade estos estilos para cuando el botón tiene foco
+                onFocus={(e) => {
+                  e.target.style.border = "3px solid #1b4d1b"; // Borde verde oscuro al recibir foco
+                  e.target.style.boxShadow = "0 0 0 3px rgba(46, 125, 50, 0.5)"; // Sombra para mayor énfasis
+                }}
+                onBlur={(e) => {
+                  e.target.style.border = "3px solid transparent"; // Vuelve al estado normal al perder foco
+                  e.target.style.boxShadow = "0 6px 12px rgba(106, 170, 106, 0.5)";
+                }}
+                onMouseEnter={(e) => {
+                  e.target.style.background = "linear-gradient(135deg, #6aaa6a 0%, #4d8b4d 100%)";
+                }}
+                onMouseLeave={(e) => {
+                  e.target.style.background = "linear-gradient(135deg, #a8d5a8 0%, #6aaa6a 100%)";
                 }}
                 onMouseEnter={(e) => {
                   e.target.style.background = "linear-gradient(135deg, #6aaa6a 0%, #4d8b4d 100%)";
