@@ -2,10 +2,26 @@ import React, { useState, useEffect, useRef } from "react";
 import { useAppContext } from "../context/appContext";
 import { useNavigate } from "react-router-dom";
 
+// Estilos reutilizables para los inputs
+const inputStyle = {
+  width: "100%",
+  padding: "10px 15px",
+  borderRadius: "8px",
+  border: "1.5px solid #2e7d32",
+  backgroundColor: "#e8f5e9",
+  color: "black",
+  fontWeight: "500",
+  fontSize: "1rem",
+  boxShadow: "inset 1px 1px 3px rgba(46, 125, 50, 0.15)",
+  transition: "border-color 0.3s ease",
+}
+
 const AgregarLibro = () => {
+  // Obtiene el contexto de la aplicación y la función de navegación
   const { store, actions } = useAppContext();
   const navigate = useNavigate();
 
+  // Estado para los datos del formulario
   const [formData, setFormData] = useState({
     isbn: "",
     titulo: "",
@@ -16,11 +32,12 @@ const AgregarLibro = () => {
     ubicacion: "",
   });
 
+  // Estados para controlar la creación sin ISBN
   const [sinIsbn, setSinIsbn] = useState(false);
   const [isbnGenerado, setIsbnGenerado] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [datosCargados, setDatosCargados] = useState(false);
-  const [origen, setOrigen] = useState("");
+  const [origen, setOrigen] = useState(""); // 'externo', 'local' o 'servidor'
   const [generandoIsbn, setGenerandoIsbn] = useState(false);
   const isbnInputRef = useRef(null);
 
@@ -31,12 +48,35 @@ const AgregarLibro = () => {
   const dropdownRef = useRef(null);
   const [indiceSeleccionado, setIndiceSeleccionado] = useState(-1);
 
+  // Referencias para manejar el foco y el modal
   const stockInputRef = useRef(null);
   const modalActivoRef = useRef(false);
 
+  // Mensaje del store
   const mensaje = store.mensaje;
 
-  // Función para mover al siguiente campo
+
+  const handlerFocus = (e) => {
+    e.target.style.borderColor = "#1b4d1b";
+    e.target.style.border = "3px solid #1b4d1b";
+  };
+
+  const handlerBlur = (e) => {
+    e.target.style.borderColor = "#2e7d32";
+    e.target.style.border = "1.5px solid #2e7d32";
+  }
+
+  const handlerFocusEditorial = (e) => {
+    handlerFocus(e);
+
+    if (formData.editorial.trim() !== "" && editorialesFiltradas.length > 0) {
+      setMostrarDropdown(true);
+    }
+  }
+  /**
+   * Función para mover el foco al siguiente campo del formulario
+   * @param {HTMLElement} currentTarget - El elemento actual que dispara el evento
+   */
   const moveToNextField = (currentTarget) => {
     const form = currentTarget.form;
     const index = Array.prototype.indexOf.call(form, currentTarget);
@@ -45,7 +85,10 @@ const AgregarLibro = () => {
     }
   };
 
-  // Función general para manejar Enter en los campos
+  /**
+   * Maneja el evento keyDown en los inputs del formulario
+   * @param {Event} e - Evento del teclado
+   */
   const handleInputKeyDown = (e) => {
     // Si el modal está activo, bloqueamos cualquier acción con Enter
     if (modalActivoRef.current && e.key === "Enter") {
@@ -94,12 +137,12 @@ const AgregarLibro = () => {
     }
   };
 
-  // Cargar editoriales al montar el componente
+  // Efecto para cargar editoriales al montar el componente
   useEffect(() => {
     actions.obtenerEditoriales();
   }, []);
 
-  // Filtrar editoriales cuando cambia el input o las editoriales disponibles
+  // Efecto para filtrar editoriales cuando cambia el input o las editoriales disponibles
   useEffect(() => {
     if (formData.editorial && store.editoriales) {
       const filtradas = store.editoriales.filter(editorial =>
@@ -111,7 +154,7 @@ const AgregarLibro = () => {
     }
   }, [formData.editorial, store.editoriales]);
 
-  // Cerrar dropdown cuando se hace clic fuera
+  // Efecto para cerrar el dropdown cuando se hace clic fuera
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target) &&
@@ -126,7 +169,10 @@ const AgregarLibro = () => {
     };
   }, []);
 
-  // Función para limpiar los datos del libro excepto el ISBN
+  /**
+   * Limpia los datos del libro excepto el ISBN
+   * @param {string} isbnValue - Valor del ISBN a mantener
+   */
   const limpiarDatosLibro = (isbnValue = formData.isbn) => {
     setFormData({
       isbn: isbnValue,
@@ -139,6 +185,10 @@ const AgregarLibro = () => {
     });
   };
 
+  /**
+   * Maneja los cambios en los campos del formulario
+   * @param {Event} e - Evento de cambio
+   */
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData({
@@ -159,7 +209,10 @@ const AgregarLibro = () => {
     }
   };
 
-  // Manejar selección de editorial del dropdown
+  /**
+   * Maneja la selección de una editorial del dropdown
+   * @param {string} editorial - Editorial seleccionada
+   */
   const handleEditorialSelect = (editorial) => {
     setFormData({
       ...formData,
@@ -169,7 +222,10 @@ const AgregarLibro = () => {
     editorialInputRef.current.focus();
   };
 
-  // Función para hacer scroll automático en el dropdown
+  /**
+   * Función para hacer scroll automático al item seleccionado en el dropdown
+   * @param {number} index - Índice del item seleccionado
+   */
   const scrollToSelectedItem = (index) => {
     if (dropdownRef.current) {
       const dropdown = dropdownRef.current;
@@ -187,7 +243,10 @@ const AgregarLibro = () => {
     }
   };
 
-  // Manejar teclas en el input de editorial
+  /**
+   * Maneja las teclas especiales en el input de editorial
+   * @param {Event} e - Evento del teclado
+   */
   const handleEditorialKeyDown = (e) => {
     if (!mostrarDropdown || editorialesFiltradas.length === 0) {
       // Si no hay dropdown activo, usar la función general
@@ -211,7 +270,9 @@ const AgregarLibro = () => {
     }
   };
 
-  // Función mejorada para generar ISBN automáticamente
+  /**
+   * Genera un ISBN automáticamente y lo muestra en el formulario
+   */
   const generarYMostrarIsbn = async () => {
     try {
       setGenerandoIsbn(true);
@@ -246,7 +307,9 @@ const AgregarLibro = () => {
     }
   };
 
-  // Función de autocompletado
+  /**
+   * Busca y autocompleta los datos del libro basado en el ISBN
+   */
   const handleAutocomplete = async () => {
     const { isbn } = formData;
 
@@ -281,9 +344,7 @@ const AgregarLibro = () => {
         } else {
           actions.setMensaje("");
           // Enfocar el campo título después de cargar datos locales
-
           document.getElementById("titulo")?.focus();
-
         }
       } else {
         actions.setMensaje("✅ No se encontró información para este ISBN. Puede ingresar los datos manualmente.");
@@ -303,12 +364,9 @@ const AgregarLibro = () => {
     }
   };
 
-  // Eliminar handleIsbnBlur ya que ahora la búsqueda se dispara con Enter
-  // const handleIsbnBlur = () => {
-  //   if (formData.isbn && !datosCargados && !sinIsbn) {
-  //     handleAutocomplete();
-  //   }
-  // };
+  /**
+   * Limpia completamente el formulario
+   */
   const limpiarFormularioCompleto = () => {
     setFormData({
       isbn: "",
@@ -323,14 +381,18 @@ const AgregarLibro = () => {
     setDatosCargados(false);
     setSinIsbn(false);
     setIsbnGenerado("");
-  }
+  };
 
-
+  /**
+   * Maneja el envío del formulario
+   * @param {Event} e - Evento de submit
+   */
   const handleSubmit = async (e) => {
     e.preventDefault();
 
     const { isbn, titulo, autor, ubicacion, stock } = formData;
 
+    // Validaciones básicas
     if (!isbn || !titulo || !autor || !ubicacion) {
       alert("Por favor, complete los campos obligatorios: ISBN, título, autor y ubicación.");
       return;
@@ -394,8 +456,6 @@ const AgregarLibro = () => {
             setOrigen("local");
             limpiarFormularioCompleto();
 
-
-
             if (formData.editorial) {
               actions.obtenerEditoriales();
             }
@@ -404,9 +464,7 @@ const AgregarLibro = () => {
           }
         } else {
           actions.setMensaje("✅ No se realizaron cambios en el libro.");
-          /* setTimeout(() => actions.setMensaje(""), 10000); */
           limpiarFormularioCompleto();
-
         }
       } else {
         // Creación de nuevo libro
@@ -433,6 +491,7 @@ const AgregarLibro = () => {
     }
   };
 
+  // Efecto para manejar la tecla Enter cuando hay un mensaje activo
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (mensaje && e.key === "Enter") {
@@ -457,11 +516,11 @@ const AgregarLibro = () => {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [mensaje]);
 
-
-  const fondoURL = "/fondo-3.jpg"
+  const fondoURL = "/fondo-3.jpg";
 
   return (
     <>
+      {/* Modal de mensaje */}
       {mensaje && (
         <div
           style={{
@@ -519,6 +578,7 @@ const AgregarLibro = () => {
         </div>
       )}
 
+      {/* Contenedor principal */}
       <div
         style={{
           backgroundImage: `linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), url(${fondoURL})`,
@@ -529,6 +589,7 @@ const AgregarLibro = () => {
           boxSizing: "border-box",
         }}
       >
+        {/* Formulario */}
         <div
           className="container"
           style={{
@@ -540,7 +601,7 @@ const AgregarLibro = () => {
             fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
           }}
         >
-          {/* Título y botón */}
+          {/* Título y botón de volver */}
           <div
             style={{
               position: "relative",
@@ -585,8 +646,9 @@ const AgregarLibro = () => {
             <div style={{ width: "130px" }}></div>
           </div>
 
+          {/* Formulario principal */}
           <form onSubmit={handleSubmit}>
-            {/* ISBN + checkbox */}
+            {/* Campo ISBN */}
             <div className="mb-3">
               <label htmlFor="isbn" className="form-label" style={{ color: "black", fontWeight: "600" }}>
                 ISBN:
@@ -604,24 +666,22 @@ const AgregarLibro = () => {
                     ref={isbnInputRef}
                     onKeyDown={handleInputKeyDown}
                     readOnly={sinIsbn}
+                    onFocus={handlerFocus}
+                    onBlur={handlerBlur}
                     placeholder={
                       sinIsbn
                         ? "Se generará automáticamente..."
                         : "Ingrese el ISBN y presione Enter"
                     }
                     style={{
-                      width: "100%",
-                      padding: "10px 15px",
-                      borderRadius: "8px",
-                      border: "1.5px solid #2e7d32",
+                      ...inputStyle,
                       backgroundColor: sinIsbn ? "#d7f0d7" : "#e8f5e9",
-                      color: "black",
-                      fontWeight: "500",
-                      fontSize: "1rem",
                     }}
+
                   />
                 </div>
 
+                {/* Checkbox para crear sin ISBN */}
                 <div style={{ display: "flex", alignItems: "center", gap: "8px", marginLeft: "10px" }}>
                   <input
                     style={{
@@ -675,9 +735,9 @@ const AgregarLibro = () => {
               </small>
             </div>
 
-            {/* CAMPOS */}
+            {/* Campos del formulario */}
             <div className="row">
-              {/* Título */}
+              {/* Campo Título */}
               <div className="mb-3 col-12">
                 <label htmlFor="titulo" className="form-label" style={{ color: "black", fontWeight: "600" }}>
                   Título:
@@ -691,28 +751,13 @@ const AgregarLibro = () => {
                   required
                   placeholder="Ingrese el título del libro"
                   onKeyDown={handleInputKeyDown}
-                  style={{
-                    width: "100%",
-                    padding: "10px 15px",
-                    borderRadius: "8px",
-                    border: "1.5px solid #2e7d32",
-                    backgroundColor: "#e8f5e9",
-                    color: "black",
-                    fontWeight: "500",
-                    fontSize: "1rem",
-                    boxShadow: "inset 1px 1px 3px rgba(46, 125, 50, 0.15)",
-                    transition: "border-color 0.3s ease",
-                  }}
-                  onFocus={(e) => {
-                    e.target.style.borderColor = "#1b4d1b";
-                  }}
-                  onBlur={(e) => {
-                    e.target.style.borderColor = "#2e7d32";
-                  }}
+                  style={inputStyle}
+                  onFocus={handlerFocus}
+                  onBlur={handlerBlur}
                 />
               </div>
 
-              {/* Autor */}
+              {/* Campo Autor */}
               <div className="mb-3 col-12">
                 <label htmlFor="autor" className="form-label" style={{ color: "black", fontWeight: "600" }}>
                   Autor:
@@ -726,28 +771,13 @@ const AgregarLibro = () => {
                   required
                   placeholder="Ingrese el autor"
                   onKeyDown={handleInputKeyDown}
-                  style={{
-                    width: "100%",
-                    padding: "10px 15px",
-                    borderRadius: "8px",
-                    border: "1.5px solid #2e7d32",
-                    backgroundColor: "#e8f5e9",
-                    color: "black",
-                    fontWeight: "500",
-                    fontSize: "1rem",
-                    boxShadow: "inset 1px 1px 3px rgba(46, 125, 50, 0.15)",
-                    transition: "border-color 0.3s ease",
-                  }}
-                  onFocus={(e) => {
-                    e.target.style.borderColor = "#1b4d1b";
-                  }}
-                  onBlur={(e) => {
-                    e.target.style.borderColor = "#2e7d32";
-                  }}
+                  onFocus={handlerFocus}
+                  onBlur={handlerBlur}
+                  style={inputStyle}
                 />
               </div>
 
-              {/* Editorial con dropdown */}
+              {/* Campo Editorial con dropdown */}
               <div className="mb-3 col-12">
                 <label htmlFor="editorial" className="form-label" style={{ color: "black", fontWeight: "600" }}>
                   Editorial:
@@ -763,23 +793,9 @@ const AgregarLibro = () => {
                     onChange={handleChange}
                     placeholder="Ingrese la editorial"
                     onKeyDown={handleEditorialKeyDown}
-                    onFocus={() => {
-                      if (formData.editorial.trim() !== "" && editorialesFiltradas.length > 0) {
-                        setMostrarDropdown(true);
-                      }
-                    }}
-                    style={{
-                      width: "100%",
-                      padding: "10px 15px",
-                      borderRadius: "8px",
-                      border: "1.5px solid #2e7d32",
-                      backgroundColor: "#e8f5e9",
-                      color: "black",
-                      fontWeight: "500",
-                      fontSize: "1rem",
-                      boxShadow: "inset 1px 1px 3px rgba(46, 125, 50, 0.15)",
-                      transition: "border-color 0.3s ease",
-                    }}
+                    onFocus={handlerFocusEditorial}
+                    onBlur={handlerBlur}
+                    style={inputStyle}
                   />
 
                   {/* Dropdown de editoriales */}
@@ -831,7 +847,8 @@ const AgregarLibro = () => {
                   )}
                 </div>
               </div>
-              {/* Stock */}
+
+              {/* Campo Stock */}
               <div className="mb-3 col-6">
                 <label htmlFor="stock" className="form-label" style={{ color: "black", fontWeight: "600" }}>
                   Stock (mínimo 1):
@@ -846,27 +863,13 @@ const AgregarLibro = () => {
                   placeholder="Ingrese la cantidad en stock"
                   min="1"
                   onKeyDown={handleInputKeyDown}
-                  style={{
-                    width: "100%",
-                    padding: "10px 15px",
-                    borderRadius: "8px",
-                    border: "1.5px solid #2e7d32",
-                    backgroundColor: "#e8f5e9",
-                    color: "black",
-                    fontWeight: "500",
-                    fontSize: "1rem",
-                    boxShadow: "inset 1px 1px 3px rgba(46, 125, 50, 0.15)",
-                    transition: "border-color 0.3s ease",
-                  }}
-                  onFocus={(e) => {
-                    e.target.style.borderColor = "#1b4d1b";
-                  }}
-                  onBlur={(e) => {
-                    e.target.style.borderColor = "#2e7d32";
-                  }}
+                  style={inputStyle}
+                  onFocus={handlerFocus}
+                  onBlur={handlerBlur}
                 />
               </div>
-              {/* Precio */}
+
+              {/* Campo Precio */}
               <div className="mb-3 col-6">
                 <label htmlFor="precio" className="form-label" style={{ color: "black", fontWeight: "600" }}>
                   Precio:
@@ -879,28 +882,13 @@ const AgregarLibro = () => {
                   onChange={handleChange}
                   placeholder="Ingrese el precio"
                   onKeyDown={handleInputKeyDown}
-                  style={{
-                    width: "100%",
-                    padding: "10px 15px",
-                    borderRadius: "8px",
-                    border: "1.5px solid #2e7d32",
-                    backgroundColor: "#e8f5e9",
-                    color: "black",
-                    fontWeight: "500",
-                    fontSize: "1rem",
-                    boxShadow: "inset 1px 1px 3px rgba(46, 125, 50, 0.15)",
-                    transition: "border-color 0.3s ease",
-                  }}
-                  onFocus={(e) => {
-                    e.target.style.borderColor = "#1b4d1b";
-                  }}
-                  onBlur={(e) => {
-                    e.target.style.borderColor = "#2e7d32";
-                  }}
+                  style={inputStyle}
+                  onFocus={handlerFocus}
+                  onBlur={handlerBlur}
                 />
               </div>
 
-              {/* Ubicación */}
+              {/* Campo Ubicación */}
               <div className="mb-3 col-12">
                 <label htmlFor="ubicacion" className="form-label" style={{ color: "black", fontWeight: "600" }}>
                   Ubicación:
@@ -913,32 +901,16 @@ const AgregarLibro = () => {
                   onChange={handleChange}
                   placeholder="Ingrese la ubicación"
                   onKeyDown={handleInputKeyDown}
-                  style={{
-                    width: "100%",
-                    padding: "10px 15px",
-                    borderRadius: "8px",
-                    border: "1.5px solid #2e7d32",
-                    backgroundColor: "#e8f5e9",
-                    color: "black",
-                    fontWeight: "500",
-                    fontSize: "1rem",
-                    boxShadow: "inset 1px 1px 3px rgba(46, 125, 50, 0.15)",
-                    transition: "border-color 0.3s ease",
-                  }}
-                  onFocus={(e) => {
-                    e.target.style.borderColor = "#1b4d1b";
-                  }}
-                  onBlur={(e) => {
-                    e.target.style.borderColor = "#2e7d32";
-                  }}
+                  style={inputStyle}
+                  onFocus={handlerFocus}
+                  onBlur={handlerBlur}
                 />
               </div>
             </div>
 
-
-
-            {/* Botones */}
+            {/* Botones del formulario */}
             <div className="d-flex gap-3 mb-3">
+              {/* Botón de enviar */}
               <button
                 type="submit"
                 className="btn"
@@ -953,20 +925,13 @@ const AgregarLibro = () => {
                   boxShadow: "0 6px 12px rgba(106, 170, 106, 0.5)",
                   transition: "background 0.3s ease",
                 }}
-                // Añade estos estilos para cuando el botón tiene foco
                 onFocus={(e) => {
-                  e.target.style.border = "3px solid #1b4d1b"; // Borde verde oscuro al recibir foco
-                  e.target.style.boxShadow = "0 0 0 3px rgba(46, 125, 50, 0.5)"; // Sombra para mayor énfasis
+                  e.target.style.border = "3px solid #1b4d1b";
+                  e.target.style.boxShadow = "0 0 0 3px rgba(46, 125, 50, 0.5)";
                 }}
                 onBlur={(e) => {
-                  e.target.style.border = "3px solid transparent"; // Vuelve al estado normal al perder foco
+                  e.target.style.border = "3px solid transparent";
                   e.target.style.boxShadow = "0 6px 12px rgba(106, 170, 106, 0.5)";
-                }}
-                onMouseEnter={(e) => {
-                  e.target.style.background = "linear-gradient(135deg, #6aaa6a 0%, #4d8b4d 100%)";
-                }}
-                onMouseLeave={(e) => {
-                  e.target.style.background = "linear-gradient(135deg, #a8d5a8 0%, #6aaa6a 100%)";
                 }}
                 onMouseEnter={(e) => {
                   e.target.style.background = "linear-gradient(135deg, #6aaa6a 0%, #4d8b4d 100%)";
@@ -978,6 +943,7 @@ const AgregarLibro = () => {
                 {formData.id ? "Actualizar Libro" : "Crear Libro"}
               </button>
 
+              {/* Botón de refrescar */}
               <button
                 type="button"
                 className="btn btn-warning"
@@ -1010,17 +976,14 @@ const AgregarLibro = () => {
                 onMouseEnter={(e) => (e.target.style.backgroundColor = "#c26f3c")}
                 onMouseLeave={(e) => (e.target.style.backgroundColor = "#fff933")}
               >
-                Refrescar
+                Limpiar Pantalla
               </button>
             </div>
-
           </form>
         </div>
       </div>
     </>
   );
-
-
 };
 
 export default AgregarLibro;
