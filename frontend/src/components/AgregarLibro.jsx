@@ -62,7 +62,7 @@ const AgregarLibro = () => {
       switch (fieldName) {
         case "isbn":
           // Para ISBN, si hay contenido y no se han cargado datos, disparar búsqueda
-          if (formData.isbn && !datosCargados && !sinIsbn) {
+          if (formData.isbn && !sinIsbn) {
             handleAutocomplete();
           } else {
             // Si ya se cargaron datos o no hay ISBN, mover al siguiente campo
@@ -81,6 +81,7 @@ const AgregarLibro = () => {
             }
           } else {
             // Si no hay selección, mover al siguiente campo
+            setMostrarDropdown(false);
             moveToNextField(e.target);
           }
           break;
@@ -276,12 +277,13 @@ const AgregarLibro = () => {
 
         if (origenDetectado === "externo") {
           actions.setMensaje("✅ Datos obtenidos de Google Books. Puede editar si es necesario.");
+          document.getElementById("titulo")?.focus();
         } else {
           actions.setMensaje("");
           // Enfocar el campo título después de cargar datos locales
-          setTimeout(() => {
-            document.getElementById("titulo")?.focus();
-          }, 100);
+
+          document.getElementById("titulo")?.focus();
+
         }
       } else {
         actions.setMensaje("✅ No se encontró información para este ISBN. Puede ingresar los datos manualmente.");
@@ -307,6 +309,22 @@ const AgregarLibro = () => {
   //     handleAutocomplete();
   //   }
   // };
+  const limpiarFormularioCompleto = () => {
+    setFormData({
+      isbn: "",
+      titulo: "",
+      autor: "",
+      editorial: "",
+      stock: 1,
+      precio: 0,
+      ubicacion: "",
+    });
+    setOrigen("");
+    setDatosCargados(false);
+    setSinIsbn(false);
+    setIsbnGenerado("");
+  }
+
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -374,6 +392,9 @@ const AgregarLibro = () => {
             const mensajeExito = `✅ Libro actualizado con éxito. Campos modificados: ${cambios.join(", ")}.`;
             actions.setMensaje(mensajeExito);
             setOrigen("local");
+            limpiarFormularioCompleto();
+
+
 
             if (formData.editorial) {
               actions.obtenerEditoriales();
@@ -383,7 +404,9 @@ const AgregarLibro = () => {
           }
         } else {
           actions.setMensaje("✅ No se realizaron cambios en el libro.");
-          setTimeout(() => actions.setMensaje(""), 10000);
+          /* setTimeout(() => actions.setMensaje(""), 10000); */
+          limpiarFormularioCompleto();
+
         }
       } else {
         // Creación de nuevo libro
@@ -399,19 +422,7 @@ const AgregarLibro = () => {
           }
 
           // Resetear formulario
-          setFormData({
-            isbn: "",
-            titulo: "",
-            autor: "",
-            editorial: "",
-            stock: 1,
-            precio: 0,
-            ubicacion: "",
-          });
-          setOrigen("");
-          setDatosCargados(false);
-          setSinIsbn(false);
-          setIsbnGenerado("");
+          limpiarFormularioCompleto();
         } else {
           alert(resultado.error || "Hubo un error al crear el libro");
         }
@@ -425,6 +436,9 @@ const AgregarLibro = () => {
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (mensaje && e.key === "Enter") {
+        // Evitar cerrar el mensaje si es un mensaje de búsqueda
+        if (mensaje.startsWith("🔍")) return;
+
         e.preventDefault();
         e.stopPropagation();
         actions.setMensaje("");
@@ -435,13 +449,14 @@ const AgregarLibro = () => {
       }
     };
 
-    if (mensaje) {
+    if (mensaje && !mensaje.startsWith("🔍")) {
       modalActivoRef.current = true;
     }
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [mensaje]);
+
 
   const fondoURL = "/fondo-3.jpg"
 
