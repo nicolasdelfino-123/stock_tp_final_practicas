@@ -14,7 +14,9 @@ const BajarLibro = () => {
     titulo: "",
     autor: "",
     editorial: "",
+    ubicacion: "",
     stock: "",
+    precio: "",
     cantidad: "",
     id: null,
   });
@@ -24,18 +26,31 @@ const BajarLibro = () => {
 
   // Efecto para cargar datos cuando se viene desde BuscarLibro
   useEffect(() => {
-    if (location.state) {
-      setFormData((prev) => ({
-        ...prev,
-        isbn: location.state.isbn || "",
-        titulo: location.state.titulo || "",
-        autor: location.state.autor || "",
-        editorial: location.state.editorial || "",
-        stock: location.state.stock || "",
-        id: location.state.id || null,
-      }));
-    }
-  }, [location.state]);
+    const cargarLibroPorISBN = async () => {
+      if (formData.isbn) {
+        try {
+          const libroEncontrado = await actions.buscarLibroPorISBN(formData.isbn);
+          if (libroEncontrado) {
+            setFormData((prev) => ({
+              ...prev,
+              id: libroEncontrado.id || null,
+              titulo: libroEncontrado.titulo || "",
+              autor: libroEncontrado.autor || "",
+              editorial: libroEncontrado.editorial || "",
+              ubicacion: libroEncontrado.ubicacion || "",
+              stock: libroEncontrado.stock || "",
+              precio: libroEncontrado.precio || 0,
+            }));
+          }
+        } catch (error) {
+          console.error("Error buscando libro por ISBN:", error);
+        }
+      }
+    };
+
+    cargarLibroPorISBN();
+  }, [formData.isbn]);
+
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -58,7 +73,9 @@ const BajarLibro = () => {
           titulo: libroEncontrado.titulo,
           autor: libroEncontrado.autor,
           editorial: libroEncontrado.editorial || "",
+          ubicacion: libroEncontrado.ubicacion || "",
           stock: libroEncontrado.stock,
+          precio: libroEncontrado.precio ?? 0,
         }));
         setError("");
         setResultado("");
@@ -112,7 +129,9 @@ const BajarLibro = () => {
             titulo: formData.titulo,
             autor: formData.autor,
             editorial: formData.editorial,
+            ubicacion: formData.ubicacion,
             stock: nuevoStock,
+            precio: formData.precio,
             ubicacion: response.ubicacion || "",
           },
         ]);
@@ -133,7 +152,9 @@ const BajarLibro = () => {
       titulo: "",
       autor: "",
       editorial: "",
+      ubicacion: "",
       stock: "",
+      precio: "",
       cantidad: "",
       id: null,
     });
@@ -260,68 +281,98 @@ const BajarLibro = () => {
           </div>
 
           <form onSubmit={handleSubmit}>
-            {[
-              {
-                label: "ISBN:",
-                name: "isbn",
-                type: "text",
-                readOnly: false,
-                placeholder: "Ingrese el ISBN del libro",
-                required: false,
-              },
-              { label: "Título:", name: "titulo", type: "text", readOnly: false },
-              { label: "Autor:", name: "autor", type: "text", readOnly: false },
-              { label: "Editorial:", name: "editorial", type: "text", readOnly: true },
-              { label: "Stock actual:", name: "stock", type: "number", readOnly: true },
-              {
-                label: "Cantidad a bajar:",
-                name: "cantidad",
-                type: "number",
-                readOnly: false,
-                min: 1,
-                placeholder: "Cantidad a descontar",
-                required: true,
-              },
-            ].map(({ label, name, type, readOnly, placeholder, required, min }) => (
-              <div className="mb-3" key={name}>
-                <label
-                  className="form-label"
-                  style={{ color: "black", fontWeight: "600" }}
-                >
-                  {label}
-                </label>
-                <input
-                  type={type}
-                  name={name}
-                  value={formData[name]}
-                  onChange={handleChange}
-                  readOnly={readOnly}
-                  placeholder={placeholder}
-                  required={required}
-                  autoFocus={name === "isbn"}
-                  min={min}
-                  onBlur={name === "isbn" ? handleSearch : undefined}
-                  style={{
-                    width: "100%",
-                    padding: "10px 15px",
-                    borderRadius: "8px",
-                    border: "1.5px solid #a83232",
-                    backgroundColor: readOnly ? "#f4dede" : "#fff0f0",
-                    color: "#000", // ✅ texto siempre negro
-                    fontWeight: "500",
-                    fontSize: "1rem",
-                    boxShadow: "inset 1px 1px 3px rgba(168,50,50,0.15)",
-                    transition: "border-color 0.3s ease",
-                  }}
-                  onFocus={(e) => {
-                    if (!readOnly) e.target.style.borderColor = "#7a1f1f";
-                  }}
-                  onBlurCapture={(e) => {
-                    if (!readOnly) e.target.style.borderColor = "#a83232";
-                  }}
-                />
-              </div>
-            ))}
+            {
+              (() => {
+                const rows = [];
+                let currentRow = [];
+                let totalCols = 0;
+
+                const fields = [
+                  {
+                    label: "ISBN:",
+                    name: "isbn",
+                    type: "text",
+                    readOnly: false,
+                    placeholder: "Ingrese el ISBN del libro",
+                    required: false,
+                    col: 12,
+                  },
+                  { label: "Título:", name: "titulo", type: "text", readOnly: false, col: 12 },
+                  { label: "Autor:", name: "autor", type: "text", readOnly: false, col: 12 },
+                  { label: "Editorial:", name: "editorial", type: "text", readOnly: true, col: 6 },
+                  { label: "Ubicación:", name: "ubicacion", type: "text", readOnly: true, col: 6 },
+                  { label: "Stock actual:", name: "stock", type: "number", readOnly: true, col: 6 },
+                  { label: "Precio", name: "precio", type: "number", readOnly: true, col: 6 },
+                  {
+                    label: "Cantidad a bajar:",
+                    name: "cantidad",
+                    type: "number",
+                    readOnly: false,
+                    min: 1,
+                    placeholder: "Cantidad a descontar",
+                    required: true,
+                    col: 12,
+                  },
+                ];
+
+                for (const field of fields) {
+                  const colSize = field.col || 12;
+                  if (totalCols + colSize > 12) {
+                    rows.push([...currentRow]);
+                    currentRow = [];
+                    totalCols = 0;
+                  }
+                  currentRow.push(field);
+                  totalCols += colSize;
+                }
+                if (currentRow.length > 0) rows.push(currentRow);
+
+                return rows.map((row, i) => (
+                  <div className="row" key={i}>
+                    {row.map(({ label, name, type, readOnly, placeholder, required, min, col }) => (
+                      <div className={`col-md-${col || 12} mb-3`} key={name}>
+                        <label
+                          className="form-label"
+                          style={{ color: "black", fontWeight: "600" }}
+                        >
+                          {label}
+                        </label>
+                        <input
+                          type={type}
+                          name={name}
+                          value={formData[name]}
+                          onChange={handleChange}
+                          readOnly={readOnly}
+                          placeholder={placeholder}
+                          required={required}
+                          autoFocus={name === "isbn"}
+                          min={min}
+                          onBlur={name === "isbn" ? handleSearch : undefined}
+                          style={{
+                            width: "100%",
+                            padding: "10px 15px",
+                            borderRadius: "8px",
+                            border: "1.5px solid #a83232",
+                            backgroundColor: readOnly ? "#f4dede" : "#fff0f0",
+                            color: "#000",
+                            fontWeight: "500",
+                            fontSize: "1rem",
+                            boxShadow: "inset 1px 1px 3px rgba(168,50,50,0.15)",
+                            transition: "border-color 0.3s ease",
+                          }}
+                          onFocus={(e) => {
+                            if (!readOnly) e.target.style.borderColor = "#7a1f1f";
+                          }}
+                          onBlurCapture={(e) => {
+                            if (!readOnly) e.target.style.borderColor = "#a83232";
+                          }}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                ));
+              })()
+            }
 
             {error && (
               <div
@@ -424,6 +475,7 @@ const BajarLibro = () => {
                       <strong>Ubicación:</strong>{" "}
                       {libro.ubicacion || "No disponible"} <br />
                       <strong>Stock:</strong> {libro.stock} <br />
+                      <strong>Precio:</strong> {libro.precio} <br />
                       <strong>Editorial:</strong>{" "}
                       {libro.editorial || "No disponible"}
                     </li>
@@ -432,6 +484,7 @@ const BajarLibro = () => {
               </div>
             )}
           </form>
+
         </div>
       </div>
     </>
