@@ -55,7 +55,6 @@ const AgregarLibro = () => {
   // Mensaje del store
   const mensaje = store.mensaje;
 
-
   const handlerFocus = (e) => {
     e.target.style.borderColor = "#1b4d1b";
     e.target.style.border = "3px solid #1b4d1b";
@@ -73,6 +72,7 @@ const AgregarLibro = () => {
       setMostrarDropdown(true);
     }
   }
+
   /**
    * Función para mover el foco al siguiente campo del formulario
    * @param {HTMLElement} currentTarget - El elemento actual que dispara el evento
@@ -80,15 +80,35 @@ const AgregarLibro = () => {
   const moveToNextField = (currentTarget) => {
     const form = currentTarget.form;
     const index = Array.prototype.indexOf.call(form, currentTarget);
-    if (form.elements[index + 1]) {
-      form.elements[index + 1].focus();
+
+    // Saltar campos readonly
+    let nextIndex = index + 1;
+    while (form.elements[nextIndex] && form.elements[nextIndex].readOnly) {
+      nextIndex++;
+    }
+
+    const nextElement = form.elements[nextIndex];
+
+    if (nextElement) {
+      nextElement.focus();
+
+      // Seleccionar texto en campos editables que lo soporten
+      const tag = nextElement.tagName.toLowerCase();
+      const isSelectable = (tag === "input" || tag === "textarea") && typeof nextElement.select === "function";
+
+      if (!nextElement.readOnly && isSelectable) {
+        setTimeout(() => {
+          nextElement.select();
+        }, 0);
+      }
     }
   };
 
+
   /**
-   * Maneja el evento keyDown en los inputs del formulario
-   * @param {Event} e - Evento del teclado
-   */
+  * Maneja el evento keyDown en los inputs del formulario
+  * @param {Event} e - Evento del teclado
+  */
   const handleInputKeyDown = (e) => {
     // Si el modal está activo, bloqueamos cualquier acción con Enter
     if (modalActivoRef.current && e.key === "Enter") {
@@ -104,11 +124,16 @@ const AgregarLibro = () => {
       // Casos especiales por campo
       switch (fieldName) {
         case "isbn":
-          // Para ISBN, si hay contenido y no se han cargado datos, disparar búsqueda
-          if (formData.isbn && !sinIsbn) {
+          // Para ISBN, verificar si tiene contenido y si debe hacer búsqueda
+          const isbnValue = formData.isbn.trim();
+
+          // Si hay ISBN, no es generado automáticamente, y no se ha intentado buscar para este valor específico
+          if (isbnValue && !sinIsbn && (!datosCargados || e.target.dataset.lastSearched !== isbnValue)) {
+            // Marcar que estamos buscando este ISBN específico
+            e.target.dataset.lastSearched = isbnValue;
             handleAutocomplete();
           } else {
-            // Si ya se cargaron datos o no hay ISBN, mover al siguiente campo
+            // Si no hay ISBN, es generado automáticamente, o ya se buscó este valor, mover al siguiente campo
             moveToNextField(e.target);
           }
           break;
@@ -134,6 +159,14 @@ const AgregarLibro = () => {
           moveToNextField(e.target);
           break;
       }
+    }
+  };
+
+  // Función modificada para manejar el blur del ISBN
+  const handleIsbnBlur = (e) => {
+    handlerBlur(e);
+    if (formData.isbn && !sinIsbn && !datosCargados) {
+      handleAutocomplete();
     }
   };
 
@@ -186,9 +219,9 @@ const AgregarLibro = () => {
   };
 
   /**
-   * Maneja los cambios en los campos del formulario
-   * @param {Event} e - Evento de cambio
-   */
+ * Maneja los cambios en los campos del formulario
+ * @param {Event} e - Evento de cambio
+ */
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData({
@@ -201,6 +234,10 @@ const AgregarLibro = () => {
       setOrigen("");
       setDatosCargados(false);
       limpiarDatosLibro(value);
+      // Limpiar el marcador de última búsqueda cuando cambia el ISBN
+      if (e.target.dataset.lastSearched) {
+        delete e.target.dataset.lastSearched;
+      }
     }
 
     // Si estamos escribiendo en editorial, mostrar dropdown
@@ -208,7 +245,6 @@ const AgregarLibro = () => {
       setMostrarDropdown(true);
     }
   };
-
   /**
    * Maneja la selección de una editorial del dropdown
    * @param {string} editorial - Editorial seleccionada
@@ -317,7 +353,6 @@ const AgregarLibro = () => {
 
     setIsLoading(true);
     setOrigen("");
-
     actions.setMensaje("🔍 Buscando datos del libro...");
 
     try {
@@ -338,22 +373,28 @@ const AgregarLibro = () => {
         setOrigen(origenDetectado);
         setDatosCargados(true);
 
-        if (origenDetectado === "externo") {
-          actions.setMensaje("✅ Datos obtenidos de Google Books. Puede editar si es necesario.");
-          document.getElementById("titulo")?.focus();
-        } else {
-          actions.setMensaje("");
-          // Enfocar el campo título después de cargar datos locales
-          document.getElementById("titulo")?.focus();
-        }
+        // Enfocar título después de un pequeño retraso
+        setTimeout(() => {
+          const tituloInput = document.getElementById("titulo");
+          if (tituloInput) {
+            tituloInput.focus();
+            tituloInput.select();
+          }
+        }, 100);
+
+        actions.setMensaje(origenDetectado === "externo"
+          ? "✅ Datos obtenidos de Google Books. Puede editar si es necesario."
+          : "");
       } else {
         actions.setMensaje("✅ No se encontró información para este ISBN. Puede ingresar los datos manualmente.");
         setOrigen("");
         setDatosCargados(false);
         limpiarDatosLibro(isbn);
-        // Enfocar el campo título cuando no se encuentran datos
+
+        // Enfocar título cuando no se encuentran datos
         setTimeout(() => {
-          document.getElementById("titulo")?.focus();
+          const tituloInput = document.getElementById("titulo");
+          if (tituloInput) tituloInput.focus();
         }, 100);
       }
     } catch (error) {
@@ -667,17 +708,16 @@ const AgregarLibro = () => {
                     onKeyDown={handleInputKeyDown}
                     readOnly={sinIsbn}
                     onFocus={handlerFocus}
-                    onBlur={handlerBlur}
+                    onBlur={handleIsbnBlur}
                     placeholder={
                       sinIsbn
                         ? "Se generará automáticamente..."
-                        : "Ingrese el ISBN y presione Enter"
+                        : "Ingrese el ISBN y presione Enter o haga clic fuera"
                     }
                     style={{
                       ...inputStyle,
                       backgroundColor: sinIsbn ? "#d7f0d7" : "#e8f5e9",
                     }}
-
                   />
                 </div>
 

@@ -259,36 +259,32 @@ def bajar_libro(libro_id):
 @app.route('/generar-isbn', methods=['GET'])
 def generar_isbn():
     try:
-        # Usamos session del contexto de la app
         session = app.session
 
-        # Buscar el último ISBN generado automáticamente con el prefijo "ISBN-"
+        # Buscar el último ISBN numérico de 5 dígitos
         ultimo_libro = session.query(Libro).filter(
-            Libro.isbn.like('ISBN-%')
+            Libro.isbn.like('_____')  # Busca exactamente 5 caracteres (podrían ser dígitos)
         ).order_by(Libro.isbn.desc()).first()
 
-        if ultimo_libro:
-            try:
-                ultimo_numero = int(ultimo_libro.isbn.split('-')[1])
-                nuevo_numero = ultimo_numero + 1
-            except (IndexError, ValueError):
-                nuevo_numero = (session.query(func.max(Libro.id)).scalar() or 0) + 1
+        if ultimo_libro and ultimo_libro.isbn.isdigit():  # Verifica que sean solo dígitos
+            nuevo_numero = int(ultimo_libro.isbn) + 1
         else:
+            # Si no hay ISBNs numéricos, empezar desde 1
             nuevo_numero = 1
 
-        nuevo_isbn = f"{nuevo_numero:05d}"
+        nuevo_isbn = f"{nuevo_numero:05d}"  # Formatea a 5 dígitos con ceros a la izquierda
 
         # Verificar que no exista duplicado
         while session.query(Libro).filter(Libro.isbn == nuevo_isbn).first():
             nuevo_numero += 1
-            nuevo_isbn = f"ISBN-{nuevo_numero:05d}"
+            nuevo_isbn = f"{nuevo_numero:05d}"
 
         return jsonify({'isbn': nuevo_isbn}), 200
 
     except Exception as e:
         print(f"Error en /generar-isbn: {str(e)}")
         return jsonify({'error': 'Error al generar ISBN', 'mensaje': str(e)}), 500
-
+    
 @app.route('/api/libros/buscar')
 def buscar_por_titulo_o_autor():
     titulo = request.args.get('titulo', '')
