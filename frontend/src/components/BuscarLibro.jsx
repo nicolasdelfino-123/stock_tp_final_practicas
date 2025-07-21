@@ -121,7 +121,7 @@ const BuscarLibro = () => {
   const irABajarLibro = () => {
     // Verificar que hay datos suficientes para bajar el libro
     if (!formData.isbn || !formData.titulo || !formData.stock) {
-      alert("El libro debe tener, ISBN, Título y Stock no debe ser cero.");
+      alert("El libro debe tener, ISBN, Título y Stock no debe cero.");
       return;
     }
 
