@@ -24,46 +24,35 @@ const BajarLibro = () => {
   const [resultado, setResultado] = useState("");
   const [resultados, setResultados] = useState([]);
 
-  // Efecto para cargar datos cuando se viene desde BuscarLibro
+  // 1) Este useEffect se ejecuta una sola vez al montar el componente,
+  // carga los datos que vienen por location.state (desde BuscarLibro)
   useEffect(() => {
-    // Verificar si hay datos en el state de la navegación
     if (location.state) {
-      setFormData(prev => ({
-        ...prev,
+      setFormData({
         isbn: location.state.isbn || "",
         titulo: location.state.titulo || "",
         autor: location.state.autor || "",
         editorial: location.state.editorial || "",
+        ubicacion: location.state.ubicacion || "",
         stock: location.state.stock || "",
-        id: location.state.id || null
-      }));
+        precio: location.state.precio || 0,
+        cantidad: "",
+        id: location.state.id || null,
+      });
     }
+  }, []); // OJO: arreglo de dependencias vacío => se ejecuta solo 1 vez
 
-    const cargarLibroPorISBN = async () => {
-
-      if (formData.isbn) {
-        try {
-          const libroEncontrado = await actions.buscarLibroPorISBN(formData.isbn);
-          if (libroEncontrado) {
-            setFormData((prev) => ({
-              ...prev,
-              id: libroEncontrado.id || null,
-              titulo: libroEncontrado.titulo || "",
-              autor: libroEncontrado.autor || "",
-              editorial: libroEncontrado.editorial || "",
-              ubicacion: libroEncontrado.ubicacion || "",
-              stock: libroEncontrado.stock || "",
-              precio: libroEncontrado.precio || 0,
-            }));
-          }
-        } catch (error) {
-          console.error("Error buscando libro por ISBN:", error);
-        }
-      }
+  useEffect(() => {
+    if (alerta) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "auto";
+    }
+    return () => {
+      document.body.style.overflow = "auto";
     };
+  }, [alerta]);
 
-    cargarLibroPorISBN();
-  }, [formData.isbn, location.state]); // Añadimos location.state como dependencia
 
 
   const handleChange = (e) => {
@@ -138,6 +127,7 @@ const BajarLibro = () => {
         setAlerta(mensaje); // Mostrar alerta
 
 
+
         setResultados([
           {
             titulo: formData.titulo,
@@ -185,45 +175,72 @@ const BajarLibro = () => {
   return (
     <>
       {alerta && (
-        <div
-          style={{
-            position: "fixed",
-            top: "50%",
-            left: "50%",
-            transform: "translate(-50%, -50%)",
-            backgroundColor: "#d4edda",
-            color: "#155724",
-            padding: "25px 30px",
-            borderRadius: "12px",
-            fontSize: "1.1rem",
-            fontWeight: "600",
-            zIndex: 9999,
-            boxShadow: "0 4px 20px rgba(0, 0, 0, 0.4)",
-            textAlign: "center",
-            border: "1px solid #c3e6cb",
-            maxWidth: "90%",
-            width: "500px",
-          }}
-        >
-          <p style={{ marginBottom: "20px" }}>{alerta}</p>
-          <button
-            type="button"
-            className="btn btn-success"
+        <>
+          <div
             onClick={() => setAlerta("")}
             style={{
-              borderRadius: "8px",
-              fontWeight: "700",
-              padding: "8px 18px",
-              fontSize: "0.95rem",
-              backgroundColor: "#28a745",
-              border: "none",
-              boxShadow: "0 2px 6px rgba(0,0,0,0.2)",
+              position: "fixed",
+              top: 0,
+              left: 0,
+              width: "100vw",
+              height: "100vh",
+              backgroundColor: "rgba(0, 0, 0, 0.4)",
+              zIndex: 9998,
             }}
+          />
+          <div
+            role="dialog"
+            aria-modal="true"
+            tabIndex={0}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === "Escape") {
+                e.preventDefault();
+                setAlerta("");
+              }
+            }}
+            style={{
+              position: "fixed",
+              top: "50%",
+              left: "50%",
+              transform: "translate(-50%, -50%)",
+              backgroundColor: "#d4edda",
+              color: "#155724",
+              padding: "25px 30px",
+              borderRadius: "12px",
+              fontSize: "1.1rem",
+              fontWeight: "600",
+              zIndex: 9999,
+              boxShadow: "0 4px 20px rgba(0, 0, 0, 0.4)",
+              textAlign: "center",
+              border: "1px solid #c3e6cb",
+              maxWidth: "90%",
+              width: "500px",
+              outline: "none",
+            }}
+            autoFocus
           >
-            Entendido
-          </button>
-        </div>
+            <p style={{ marginBottom: "20px" }}>{alerta}</p>
+            <button
+              type="button"
+              className="btn btn-success"
+              onClick={() => setAlerta("")}
+              style={{
+                borderRadius: "8px",
+                fontWeight: "700",
+                padding: "8px 18px",
+                fontSize: "0.95rem",
+                backgroundColor: "#28a745",
+                border: "none",
+                boxShadow: "0 2px 6px rgba(0,0,0,0.2)",
+              }}
+              autoFocus
+            >
+              Entendido
+            </button>
+          </div>
+        </>
       )}
+
 
       <div
         style={{
@@ -362,6 +379,12 @@ const BajarLibro = () => {
                           autoFocus={name === "isbn"}
                           min={min}
                           onBlur={name === "isbn" ? handleSearch : undefined}
+                          onKeyDown={name === "isbn" ? (e => {
+                            if (e.key === "Enter") {
+                              e.preventDefault();
+                              handleSearch();
+                            }
+                          }) : undefined}
                           style={{
                             width: "100%",
                             padding: "10px 15px",
@@ -436,6 +459,7 @@ const BajarLibro = () => {
                   transition: "background-color 0.3s ease",
                 }}
                 onClick={limpiarPantalla}
+
                 onMouseEnter={(e) => (e.target.style.backgroundColor = "#d4a417")}
                 onMouseLeave={(e) => (e.target.style.backgroundColor = "")}
               >

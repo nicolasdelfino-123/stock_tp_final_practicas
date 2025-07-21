@@ -127,13 +127,13 @@ const AgregarLibro = () => {
           // Para ISBN, verificar si tiene contenido y si debe hacer búsqueda
           const isbnValue = formData.isbn.trim();
 
-          // Si hay ISBN, no es generado automáticamente, y no se ha intentado buscar para este valor específico
-          if (isbnValue && !sinIsbn && (!datosCargados || e.target.dataset.lastSearched !== isbnValue)) {
+          // Solo buscar si hay ISBN, no es generado automáticamente, NO se han cargado datos aún, y no se ha buscado este valor
+          if (isbnValue && !sinIsbn && !datosCargados && e.target.dataset.lastSearched !== isbnValue) {
             // Marcar que estamos buscando este ISBN específico
             e.target.dataset.lastSearched = isbnValue;
             handleAutocomplete();
           } else {
-            // Si no hay ISBN, es generado automáticamente, o ya se buscó este valor, mover al siguiente campo
+            // En todos los demás casos, mover al siguiente campo
             moveToNextField(e.target);
           }
           break;
@@ -161,6 +161,7 @@ const AgregarLibro = () => {
       }
     }
   };
+
 
   // Función modificada para manejar el blur del ISBN
   const handleIsbnBlur = (e) => {
@@ -544,6 +545,7 @@ const AgregarLibro = () => {
         actions.setMensaje("");
 
         setTimeout(() => {
+          console.log("el modal esta en estado:", modalActivoRef.current)
           modalActivoRef.current = false;
         }, 100);
       }
@@ -555,6 +557,17 @@ const AgregarLibro = () => {
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [mensaje]);
+
+  useEffect(() => {
+    if (mensaje) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "auto";
+    }
+    return () => {
+      document.body.style.overflow = "auto";
+    };
   }, [mensaje]);
 
   const fondoURL = "/fondo-3.jpg";
