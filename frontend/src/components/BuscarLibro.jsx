@@ -13,6 +13,7 @@ const BuscarLibro = () => {
     autor: "",
     ubicacion: "",
     stock: "",
+    precio: "",
     editorial: "",
   });
 
@@ -45,6 +46,7 @@ const BuscarLibro = () => {
             titulo: libroEncontrado.titulo,
             autor: libroEncontrado.autor,
             stock: libroEncontrado.stock,
+            precio: libroEncontrado.precio,
             ubicacion: libroEncontrado.ubicacion || "",
             editorial: libroEncontrado.editorial || "",
           }));
@@ -94,6 +96,7 @@ const BuscarLibro = () => {
       autor: "",
       ubicacion: "",
       stock: "",
+      precio: "",
       editorial: "",
     });
     setResultados([]);
@@ -108,6 +111,7 @@ const BuscarLibro = () => {
       autor: libro.autor,
       ubicacion: libro.ubicacion || "",
       stock: libro.stock,
+      precio: libro.precio || 0,
       editorial: libro.editorial || "",
     });
     setResultados([]);
@@ -275,65 +279,91 @@ const BuscarLibro = () => {
           </div>
 
           <form onSubmit={handleSubmit}>
-            {[
-              {
-                label: "ISBN:",
-                name: "isbn",
-                type: "text",
-                readOnly: false,
-                placeholder: "Ej: 9789870000000",
-                onBlur: async (e) => {
-                  const valor = e.target.value.trim();
-                  if (valor) {
-                    await buscarLibro();
+            {
+              (() => {
+                const rows = [];
+                let currentRow = [];
+                let totalCols = 0;
+
+                const fields = [
+                  {
+                    label: "ISBN:",
+                    name: "isbn",
+                    type: "text",
+                    readOnly: false,
+                    placeholder: "Ej: 9789870000000",
+                    onBlur: async (e) => {
+                      const valor = e.target.value.trim();
+                      if (valor) {
+                        await buscarLibro();
+                      }
+                    },
+                    col: 12,
+                  },
+                  { label: "Título:", name: "titulo", type: "text", readOnly: false, placeholder: "Ej: principito", col: 12 },
+                  { label: "Autor:", name: "autor", type: "text", readOnly: false, placeholder: "Ej: Borges", col: 12 },
+                  { label: "Editorial:", name: "editorial", type: "text", readOnly: true, col: 12 },
+                  { label: "Stock:", name: "stock", type: "text", readOnly: true, col: 6 },
+                  { label: "Precio:", name: "precio", type: "number", readOnly: true, col: 6 },
+                  { label: "Ubicación:", name: "ubicacion", type: "text", readOnly: true, col: 12 },
+                ];
+
+                for (const field of fields) {
+                  const colSize = field.col || 12;
+                  if (totalCols + colSize > 12) {
+                    rows.push([...currentRow]);
+                    currentRow = [];
+                    totalCols = 0;
                   }
-                },
-              },
-              { label: "Título:", name: "titulo", type: "text", readOnly: false, placeholder: "Ej: principito" },
-              { label: "Autor:", name: "autor", type: "text", readOnly: false, placeholder: "Ej: Borges" },
-              { label: "Ubicación:", name: "ubicacion", type: "text", readOnly: true },
-              { label: "Stock:", name: "stock", type: "text", readOnly: true },
-              { label: "Editorial:", name: "editorial", type: "text", readOnly: true },
-            ].map(({ label, name, type, readOnly, placeholder, onBlur }) => (
-              <div className="mb-3" key={name}>
-                <label
-                  className="form-label"
-                  style={{ color: "black", fontWeight: "800" }}
-                >
-                  {label}
-                </label>
-                <input
-                  type={type}
-                  name={name}
-                  value={formData[name]}
-                  onChange={handleChange}
-                  readOnly={readOnly}
-                  placeholder={placeholder}
-                  onBlur={onBlur}
-                  autoFocus={name === "isbn"}
-                  style={{
-                    width: "100%",
-                    padding: "10px 15px",
-                    borderRadius: "8px",
-                    border: `1.5px solid #1e88e5`,
-                    backgroundColor: readOnly ? "#d3e3fc" : "#e8f1fc",
-                    color: readOnly ? "black" : "black",
-                    fontWeight: "500",
-                    fontSize: "1rem",
-                    boxShadow: "inset 1px 1px 3px rgba(30, 136, 229, 0.15)",
-                    transition: "border-color 0.3s ease",
-                  }}
-                  onFocus={(e) => {
-                    if (!readOnly) e.target.style.borderColor = "#1565c0";
-                  }}
-                  onBlurCapture={(e) => {
-                    if (!readOnly) e.target.style.borderColor = "#1e88e5";
-                  }}
-                />
-              </div>
-            ))}
+                  currentRow.push(field);
+                  totalCols += colSize;
+                }
+                if (currentRow.length > 0) rows.push(currentRow);
 
-
+                return rows.map((row, i) => (
+                  <div className="row" key={i}>
+                    {row.map(({ label, name, type, readOnly, placeholder, onBlur, col }) => (
+                      <div className={`col-md-${col || 12} mb-3`} key={name}>
+                        <label
+                          className="form-label"
+                          style={{ color: "black", fontWeight: "800" }}
+                        >
+                          {label}
+                        </label>
+                        <input
+                          type={type}
+                          name={name}
+                          value={formData[name]}
+                          onChange={handleChange}
+                          readOnly={readOnly}
+                          placeholder={placeholder}
+                          autoFocus={name === "isbn"}
+                          onBlur={onBlur}
+                          style={{
+                            width: "100%",
+                            padding: "10px 15px",
+                            borderRadius: "8px",
+                            border: `1.5px solid #1e88e5`,
+                            backgroundColor: readOnly ? "#d3e3fc" : "#e8f1fc",
+                            color: "black",
+                            fontWeight: "500",
+                            fontSize: "1rem",
+                            boxShadow: "inset 1px 1px 3px rgba(30, 136, 229, 0.15)",
+                            transition: "border-color 0.3s ease",
+                          }}
+                          onFocus={(e) => {
+                            if (!readOnly) e.target.style.borderColor = "#1565c0";
+                          }}
+                          onBlurCapture={(e) => {
+                            if (!readOnly) e.target.style.borderColor = "#1e88e5";
+                          }}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                ));
+              })()
+            }
 
             <div className="d-flex gap-3" style={{ marginBottom: "0" }}>
               <button
@@ -381,152 +411,167 @@ const BuscarLibro = () => {
               </button>
             </div>
           </form>
-        </div>
+
+        </div >
+
 
         {/* Sección de resultados en una línea */}
-        {resultados.length > 0 && (
-          <div
-            style={{
-              marginTop: "24px",
-              marginLeft: "10px",
-              marginRight: "10px",
-              marginBottom: "60px",
-              backgroundColor: "#e3f2fd",
-              borderRadius: "10px",
-              padding: "20px",
-              boxShadow: "0 4px 10px rgba(30,136,229,0.1)",
-            }}
-          >
-            <h4
+        {
+          resultados.length > 0 && (
+            <div
               style={{
-                fontWeight: "700",
-                color: "#114470",
-                marginBottom: "20px",
-                textAlign: "center",
+                marginTop: "24px",
+                marginLeft: "10px",
+                marginRight: "10px",
+                marginBottom: "60px",
+                backgroundColor: "#e3f2fd",
+                borderRadius: "10px",
+                padding: "20px",
+                boxShadow: "0 4px 10px rgba(30,136,229,0.1)",
               }}
             >
-              Resultados:
-            </h4>
+              <h4
+                style={{
+                  fontWeight: "700",
+                  color: "#114470",
+                  marginBottom: "20px",
+                  textAlign: "center",
+                }}
+              >
+                Resultados:
+              </h4>
 
-            <ul
-              className="list-group"
-              style={{
-                display: "flex",
-                flexDirection: "column",
-                gap: "12px",
-              }}
-            >
-              {resultados.map((libro, index) => (
-                <li
-                  key={index}
-                  className="list-group-item"
-                  style={{
-                    display: "flex",
-                    alignItems: "flex-start",
-                    flexWrap: "wrap",
-                    justifyContent: "space-between",
-                    gap: "10px",
-                    padding: "15px 20px",
-                    border: "1px solid black",
-                    backgroundColor: libro.stock === 0 ? "red" : "#bbdefb",
-                    borderRadius: "12px",
-                    boxShadow: "0 4px 8px rgba(30, 136, 229, 0.1)",
-                    fontSize: "0.95rem",
-                    color: "black",
-                    fontWeight: "500",
-                  }}
-                >
-                  <div style={{
-                    flex: "1 1 auto",
-                    minWidth: "0",
-                    display: "flex",
-                    flexWrap: "wrap",
-                    gap: "10px 30px",
-                    alignItems: "center"
-                  }}>
-                    <div style={{
-                      wordWrap: "break-word",
-                      wordBreak: "break-word",
-                      overflowWrap: "break-word"
-                    }}>
-                      <strong>Título:</strong> 📘 {libro.titulo}
-                    </div>
-
-                    <div style={{
-                      wordWrap: "break-word",
-                      wordBreak: "break-word",
-                      overflowWrap: "break-word"
-                    }}>
-                      <strong>Autor:</strong> {libro.autor}
-                    </div>
-
-                    <div style={{
-                      wordWrap: "break-word",
-                      wordBreak: "break-word",
-                      overflowWrap: "break-word"
-                    }}>
-                      <strong>Editorial:</strong> {libro.editorial || "No disponible"}
-                    </div>
-
-                    <div style={{
-                      wordWrap: "break-word",
-                      wordBreak: "break-word",
-                      overflowWrap: "break-word"
-                    }}>
-                      <strong>ISBN:</strong> {libro.isbn}
-                    </div>
-
-                    <div style={{
-                      wordWrap: "break-word",
-                      wordBreak: "break-word",
-                      overflowWrap: "break-word"
-                    }}>
-                      <strong>Stock:</strong> {libro.stock}
-                    </div>
-
-                    <div style={{
-                      wordWrap: "break-word",
-                      wordBreak: "break-word",
-                      overflowWrap: "break-word"
-                    }}>
-                      <strong style={{ fontWeight: "900" }}>Ubicación:</strong> {libro.ubicacion || "No disponible"}
-                    </div>
-                  </div>
-
-                  <button
-                    className="btn btn-sm btn-success"
+              <ul
+                className="list-group"
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "12px",
+                }}
+              >
+                {resultados.map((libro, index) => (
+                  <li
+                    key={index}
+                    className="list-group-item"
                     style={{
-                      padding: "6px 12px",
-                      fontSize: "0.9rem",
-                      fontWeight: "600",
-                      borderRadius: "6px",
-                      whiteSpace: "nowrap",
-                      flexShrink: 0
+                      display: "flex",
+                      alignItems: "flex-start",
+                      flexWrap: "wrap",
+                      justifyContent: "space-between",
+                      gap: "10px",
+                      padding: "15px 20px",
+                      border: "1px solid black",
+                      backgroundColor: libro.stock === 0 ? "red" : "#bbdefb",
+                      borderRadius: "12px",
+                      boxShadow: "0 4px 8px rgba(30, 136, 229, 0.1)",
+                      fontSize: "0.95rem",
+                      color: "black",
+                      fontWeight: "500",
                     }}
-                    onClick={() => handleSelectBook(libro)}
                   >
-                    Seleccionar
-                  </button>
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
+                    <div style={{
+                      flex: "1 1 auto",
+                      minWidth: "0",
+                      display: "flex",
+                      flexWrap: "wrap",
+                      gap: "10px 30px",
+                      alignItems: "center"
+                    }}>
+                      <div style={{
+                        wordWrap: "break-word",
+                        wordBreak: "break-word",
+                        overflowWrap: "break-word"
+                      }}>
+                        <strong>Título:</strong> 📘 {libro.titulo}
+                      </div>
+
+                      <div style={{
+                        wordWrap: "break-word",
+                        wordBreak: "break-word",
+                        overflowWrap: "break-word"
+                      }}>
+                        <strong>Autor:</strong> {libro.autor}
+                      </div>
+
+                      <div style={{
+                        wordWrap: "break-word",
+                        wordBreak: "break-word",
+                        overflowWrap: "break-word"
+                      }}>
+                        <strong>Editorial:</strong> {libro.editorial || "No disponible"}
+                      </div>
+
+                      <div style={{
+                        wordWrap: "break-word",
+                        wordBreak: "break-word",
+                        overflowWrap: "break-word"
+                      }}>
+                        <strong>ISBN:</strong> {libro.isbn}
+                      </div>
+
+                      <div style={{
+                        wordWrap: "break-word",
+                        wordBreak: "break-word",
+                        overflowWrap: "break-word"
+                      }}>
+                        <strong>Stock:</strong> {libro.stock}
+                      </div>
+
+                      <div style={{
+                        wordWrap: "break-word",
+                        wordBreak: "break-word",
+                        overflowWrap: "break-word"
+                      }}>
+                        <strong style={{ fontWeight: "900" }}>Ubicación:</strong> {libro.ubicacion || "No disponible"}
+                      </div>
+
+                      <div style={{
+                        wordWrap: "break-word",
+                        wordBreak: "break-word",
+                        overflowWrap: "break-word"
+                      }}>
+                        <strong>Precio:</strong> {libro.precio}
+                      </div>
+
+                    </div>
+
+                    <button
+                      className="btn btn-sm btn-success"
+                      style={{
+                        padding: "6px 12px",
+                        fontSize: "0.9rem",
+                        fontWeight: "600",
+                        borderRadius: "6px",
+                        whiteSpace: "nowrap",
+                        flexShrink: 0
+                      }}
+                      onClick={() => handleSelectBook(libro)}
+                    >
+                      Seleccionar
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )
+        }
         {/* Mensaje de error separado */}
-        {error && resultados.length === 0 && (
-          <div
-            style={{
-              color: "#1565c0",
-              fontWeight: "700",
-              textAlign: "center",
-              marginTop: "20px",
-              padding: "0 20px"
-            }}
-          >
-            {error}
-          </div>
-        )}
-      </div>
+        {
+          error && resultados.length === 0 && (
+            <div
+              style={{
+                color: "#1565c0",
+                fontWeight: "700",
+                textAlign: "center",
+                marginTop: "20px",
+                padding: "0 20px"
+              }}
+            >
+              {error}
+            </div>
+          )
+        }
+      </div >
     </>
   );
 }

@@ -26,7 +26,21 @@ const BajarLibro = () => {
 
   // Efecto para cargar datos cuando se viene desde BuscarLibro
   useEffect(() => {
+    // Verificar si hay datos en el state de la navegación
+    if (location.state) {
+      setFormData(prev => ({
+        ...prev,
+        isbn: location.state.isbn || "",
+        titulo: location.state.titulo || "",
+        autor: location.state.autor || "",
+        editorial: location.state.editorial || "",
+        stock: location.state.stock || "",
+        id: location.state.id || null
+      }));
+    }
+
     const cargarLibroPorISBN = async () => {
+
       if (formData.isbn) {
         try {
           const libroEncontrado = await actions.buscarLibroPorISBN(formData.isbn);
@@ -49,7 +63,7 @@ const BajarLibro = () => {
     };
 
     cargarLibroPorISBN();
-  }, [formData.isbn]);
+  }, [formData.isbn, location.state]); // Añadimos location.state como dependencia
 
 
   const handleChange = (e) => {
