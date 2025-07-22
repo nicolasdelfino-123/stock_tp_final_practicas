@@ -7,6 +7,7 @@ const BajarLibro = () => {
   const location = useLocation();
   const { actions } = useAppContext();
   const [alerta, setAlerta] = useState(""); // NUEVO estado para alerta
+  const [alertaCantidad, setAlertaCantidad] = useState("");
 
 
   const [formData, setFormData] = useState({
@@ -23,6 +24,8 @@ const BajarLibro = () => {
   const [error, setError] = useState("");
   const [resultado, setResultado] = useState("");
   const [resultados, setResultados] = useState([]);
+  const resultadosRef = React.useRef(null);
+
 
   // 1) Este useEffect se ejecuta una sola vez al montar el componente,
   // carga los datos que vienen por location.state (desde BuscarLibro)
@@ -43,7 +46,7 @@ const BajarLibro = () => {
   }, []); // OJO: arreglo de dependencias vacío => se ejecuta solo 1 vez
 
   useEffect(() => {
-    if (alerta) {
+    if (alerta || alertaCantidad) {
       document.body.style.overflow = "hidden";
     } else {
       document.body.style.overflow = "auto";
@@ -51,7 +54,7 @@ const BajarLibro = () => {
     return () => {
       document.body.style.overflow = "auto";
     };
-  }, [alerta]);
+  }, [alerta, alertaCantidad]);
 
 
 
@@ -59,12 +62,15 @@ const BajarLibro = () => {
     const { name, value } = e.target;
     setFormData((prev) => ({
       ...prev,
-      [name]: value,
+      [name]: value, // Elimina la conversión a null
     }));
   };
 
   const handleSearch = async () => {
-    if (!formData.isbn) return;
+    if (!formData.isbn) {
+      setAlertaCantidad("❌ Por favor, ingrese un ISBN para buscar");
+      return;
+    }
 
     try {
       const libroEncontrado = await actions.buscarLibroPorISBN(formData.isbn);
@@ -84,13 +90,15 @@ const BajarLibro = () => {
         setResultado("");
         setResultados([]);
       } else {
-        setError("No se encontró un libro con ese ISBN");
+        setAlertaCantidad("❌ No se encontró un libro con ese ISBN");
+        setError("");
         setResultado("");
         setResultados([]);
       }
     } catch (err) {
       console.error("Error al buscar el libro:", err);
-      setError("Error al buscar el libro.");
+      setAlertaCantidad("❌ Error al buscar el libro");
+      setError("");
       setResultado("");
       setResultados([]);
     }
@@ -99,15 +107,43 @@ const BajarLibro = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!formData.id || !formData.cantidad) {
-      alert("Por favor, complete todos los campos obligatorios.");
+    // Validación de libro buscado
+    if (!formData.id) {
+      setAlertaCantidad("❌ Por favor, primero busque un libro por ISBN");
       return;
     }
 
-    const cantidad = Number(formData.cantidad);
+    // Validación de stock
+    if (!formData.stock || formData.stock === 0) {
+      setAlertaCantidad("❌ No hay stock disponible para este libro");
+      return;
+    }
 
-    if (isNaN(cantidad) || cantidad <= 0) {
-      alert("La cantidad debe ser un número mayor que 0.");
+    // Validación de cantidad - ESTA ES LA PARTE CLAVE MODIFICADA
+    if (!formData.cantidad || formData.cantidad.trim() === "") {
+      setAlertaCantidad("❌ Por favor, ingrese la cantidad a bajar");
+      return;
+    }
+
+    // Convertir a número
+    const cantidad = Number(formData.cantidad);
+    const stockActual = Number(formData.stock);
+
+    // Validar que sea un número válido
+    if (isNaN(cantidad)) {
+      setAlertaCantidad("❌ La cantidad debe ser un número");
+      return;
+    }
+
+    // Validar que sea mayor que 0
+    if (cantidad <= 0) {
+      setAlertaCantidad("❌ La cantidad debe ser mayor que 0");
+      return;
+    }
+
+    // Validar stock suficiente
+    if (cantidad > stockActual) {
+      setAlertaCantidad(`❌ No hay suficiente stock. Stock actual: ${stockActual}`);
       return;
     }
 
@@ -115,8 +151,7 @@ const BajarLibro = () => {
       const response = await actions.bajarStockLibro(formData.id, cantidad);
 
       if (response.success) {
-
-        const nuevoStock = formData.stock - cantidad;
+        const nuevoStock = stockActual - cantidad;
         setFormData((prev) => ({
           ...prev,
           stock: nuevoStock,
@@ -124,9 +159,7 @@ const BajarLibro = () => {
         }));
 
         const mensaje = `✅ Stock actualizado correctamente. Se dio de baja la cantidad ${cantidad} del libro "${formData.titulo}" de ${formData.autor}.`;
-        setAlerta(mensaje); // Mostrar alerta
-
-
+        setAlerta(mensaje);
 
         setResultados([
           {
@@ -140,12 +173,12 @@ const BajarLibro = () => {
           },
         ]);
       } else {
-        setResultado(`❌ ${response.error || "Error al bajar el stock"}`);
+        setAlertaCantidad(`❌ ${response.error || "Error al bajar el stock"}`);
         setResultados([]);
       }
     } catch (error) {
       console.error("Error en la solicitud:", error);
-      setResultado("❌ Error de red: " + error.message);
+      setAlertaCantidad("❌ Error de red: " + error.message);
       setResultados([]);
     }
   };
@@ -174,20 +207,101 @@ const BajarLibro = () => {
 
   return (
     <>
-      {alerta && (
-        <>
+      {/* Modal para alerta de cantidad */}
+      {alertaCantidad && (
+        <div
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            width: "100vw",
+            height: "100vh",
+            backgroundColor: "rgba(0, 0, 0, 0.6)",
+            zIndex: 9998,
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            pointerEvents: "auto"
+          }}
+          onClick={(e) => {
+            if (!e.target.closest('[role="dialog"]')) {
+              e.stopPropagation();
+            }
+          }}
+        >
           <div
-            onClick={() => setAlerta("")}
-            style={{
-              position: "fixed",
-              top: 0,
-              left: 0,
-              width: "100vw",
-              height: "100vh",
-              backgroundColor: "rgba(0, 0, 0, 0.4)",
-              zIndex: 9998,
+            role="dialog"
+            aria-modal="true"
+            tabIndex={0}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === "Escape") {
+                e.preventDefault();
+                setAlertaCantidad("");
+              }
             }}
-          />
+            style={{
+              backgroundColor: "#f8d7da",
+              color: "#721c24",
+              padding: "25px 30px",
+              borderRadius: "12px",
+              fontSize: "1.1rem",
+              fontWeight: "600",
+              zIndex: 9999,
+              boxShadow: "0 4px 20px rgba(0, 0, 0, 0.4)",
+              textAlign: "center",
+              border: "1px solid #f5c6cb",
+              maxWidth: "90%",
+              width: "500px",
+              outline: "none",
+              pointerEvents: "auto"
+            }}
+            autoFocus
+          >
+            <p style={{ marginBottom: "20px" }}>{alertaCantidad}</p>
+            <button
+              type="button"
+              className="btn btn-danger"
+              onClick={() => setAlertaCantidad("")}
+              style={{
+                borderRadius: "8px",
+                fontWeight: "700",
+                padding: "8px 18px",
+                fontSize: "0.95rem",
+                backgroundColor: "#dc3545",
+                border: "none",
+                boxShadow: "0 2px 6px rgba(0,0,0,0.2)",
+              }}
+              autoFocus
+            >
+              Entendido
+            </button>
+          </div>
+        </div>
+      )}
+
+
+      {alerta && (
+        <div
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            width: "100vw",
+            height: "100vh",
+            backgroundColor: "rgba(0, 0, 0, 0.6)", // Fondo más oscuro
+            zIndex: 9998,
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            pointerEvents: "auto" // Asegura que captura todos los clicks
+          }}
+          onClick={(e) => {
+            // Solo permitir cerrar haciendo click en el botón
+            if (!e.target.closest('[role="dialog"]')) {
+              e.stopPropagation();
+            }
+          }}
+        >
           <div
             role="dialog"
             aria-modal="true"
@@ -199,10 +313,6 @@ const BajarLibro = () => {
               }
             }}
             style={{
-              position: "fixed",
-              top: "50%",
-              left: "50%",
-              transform: "translate(-50%, -50%)",
               backgroundColor: "#d4edda",
               color: "#155724",
               padding: "25px 30px",
@@ -216,6 +326,7 @@ const BajarLibro = () => {
               maxWidth: "90%",
               width: "500px",
               outline: "none",
+              pointerEvents: "auto" // Permite interacción con el modal
             }}
             autoFocus
           >
@@ -223,7 +334,12 @@ const BajarLibro = () => {
             <button
               type="button"
               className="btn btn-success"
-              onClick={() => setAlerta("")}
+              onClick={() => {
+                setAlerta("");
+                setTimeout(() => {
+                  resultadosRef.current?.scrollIntoView({ behavior: "smooth" });
+                }, 100);
+              }}
               style={{
                 borderRadius: "8px",
                 fontWeight: "700",
@@ -238,7 +354,7 @@ const BajarLibro = () => {
               Entendido
             </button>
           </div>
-        </>
+        </div>
       )}
 
 
@@ -341,7 +457,7 @@ const BajarLibro = () => {
                     readOnly: false,
                     min: 1,
                     placeholder: "Cantidad a descontar",
-                    required: true,
+                    required: false,
                     col: 12,
                   },
                 ];
@@ -481,7 +597,8 @@ const BajarLibro = () => {
             )}
 
             {resultados.length > 0 && (
-              <div className="mt-4" style={{ color: "#a83232" }}>
+              <div ref={resultadosRef} className="mt-4" style={{ color: "#a83232" }}>
+
                 <h4 style={{ fontWeight: "700", marginBottom: "15px" }}>
                   Resultado:
                 </h4>
