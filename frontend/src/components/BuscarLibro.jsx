@@ -1,11 +1,14 @@
 import React, { useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAppContext } from "../context/appContext";
+import { useEffect } from "react";
 
 const BuscarLibro = () => {
   const navigate = useNavigate();
   const { store, actions, API_BASE } = useAppContext();
   const resultadosRef = useRef(null);
+  const entendidoBtnRef = useRef(null);
+
 
   const [formData, setFormData] = useState({
     isbn: "",
@@ -19,6 +22,15 @@ const BuscarLibro = () => {
 
   const [resultados, setResultados] = useState([]);
   const [error, setError] = useState("");
+
+
+
+  useEffect(() => {
+    if (error && entendidoBtnRef.current) {
+      entendidoBtnRef.current.focus();
+    }
+  }, [error]);
+
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -169,42 +181,59 @@ const BuscarLibro = () => {
         <div
           style={{
             position: "fixed",
-            top: "50%",
-            left: "50%",
-            transform: "translate(-50%, -50%)",
-            backgroundColor: "#d4edda",
-            color: "#155724",
-            padding: "25px 30px",
-            borderRadius: "12px",
-            fontSize: "1.1rem",
-            fontWeight: "600",
+            top: 0,
+            left: 0,
+            width: "100vw",
+            height: "100vh",
+            backgroundColor: "rgba(0, 0, 0, 0.6)",
+            backdropFilter: "blur(3px)",
             zIndex: 9999,
-            boxShadow: "0 4px 20px rgba(0, 0, 0, 0.4)",
-            textAlign: "center",
-            border: "1px solid #c3e6cb",
-            maxWidth: "90%",
-            width: "500px",
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
           }}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") setError("");
+          }}
+          tabIndex={-1} // permite que escuche eventos de teclado
         >
-          <p style={{ marginBottom: "20px" }}>{error}</p>
-          <button
-            type="button"
-            className="btn btn-success"
-            onClick={() => setError("")}
+          <div
             style={{
-              borderRadius: "8px",
-              fontWeight: "700",
-              padding: "8px 18px",
-              fontSize: "0.95rem",
-              backgroundColor: "#28a745",
-              border: "none",
-              boxShadow: "0 2px 6px rgba(0,0,0,0.2)",
+              backgroundColor: "#d4edda",
+              color: "#155724",
+              padding: "25px 30px",
+              borderRadius: "12px",
+              fontSize: "1.1rem",
+              fontWeight: "600",
+              maxWidth: "90%",
+              width: "500px",
+              textAlign: "center",
+              boxShadow: "0 4px 20px rgba(0, 0, 0, 0.4)",
+              outline: "none",
             }}
           >
-            Entendido
-          </button>
+            <p style={{ marginBottom: "20px" }}>{error}</p>
+            <button
+              ref={entendidoBtnRef}
+              type="button"
+              className="btn btn-success"
+              onClick={() => setError("")}
+              style={{
+                borderRadius: "8px",
+                fontWeight: "700",
+                padding: "8px 18px",
+                fontSize: "0.95rem",
+                backgroundColor: "#28a745",
+                border: "none",
+                boxShadow: "0 2px 6px rgba(0,0,0,0.2)",
+              }}
+            >
+              Entendido
+            </button>
+          </div>
         </div>
       )}
+
 
       <div
         style={{
