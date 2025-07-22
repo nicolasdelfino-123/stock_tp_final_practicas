@@ -59,13 +59,13 @@ const AgregarLibro = () => {
     e.target.style.borderColor = "#1b4d1b";
     e.target.style.border = "3px solid #1b4d1b";
 
-    // CAMBIO 1: Limpiar el dataset cuando se hace focus en cualquier input
+    // Limpiar el dataset cuando se hace focus en el input ISBN
     if (e.target.name === "isbn" && e.target.dataset.lastSearched) {
       delete e.target.dataset.lastSearched;
     }
 
-    // Resetear datosCargados cuando se hace focus manual en cualquier campo que no sea ISBN
-    if (e.target.name !== "isbn" && datosCargados) {
+    // Resetear datosCargados solo cuando se hace focus en ISBN y hay datos cargados
+    if (e.target.name === "isbn" && datosCargados) {
       setDatosCargados(false);
     }
   };
@@ -180,6 +180,7 @@ const AgregarLibro = () => {
   // Función modificada para manejar el blur del ISBN
   const handleIsbnBlur = (e) => {
     handlerBlur(e);
+    // Solo hacer autocomplete si no hay datos cargados y no es sin ISBN
     if (formData.isbn && !sinIsbn && !datosCargados) {
       handleAutocomplete();
     }
@@ -270,7 +271,8 @@ const AgregarLibro = () => {
       editorial: editorial
     });
     setMostrarDropdown(false);
-    editorialInputRef.current.focus();
+    setIndiceSeleccionado(-1); // Resetear índice de selección
+    // No hacer focus automático aquí, dejar que el flujo normal continúe
   };
 
   /**
@@ -576,11 +578,17 @@ const AgregarLibro = () => {
   useEffect(() => {
     if (mensaje) {
       document.body.style.overflow = "hidden";
+      // Bloquear interacción con el formulario
+      modalActivoRef.current = true;
     } else {
       document.body.style.overflow = "auto";
+      // Permitir interacción nuevamente
+      modalActivoRef.current = false;
     }
+
     return () => {
       document.body.style.overflow = "auto";
+      modalActivoRef.current = false;
     };
   }, [mensaje]);
 
@@ -597,12 +605,19 @@ const AgregarLibro = () => {
             left: 0,
             width: "100vw",
             height: "100vh",
-            backgroundColor: "rgba(0, 0, 0, 0.4)",
+            backgroundColor: "rgba(0, 0, 0, 0.6)", // Oscurecer más el fondo
             zIndex: 9999,
             display: "flex",
             justifyContent: "center",
             alignItems: "center",
-            paddingBottom: "300px"
+            paddingBottom: "300px",
+            pointerEvents: "auto" // Asegurar que captura todos los clicks
+          }}
+          onClick={(e) => {
+            // Solo permitir cerrar haciendo click en el botón Ok
+            if (!e.target.closest('.alert')) {
+              e.stopPropagation();
+            }
           }}
         >
           <div
@@ -619,29 +634,28 @@ const AgregarLibro = () => {
               color: "#155724",
               border: "1px solid #c3e6cb",
               boxShadow: "0 10px 20px rgba(0,0,0,0.25)",
-              textAlign: "center"
+              textAlign: "center",
+              pointerEvents: "auto" // Permitir interacción solo con el modal
             }}
           >
-            <div style={{ marginBottom: mensaje.startsWith("🔍") ? "0" : "20px" }}>
+            <div style={{ marginBottom: "20px" }}>
               {mensaje}
             </div>
-            {!mensaje.startsWith("🔍") && (
-              <button
-                type="button"
-                className="btn btn-success"
-                style={{
-                  borderRadius: "8px",
-                  fontWeight: "700",
-                  padding: "10px 20px",
-                  fontSize: "1rem",
-                  backgroundColor: "#28a745",
-                  border: "none"
-                }}
-                onClick={() => actions.setMensaje("")}
-              >
-                Ok
-              </button>
-            )}
+            <button
+              type="button"
+              className="btn btn-success"
+              style={{
+                borderRadius: "8px",
+                fontWeight: "700",
+                padding: "10px 20px",
+                fontSize: "1rem",
+                backgroundColor: "#28a745",
+                border: "none"
+              }}
+              onClick={() => actions.setMensaje("")}
+            >
+              Ok
+            </button>
           </div>
         </div>
       )}
@@ -767,7 +781,7 @@ const AgregarLibro = () => {
                       if (checked) {
                         await generarYMostrarIsbn();
                         setSinIsbn(true);
-                        setDatosCargados(false);
+                        setDatosCargados(true); // Cambiar a true para que funcione la navegación
                       } else {
                         setFormData({ ...formData, isbn: "" });
                         setIsbnGenerado("");
