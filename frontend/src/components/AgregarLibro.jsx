@@ -58,6 +58,16 @@ const AgregarLibro = () => {
   const handlerFocus = (e) => {
     e.target.style.borderColor = "#1b4d1b";
     e.target.style.border = "3px solid #1b4d1b";
+
+    // CAMBIO 1: Limpiar el dataset cuando se hace focus en cualquier input
+    if (e.target.name === "isbn" && e.target.dataset.lastSearched) {
+      delete e.target.dataset.lastSearched;
+    }
+
+    // Resetear datosCargados cuando se hace focus manual en cualquier campo que no sea ISBN
+    if (e.target.name !== "isbn" && datosCargados) {
+      setDatosCargados(false);
+    }
   };
 
   const handlerBlur = (e) => {
@@ -127,11 +137,16 @@ const AgregarLibro = () => {
           // Para ISBN, verificar si tiene contenido y si debe hacer búsqueda
           const isbnValue = formData.isbn.trim();
 
-          // Solo buscar si hay ISBN, no es generado automáticamente, NO se han cargado datos aún, y no se ha buscado este valor
-          if (isbnValue && !sinIsbn && !datosCargados && e.target.dataset.lastSearched !== isbnValue) {
-            // Marcar que estamos buscando este ISBN específico
-            e.target.dataset.lastSearched = isbnValue;
-            handleAutocomplete();
+          // CAMBIO 2: Simplificar la condición - solo buscar si hay ISBN, no es generado automáticamente, NO se han cargado datos aún
+          if (isbnValue && !sinIsbn && !datosCargados) {
+            // Solo buscar si no se ha buscado este valor específico
+            if (e.target.dataset.lastSearched !== isbnValue) {
+              e.target.dataset.lastSearched = isbnValue;
+              handleAutocomplete();
+            } else {
+              // Si ya se buscó este ISBN, mover al siguiente campo
+              moveToNextField(e.target);
+            }
           } else {
             // En todos los demás casos, mover al siguiente campo
             moveToNextField(e.target);
@@ -161,7 +176,6 @@ const AgregarLibro = () => {
       }
     }
   };
-
 
   // Función modificada para manejar el blur del ISBN
   const handleIsbnBlur = (e) => {
