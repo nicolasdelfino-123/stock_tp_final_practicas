@@ -4,7 +4,7 @@ import { useAppContext } from "../context/appContext";
 
 const BuscarLibro = () => {
   const navigate = useNavigate();
-  const { store, actions } = useAppContext();
+  const { store, actions, API_BASE } = useAppContext();
   const resultadosRef = useRef(null);
 
   const [formData, setFormData] = useState({
@@ -38,8 +38,33 @@ const BuscarLibro = () => {
 
     try {
       if (isbn.trim()) {
-        const libroEncontrado = await actions.buscarLibroPorISBN(isbn.trim());
-        if (libroEncontrado) {
+        // 1. Primero busca en los libros ya cargados en el contexto (store.libros)
+        const libroEnStore = store.libros?.find(libro =>
+          libro.isbn === isbn.trim().replace(/-/g, "")
+        );
+
+        if (libroEnStore) {
+          setFormData((prev) => ({
+            ...prev,
+            id: libroEnStore.id,
+            titulo: libroEnStore.titulo,
+            autor: libroEnStore.autor,
+            stock: libroEnStore.stock,
+            precio: libroEnStore.precio,
+            ubicacion: libroEnStore.ubicacion || "",
+            editorial: libroEnStore.editorial || "",
+          }));
+          setResultados([libroEnStore]);
+          scrollToResultados();
+          return;
+        }
+
+        // 2. Si no está en el store, consulta la API local directamente
+        const response = await fetch(`${API_BASE}/libros?isbn=${isbn.trim().replace(/-/g, "")}`);
+        const data = await response.json();
+
+        if (response.ok && data.length > 0) {
+          const libroEncontrado = data[0];
           setFormData((prev) => ({
             ...prev,
             id: libroEncontrado.id,
@@ -54,33 +79,31 @@ const BuscarLibro = () => {
           scrollToResultados();
           return;
         } else {
-          setError("No se encontró un libro con ese ISBN");
+          setError("No se encontró un libro con ese ISBN en nuestro stock");
           return;
         }
       }
 
-      // Si no hay ISBN, buscar por título o autor
+      // Búsqueda por título/autor (mantenemos la lógica original)
       if (!store.libros || store.libros.length === 0) {
         await actions.fetchLibros();
       }
 
       const librosFiltrados = store.libros.filter((libro) => {
-        const matchTitulo =
-          titulo.trim() && libro.titulo.toLowerCase().includes(titulo.toLowerCase());
-        const matchAutor =
-          autor.trim() && libro.autor.toLowerCase().includes(autor.toLowerCase());
+        const matchTitulo = titulo.trim() && libro.titulo.toLowerCase().includes(titulo.toLowerCase());
+        const matchAutor = autor.trim() && libro.autor.toLowerCase().includes(autor.toLowerCase());
         return matchTitulo || matchAutor;
       });
 
       if (librosFiltrados.length === 0) {
-        setError("No se encontraron coincidencias por título o autor.");
+        setError("No se encontraron coincidencias en nuestro stock");
       } else {
         setResultados(librosFiltrados);
         scrollToResultados();
       }
     } catch (err) {
       console.error("Error al buscar:", err);
-      setError("Hubo un error durante la búsqueda.");
+      setError("ISBN no existente en nuestra base de datos");
     }
   };
 
