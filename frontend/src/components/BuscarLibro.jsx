@@ -363,11 +363,19 @@ const BuscarLibro = () => {
                           autoFocus={name === "isbn"}
                           onBlur={onBlur}
                           style={{
+
                             width: "100%",
                             padding: "10px 15px",
                             borderRadius: "8px",
                             border: `1.5px solid #1e88e5`,
-                            backgroundColor: readOnly ? "#d3e3fc" : "#e8f1fc",
+                            backgroundColor:
+                              name === "stock" && formData.stock !== ""
+                                ? formData.stock == 0  // Usar == para comparación flexible
+                                  ? "#e94444ff"  // Rojo claro para stock 0
+                                  : "#51c651ff"  // Verde claro para stock > 0
+                                : readOnly
+                                  ? "#d3e3fc"
+                                  : "#e8f1fc",
                             color: "black",
                             fontWeight: "500",
                             fontSize: "1rem",
