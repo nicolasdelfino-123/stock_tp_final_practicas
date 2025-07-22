@@ -66,7 +66,7 @@ const Inicio = () => {
             onClick={() => navigate("/bajarlibro")}
             className="btn btn-danger btn-lg d-flex align-items-center gap-2 px-4 py-4 btn-futurista"
           >
-            <Trash2 size={29} />
+            <Trash2 size={45} />
             <span>Bajar Libro</span>
           </button>
 
@@ -74,7 +74,7 @@ const Inicio = () => {
             onClick={() => navigate("/buscarlibro")}
             className="btn btn-primary btn-lg d-flex align-items-center gap-2 px-4 py-3 btn-futurista"
           >
-            <Search size={29} />
+            <Search size={45} />
             <span>Buscar Libro</span>
           </button>
 
@@ -82,7 +82,7 @@ const Inicio = () => {
             onClick={() => navigate("/agregarlibro")}
             className="btn btn-success btn-lg d-flex align-items-center gap-2 px-4 py-3 btn-futurista"
           >
-            <PlusCircle size={29} />
+            <PlusCircle size={45} />
             <span>Agregar Libro</span>
           </button>
         </div>
