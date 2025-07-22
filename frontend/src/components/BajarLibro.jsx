@@ -75,7 +75,7 @@ const BajarLibro = () => {
     try {
       const libroEncontrado = await actions.buscarLibroPorISBN(formData.isbn);
 
-      if (libroEncontrado) {
+      if (libroEncontrado && libroEncontrado.fuente === "Base de datos local") {
         setFormData((prev) => ({
           ...prev,
           id: libroEncontrado.id,
