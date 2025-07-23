@@ -42,7 +42,7 @@ const Inicio = () => {
             border-radius: inherit;
             z-index: -1;
             opacity: 0;
-            transition: opacity 0.3s ease;
+            transition: opacity 0.0s ease;
             background: rgba(57, 255, 20, 0.1);
           }
 

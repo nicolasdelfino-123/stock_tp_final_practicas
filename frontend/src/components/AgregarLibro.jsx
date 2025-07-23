@@ -56,7 +56,7 @@ const AgregarLibro = () => {
   const mensaje = store.mensaje;
 
   const handlerFocus = (e) => {
-    e.target.style.borderColor = "#1b4d1b";
+
     e.target.style.border = "3px solid #1b4d1b";
 
     // Limpiar el dataset cuando se hace focus en el input ISBN
@@ -71,7 +71,7 @@ const AgregarLibro = () => {
   };
 
   const handlerBlur = (e) => {
-    e.target.style.borderColor = "#2e7d32";
+
     e.target.style.border = "1.5px solid #2e7d32";
   }
 
