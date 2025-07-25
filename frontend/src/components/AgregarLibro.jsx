@@ -71,7 +71,6 @@ const AgregarLibro = () => {
   };
 
   const handlerBlur = (e) => {
-
     e.target.style.border = "1.5px solid #2e7d32";
   }
 

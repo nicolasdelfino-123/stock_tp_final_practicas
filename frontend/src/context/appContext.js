@@ -60,7 +60,12 @@ export const AppProvider = ({ children }) => {
 
       obtenerEditoriales: async () => {
         try {
-          const response = await fetch(`${API_BASE}/api/editoriales`);
+          const response = await fetch(`${API_BASE}/api/editoriales`, {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          });
+
           const data = await response.json();
 
           if (data.success) {
@@ -77,12 +82,14 @@ export const AppProvider = ({ children }) => {
 
 
 
+
       generarIsbnAutomatico: async () => {
         try {
           const response = await fetch(`${API_BASE}/generar-isbn`, {
             method: 'GET',
             headers: {
               'Content-Type': 'application/json',
+              Authorization: `Bearer ${token}`,
             },
           });
 
@@ -104,16 +111,20 @@ export const AppProvider = ({ children }) => {
           console.error("Error al generar ISBN desde servidor:", error);
           return {
             success: false,
-            error: "No se pudo conectar al backend para generar ISBN."
+            error: "No se pudo conectar al backend para generar ISBN.",
           };
         }
       },
+
 
       actualizarLibro: async (id, formData) => {
         try {
           const response = await fetch(`${API_BASE}/libros/${id}`, {
             method: "PUT",
-            headers: { "Content-Type": "application/json" },
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
             body: JSON.stringify(formData),
           });
 
@@ -133,11 +144,15 @@ export const AppProvider = ({ children }) => {
         }
       },
 
+
       crearLibro: async (formData) => {
         try {
           const response = await fetch(`${API_BASE}/libros`, {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
             body: JSON.stringify(formData),
           });
 
@@ -156,10 +171,11 @@ export const AppProvider = ({ children }) => {
           console.error("Error en la solicitud de creación:", error);
           return {
             success: false,
-            error: error.message || "Error de conexión al crear libro"
+            error: error.message || "Error de conexión al crear libro",
           };
         }
       },
+
 
       setMensaje: (msg) => {
         setMensaje(msg);
@@ -225,7 +241,10 @@ export const AppProvider = ({ children }) => {
         try {
           const response = await fetch(`${API_BASE}/bajar-libro/${id}`, {
             method: "PUT",
-            headers: { "Content-Type": "application/json" },
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
             body: JSON.stringify({ cantidad }),
           });
 
@@ -249,6 +268,7 @@ export const AppProvider = ({ children }) => {
         }
       },
 
+
       buscarLibroPorISBN: async (isbn) => {
         if (!isbn) return null;
 
@@ -257,7 +277,11 @@ export const AppProvider = ({ children }) => {
 
         // Paso 1: buscar en tu base de datos local
         try {
-          const response = await fetch(`${API_BASE}/libros?isbn=${isbnLimpio}`);
+          const response = await fetch(`${API_BASE}/libros?isbn=${isbnLimpio}`, {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          });
           const data = await response.json();
 
           if (response.ok && data.length > 0) {
