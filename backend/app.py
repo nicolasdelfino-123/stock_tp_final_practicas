@@ -1,129 +1,89 @@
-import os
-import time
-import datetime
-import jwt
-from functools import wraps
-
 from flask import Flask, jsonify, request
+from sqlalchemy import create_engine, or_, func
+from sqlalchemy.orm import sessionmaker
+from config import ProductionConfig  # usamos configuración segura desde .env
+from models.libro import Base, Libro
+from unidecode import unidecode
 from flask_cors import CORS
 from flask_admin import Admin
 from flask_admin.contrib.sqla import ModelView
+from sqlalchemy import func
+from models.libro import Base
+import jwt 
+import datetime
+import time
 
-from sqlalchemy import create_engine, or_, func
-from sqlalchemy.orm import sessionmaker, scoped_session
 
-from unidecode import unidecode
-
-from config import ProductionConfig
-from models.libro import Base, Libro
 
 
 def create_app():
     app = Flask(__name__)
-    
-    # CORS: restringir según variable de entorno o usar '*'
-    cors_origins = os.getenv("CORS_ORIGINS", "*")
-    CORS(app, origins=cors_origins)
-    
+    CORS(app)
     app.config.from_object(ProductionConfig)
+    
 
+    
     engine = create_engine(app.config["SQLALCHEMY_DATABASE_URI"], echo=True)
-
-    # Crear tablas si no existen
+    
+    # Especifica el esquema que quieres usar
+    #Base.metadata.schema = 'nico'  # o cualquier otro esquema que tengas permiso
+    
     Base.metadata.create_all(engine)
 
-    # Scoped session para evitar problemas con sesiones concurrentes
-    Session = scoped_session(sessionmaker(autocommit=False, autoflush=False, bind=engine))
-    app.session = Session
-
-    # Admin panel con sesión scoped
+    Session = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+    app.session = Session()
     admin = Admin(app, name="Panel de Administración", template_mode="bootstrap3")
-    admin.add_view(ModelView(Libro, Session()))
+    admin.add_view(ModelView(Libro, app.session))
 
     return app
 
-
 app = create_app()
-
-SERVER_START_TIME = time.time()
-
-
-# --- Decorador para proteger rutas con JWT ---
-def token_required(f):
-    @wraps(f)
-    def decorated(*args, **kwargs):
-        token = None
-        # Buscar token en headers Authorization Bearer
-        auth_header = request.headers.get('Authorization', None)
-        if auth_header:
-            parts = auth_header.split()
-            if len(parts) == 2 and parts[0].lower() == 'bearer':
-                token = parts[1]
-
-        if not token:
-            return jsonify({'error': 'Token es requerido'}), 401
-
-        try:
-            data = jwt.decode(token, app.config['SECRET_KEY'], algorithms=['HS256'])
-            current_user = data['user']
-        except jwt.ExpiredSignatureError:
-            return jsonify({'error': 'Token expirado'}), 401
-        except Exception:
-            return jsonify({'error': 'Token inválido'}), 401
-
-        return f(current_user, *args, **kwargs)
-    return decorated
-
 
 @app.route('/')
 def index():
-    return '¡Bienvenido a la aplicación Flask!'
+    return '¡Bienvenido a la aplicación Flask!'  # Asegúrate de tener una ruta base
 
 
-@app.route('/ping')
-def ping():
-    return jsonify({'message': 'pong'}), 200
 
-
+SERVER_START_TIME = time.time()
 @app.route('/login', methods=['POST'])
 def login():
     data = request.json
     username = data.get('username')
     password = data.get('password')
 
-    # Login fijo (para producción, reemplazar con DB y bcrypt)
+    # ⚠️ Login fijo (después lo cambiamos por usuarios reales de DB)
     if username == 'admin' and password == '1234':
         try:
             payload = {
-                'user': username,
-                'exp': datetime.datetime.utcnow() + datetime.timedelta(hours=2)
-            }
+                        'user': username,
+                        'exp': datetime.datetime.utcnow() + datetime.timedelta(hours=2)
+}
             token = jwt.encode(payload, app.config["SECRET_KEY"], algorithm='HS256')
+
 
             return jsonify({
                 'message': 'Login exitoso',
                 'token': token,
                 'user': username,
-                'server_start': SERVER_START_TIME
-            }), 200
+                'server_start': SERVER_START_TIME  # Agrega esto
+                 }), 200
         except Exception as e:
             return jsonify({'error': 'Error generando token', 'detalle': str(e)}), 500
     else:
         return jsonify({'error': 'Credenciales inválidas'}), 401
 
 
-# --- Ejemplo de ruta protegida con JWT ---
+# Obtener todos los libros o filtrar por palabra clave
 @app.route('/libros', methods=['GET'])
-@token_required
-def obtener_libros(current_user):
-    session = app.session()
+def obtener_libros():
+    session = app.session
     palabra_clave = request.args.get('q')
     isbn = request.args.get('isbn')  # Obtener el ISBN si está presente
 
     try:
-        if isbn:  # Filtrar por ISBN
+        if isbn:  # Si el ISBN está presente, filtra por él
             libro = session.query(Libro).filter(Libro.isbn == isbn).first()
-            session.close()
             if libro:
                 return jsonify([{
                     'id': libro.id,
@@ -136,21 +96,23 @@ def obtener_libros(current_user):
                     'ubicacion': libro.ubicacion
                 }])
             else:
-                return jsonify([])
-
-        # Buscar por palabra clave
+                return jsonify([])  # Cambio clave: Devuelve array vacío en lugar de error 404
+        
+        # Si no se pasa ISBN, busca por palabra clave
         if palabra_clave:
             palabra_clave = unidecode(palabra_clave.lower())
             libros = session.query(Libro).filter(
-                or_(
+                or_( # or_ es como WHERE titulo LIKE '%harry%' OR autor LIKE '%harry%' “significa Dame los libros que cumplan con condición_1 o condición_2”.
                     func.lower(Libro.titulo).like(f"%{palabra_clave}%"),
+                    #Esto baja todo a minúsculas. Es para que la búsqueda no sea sensible a mayúsculas/minúsculas. esto genera en SQL algo como LOWER(titulo)
                     func.lower(Libro.autor).like(f"%{palabra_clave}%")
+                    #El % significa “cualquier cosa antes o después”.
                 )
             ).all()
         else:
             libros = session.query(Libro).all()
 
-        result = [{
+        return jsonify([{
             'id': libro.id,
             'titulo': libro.titulo,
             'autor': libro.autor,
@@ -159,33 +121,32 @@ def obtener_libros(current_user):
             'stock': libro.stock,
             'precio': libro.precio,
             'ubicacion': libro.ubicacion
-        } for libro in libros]
-        session.close()
-        return jsonify(result)
+        } for libro in libros])
 
     except Exception as e:
-        session.close()
         return jsonify({'error': 'Ocurrió un error al obtener los libros', 'mensaje': str(e)}), 500
 
-
+# Crear nuevo libro con validación
 @app.route('/libros', methods=['POST'])
-@token_required
-def crear_libro(current_user):
-    session = app.session()
+def crear_libro():
+    session = app.session
     data = request.json
+    print("📦 Datos recibidos:", data)
 
-    # Validación
+    # Validación de campos obligatorios (sacamos precio de la validación)
     if not data.get('titulo') or not data.get('autor'):
-        session.close()
         return jsonify({'error': 'Faltan campos obligatorios (titulo o autor)'}), 400
 
+    # Procesar el precio: si viene vacío o null, lo dejamos en None
     precio_raw = data.get('precio')
     precio = float(precio_raw) if precio_raw not in (None, '', 'null') else None
 
     try:
+        # Buscar si ya existe un libro con el mismo ISBN
         libro_existente = session.query(Libro).filter(Libro.isbn == data.get('isbn')).first()
 
         if libro_existente:
+            # Si ya existe, actualizamos el libro con los nuevos datos
             libro_existente.titulo = data['titulo']
             libro_existente.autor = data['autor']
             libro_existente.editorial = data.get('editorial')
@@ -194,9 +155,9 @@ def crear_libro(current_user):
             libro_existente.ubicacion = data.get('ubicacion')
 
             session.commit()
-            session.close()
             return jsonify({'mensaje': 'Libro actualizado con éxito'}), 200
         else:
+            # Si no existe, creamos un nuevo libro
             nuevo_libro = Libro(
                 titulo=data['titulo'],
                 autor=data['autor'],
@@ -208,28 +169,24 @@ def crear_libro(current_user):
             )
             session.add(nuevo_libro)
             session.commit()
-            session.close()
             return jsonify({'mensaje': 'Libro creado con éxito'}), 201
 
     except Exception as e:
         session.rollback()
-        session.close()
         return jsonify({'error': 'Error al crear o actualizar el libro', 'mensaje': str(e)}), 500
 
 
+# Actualizar libro
 @app.route('/libros/<int:libro_id>', methods=['PUT'])
-@token_required
-def actualizar_libro(current_user, libro_id):
-    session = app.session()
+def actualizar_libro(libro_id):
+    session = app.session
     libro = session.query(Libro).get(libro_id)
 
     if libro is None:
-        session.close()
         return jsonify({'error': 'Libro no encontrado'}), 404
 
     data = request.json
     if not data.get('titulo') or not data.get('autor'):
-        session.close()
         return jsonify({'error': 'Faltan campos obligatorios (titulo o autor)'}), 400
 
     try:
@@ -242,125 +199,115 @@ def actualizar_libro(current_user, libro_id):
         libro.ubicacion = data.get('ubicacion')
 
         session.commit()
-        session.close()
         return jsonify({'mensaje': 'Libro actualizado'})
 
     except Exception as e:
         session.rollback()
-        session.close()
         return jsonify({'error': 'Error al actualizar el libro', 'mensaje': str(e)}), 500
 
-
+# Eliminar libro
 @app.route('/libros/<int:libro_id>', methods=['DELETE'])
-@token_required
-def eliminar_libro(current_user, libro_id):
-    session = app.session()
+def eliminar_libro(libro_id):
+    session = app.session
     libro = session.query(Libro).get(libro_id)
 
     if libro is None:
-        session.close()
         return jsonify({'error': 'Libro no encontrado'}), 404
 
     try:
         session.delete(libro)
         session.commit()
-        session.close()
         return jsonify({'mensaje': 'Libro eliminado'})
     except Exception as e:
         session.rollback()
-        session.close()
         return jsonify({'error': 'Error al eliminar el libro', 'mensaje': str(e)}), 500
-
-
+    
+# Bajar Stock de un libro
 @app.route('/bajar-libro/<int:libro_id>', methods=['PUT'])
-@token_required
-def bajar_libro(current_user, libro_id):
-    session = app.session()
+def bajar_libro(libro_id):
+    session = app.session
     libro = session.query(Libro).get(libro_id)
 
     if libro is None:
-        session.close()
         return jsonify({'error': 'Libro no encontrado'}), 404
 
     data = request.json
     cantidad = data.get('cantidad')
 
     if not cantidad or cantidad <= 0:
-        session.close()
         return jsonify({'error': 'Cantidad inválida'}), 400
 
     try:
+        # Log para ver el stock antes de la actualización
         app.logger.info(f"Antes de actualizar: {libro.titulo} - Stock actual: {libro.stock}")
 
         if libro.stock >= cantidad:
             libro.stock -= cantidad
             session.commit()
 
+            # Log para confirmar que se hizo la actualización
             app.logger.info(f"Después de actualizar: {libro.titulo} - Stock restante: {libro.stock}")
-
-            session.close()
+            
             return jsonify({'mensaje': 'Stock actualizado exitosamente'})
         else:
-            session.close()
             return jsonify({'error': 'No hay suficiente stock disponible'}), 400
     except Exception as e:
         session.rollback()
-        session.close()
         app.logger.error(f"Error al actualizar el stock: {str(e)}")
         return jsonify({'error': 'Error al bajar el stock', 'mensaje': str(e)}), 500
 
-
 @app.route('/generar-isbn', methods=['GET'])
-@token_required
-def generar_isbn(current_user):
-    session = app.session()
-
+def generar_isbn():
     try:
+        session = app.session
+
+        # Buscar el último ISBN numérico de 5 dígitos
         ultimo_libro = session.query(Libro).filter(
-            Libro.isbn.like('_____')
+            Libro.isbn.like('_____')  # Busca exactamente 5 caracteres (podrían ser dígitos)
         ).order_by(Libro.isbn.desc()).first()
 
-        if ultimo_libro and ultimo_libro.isbn.isdigit():
+        if ultimo_libro and ultimo_libro.isbn.isdigit():  # Verifica que sean solo dígitos
             nuevo_numero = int(ultimo_libro.isbn) + 1
         else:
+            # Si no hay ISBNs numéricos, empezar desde 1
             nuevo_numero = 1
 
-        nuevo_isbn = f"{nuevo_numero:05d}"
+        nuevo_isbn = f"{nuevo_numero:05d}"  # Formatea a 5 dígitos con ceros a la izquierda
 
+        # Verificar que no exista duplicado
         while session.query(Libro).filter(Libro.isbn == nuevo_isbn).first():
             nuevo_numero += 1
             nuevo_isbn = f"{nuevo_numero:05d}"
 
-        session.close()
         return jsonify({'isbn': nuevo_isbn}), 200
 
     except Exception as e:
-        session.close()
-        app.logger.error(f"Error en /generar-isbn: {str(e)}")
+        print(f"Error en /generar-isbn: {str(e)}")
         return jsonify({'error': 'Error al generar ISBN', 'mensaje': str(e)}), 500
-
-
+    
 @app.route('/api/libros/buscar')
-@token_required
-def buscar_por_titulo_o_autor(current_user):
-    session = app.session()
+def buscar_por_titulo_o_autor():
     titulo = request.args.get('titulo', '')
     autor = request.args.get('autor', '')
 
-    libros = session.query(Libro).filter(
+    libros = Libro.query.filter(
         (Libro.titulo.ilike(f"%{titulo}%")) |
         (Libro.autor.ilike(f"%{autor}%"))
     ).all()
-    result = [libro.to_dict() for libro in libros]
-    session.close()
-    return jsonify({"libros": result})
+
+    return jsonify({"libros": [libro.to_dict() for libro in libros]})
+
+
 
 
 @app.route('/api/editoriales', methods=['GET'])
-@token_required
-def obtener_editoriales(current_user):
-    session = app.session()
+def obtener_editoriales():
+    """
+    Obtiene todas las editoriales únicas de la base de datos usando SQLAlchemy
+    """
+    session = app.session
     try:
+        # Consulta para obtener editoriales distintas, no nulas ni vacías
         editoriales = (
             session.query(Libro.editorial)
             .filter(Libro.editorial.isnot(None), Libro.editorial != "")
@@ -370,35 +317,22 @@ def obtener_editoriales(current_user):
         )
 
         lista_editoriales = [e[0] for e in editoriales]
-        session.close()
+
         return jsonify({
             "success": True,
             "editoriales": lista_editoriales
         })
     except Exception as e:
-        session.close()
         return jsonify({
             "success": False,
             "error": str(e)
         }), 500
 
 
-# Manejo global de errores
-@app.errorhandler(404)
-def not_found(e):
-    return jsonify({'error': 'Recurso no encontrado'}), 404
-
-@app.errorhandler(500)
-def internal_error(e):
-    return jsonify({'error': 'Error interno del servidor'}), 500
-
 
 if __name__ == '__main__':
     from database import init_db
-    import sys
+    init_db()  # Esto crea las tablas en PostgreSQL
+    app.run(debug=True)
 
-    init_db()
 
-    port = int(os.getenv('PORT', 5000))
-    debug_mode = False  # NO debug en producción
-    app.run(host='0.0.0.0', port=port, debug=debug_mode)
