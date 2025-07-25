@@ -332,6 +332,8 @@ def obtener_editoriales():
 
 def run():
     from database import init_db
-    init_db()
+    init_db()  # Crea las tablas si no existen
+    app.run(debug=True)
 
-
+if __name__ == '__main__':
+    run()
