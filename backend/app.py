@@ -330,9 +330,8 @@ def obtener_editoriales():
 
 
 
-if __name__ == '__main__':
+def run():
     from database import init_db
-    init_db()  # Esto crea las tablas en PostgreSQL
-    app.run(debug=True)
+    init_db()
 
 
