@@ -38,6 +38,7 @@ class ProductionConfig(Config):
     DB_PORT = os.getenv('DB_PORT', '5432')
     DB_NAME = os.getenv('DB_NAME', 'stock_charles')
     DB_SCHEMA = os.getenv('DB_SCHEMA', 'stock_charles_schema')
+    DEBUG = False
 
     SQLALCHEMY_DATABASE_URI = (
         f"postgresql://{DB_USER}:{DB_PASSWORD}@"
