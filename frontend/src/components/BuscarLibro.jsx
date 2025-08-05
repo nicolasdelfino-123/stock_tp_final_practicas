@@ -355,9 +355,9 @@ const BuscarLibro = () => {
                   { label: "Título:", name: "titulo", type: "text", readOnly: false, placeholder: "Ej: principito", col: 12 },
                   { label: "Autor:", name: "autor", type: "text", readOnly: false, placeholder: "Ej: Borges", col: 12 },
                   { label: "Editorial:", name: "editorial", type: "text", readOnly: true, col: 12 },
-                  { label: "Stock:", name: "stock", type: "text", readOnly: true, col: 6 },
-                  { label: "Precio:", name: "precio", type: "number", readOnly: true, col: 6 },
-                  { label: "Ubicación:", name: "ubicacion", type: "text", readOnly: true, col: 12 },
+                  { label: "Stock:", name: "stock", type: "text", readOnly: true, col: 4 },
+                  { label: "Precio:", name: "precio", type: "number", readOnly: true, col: 4 },
+                  { label: "Ubicación:", name: "ubicacion", type: "text", readOnly: true, col: 4 },
                 ];
 
                 for (const field of fields) {

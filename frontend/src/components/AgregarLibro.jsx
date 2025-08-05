@@ -604,16 +604,15 @@ const AgregarLibro = () => {
             left: 0,
             width: "100vw",
             height: "100vh",
-            backgroundColor: "rgba(0, 0, 0, 0.6)", // Oscurecer más el fondo
+            backgroundColor: "rgba(0, 0, 0, 0.6)",
             zIndex: 9999,
             display: "flex",
             justifyContent: "center",
             alignItems: "center",
             paddingBottom: "300px",
-            pointerEvents: "auto" // Asegurar que captura todos los clicks
+            pointerEvents: "auto"
           }}
           onClick={(e) => {
-            // Solo permitir cerrar haciendo click en el botón Ok
             if (!e.target.closest('.alert')) {
               e.stopPropagation();
             }
@@ -634,7 +633,7 @@ const AgregarLibro = () => {
               border: "1px solid #c3e6cb",
               boxShadow: "0 10px 20px rgba(0,0,0,0.25)",
               textAlign: "center",
-              pointerEvents: "auto" // Permitir interacción solo con el modal
+              pointerEvents: "auto"
             }}
           >
             <div style={{ marginBottom: "20px" }}>
@@ -670,7 +669,6 @@ const AgregarLibro = () => {
           boxSizing: "border-box",
         }}
       >
-        {/* Formulario */}
         <div
           className="container"
           style={{
@@ -682,54 +680,19 @@ const AgregarLibro = () => {
             fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
           }}
         >
-          {/* Título y botón de volver */}
-          <div
-            style={{
-              position: "relative",
-              display: "flex",
-              alignItems: "center",
-              marginBottom: "25px",
-              height: "40px",
-            }}
-          >
+          <div className="top-bar">
             <button
               type="button"
-              className="btn btn-secondary"
+              className="back-button"
               onClick={() => navigate("/")}
-              style={{
-                borderRadius: "8px",
-                fontWeight: "600",
-                padding: "10px 20px",
-                boxShadow: "0 4px 8px rgba(0, 100, 0, 0.1)",
-                transition: "background-color 0.3s ease",
-                zIndex: 2,
-              }}
             >
               Volver al Inicio
             </button>
 
-            <h2
-              style={{
-                position: "absolute",
-                left: "50%",
-                transform: "translateX(-50%)",
-                color: "#183d1b",
-                fontWeight: "700",
-                margin: 0,
-                fontSize: "1.8rem",
-                userSelect: "none",
-                zIndex: 1,
-              }}
-            >
-              Agregar Libro
-            </h2>
-
-            <div style={{ width: "130px" }}></div>
+            <h2 className="page-title">Agregar Libro</h2>
           </div>
 
-          {/* Formulario principal */}
           <form onSubmit={handleSubmit}>
-            {/* Campo ISBN */}
             <div className="mb-3">
               <label htmlFor="isbn" className="form-label" style={{ color: "black", fontWeight: "600" }}>
                 ISBN:
@@ -761,7 +724,6 @@ const AgregarLibro = () => {
                   />
                 </div>
 
-                {/* Checkbox para crear sin ISBN */}
                 <div style={{ display: "flex", alignItems: "center", gap: "8px", marginLeft: "10px" }}>
                   <input
                     style={{
@@ -780,7 +742,7 @@ const AgregarLibro = () => {
                       if (checked) {
                         await generarYMostrarIsbn();
                         setSinIsbn(true);
-                        setDatosCargados(true); // Cambiar a true para que funcione la navegación
+                        setDatosCargados(true);
                       } else {
                         setFormData({ ...formData, isbn: "" });
                         setIsbnGenerado("");
@@ -804,7 +766,6 @@ const AgregarLibro = () => {
                   )}
                 </div>
               </div>
-
               <small
                 className="text-muted"
                 style={{ color: "#4a7f4a", display: "block", marginTop: "5px" }}
@@ -815,9 +776,7 @@ const AgregarLibro = () => {
               </small>
             </div>
 
-            {/* Campos del formulario */}
             <div className="row">
-              {/* Campo Título */}
               <div className="mb-3 col-12">
                 <label htmlFor="titulo" className="form-label" style={{ color: "black", fontWeight: "600" }}>
                   Título:
@@ -837,7 +796,6 @@ const AgregarLibro = () => {
                 />
               </div>
 
-              {/* Campo Autor */}
               <div className="mb-3 col-12">
                 <label htmlFor="autor" className="form-label" style={{ color: "black", fontWeight: "600" }}>
                   Autor:
@@ -857,7 +815,6 @@ const AgregarLibro = () => {
                 />
               </div>
 
-              {/* Campo Editorial con dropdown */}
               <div className="mb-3 col-12">
                 <label htmlFor="editorial" className="form-label" style={{ color: "black", fontWeight: "600" }}>
                   Editorial:
@@ -877,8 +834,6 @@ const AgregarLibro = () => {
                     onBlur={handlerBlur}
                     style={inputStyle}
                   />
-
-                  {/* Dropdown de editoriales */}
                   {mostrarDropdown && editorialesFiltradas.length > 0 && (
                     <div
                       ref={dropdownRef}
@@ -928,7 +883,6 @@ const AgregarLibro = () => {
                 </div>
               </div>
 
-              {/* Campo Stock */}
               <div className="mb-3 col-6">
                 <label htmlFor="stock" className="form-label" style={{ color: "black", fontWeight: "600" }}>
                   Stock (mínimo 1):
@@ -949,7 +903,6 @@ const AgregarLibro = () => {
                 />
               </div>
 
-              {/* Campo Precio */}
               <div className="mb-3 col-6">
                 <label htmlFor="precio" className="form-label" style={{ color: "black", fontWeight: "600" }}>
                   Precio:
@@ -968,7 +921,6 @@ const AgregarLibro = () => {
                 />
               </div>
 
-              {/* Campo Ubicación */}
               <div className="mb-3 col-12">
                 <label htmlFor="ubicacion" className="form-label" style={{ color: "black", fontWeight: "600" }}>
                   Ubicación:
@@ -988,9 +940,7 @@ const AgregarLibro = () => {
               </div>
             </div>
 
-            {/* Botones del formulario */}
             <div className="d-flex gap-3 mb-3">
-              {/* Botón de enviar */}
               <button
                 type="submit"
                 className="btn"
@@ -1023,7 +973,6 @@ const AgregarLibro = () => {
                 {formData.id ? "Actualizar Libro" : "Crear Libro"}
               </button>
 
-              {/* Botón de refrescar */}
               <button
                 type="button"
                 className="btn btn-warning"
@@ -1064,6 +1013,6 @@ const AgregarLibro = () => {
       </div>
     </>
   );
-};
+}
 
 export default AgregarLibro;
