@@ -12,12 +12,14 @@ from models.libro import Base
 import jwt 
 import datetime
 import time
+from flask import send_from_directory
+import os
 
 
 
 
 def create_app():
-    app = Flask(__name__)
+    app = Flask(__name__, static_folder="../frontend/build", static_url_path="/")
     CORS(app)
     app.config.from_object(ProductionConfig)
     
@@ -39,9 +41,13 @@ def create_app():
 
 app = create_app()
 
-@app.route('/')
-def index():
-    return '¡Bienvenido a la aplicación Flask!'  # Asegúrate de tener una ruta base
+@app.route("/")
+def serve():
+    return send_from_directory(app.static_folder, "index.html")
+
+@app.route("/<path:path>")
+def serve_static(path):
+    return send_from_directory(app.static_folder, path)
 
 
 
@@ -53,7 +59,8 @@ def login():
     password = data.get('password')
 
     # ⚠️ Login fijo (después lo cambiamos por usuarios reales de DB)
-    if username == 'admin' and password == '1234':
+    if username == os.getenv('APP_LOGIN') and password == os.getenv('APP_PASSWORD'):
+
         try:
             payload = {
                         'user': username,
