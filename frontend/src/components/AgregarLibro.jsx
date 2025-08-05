@@ -607,6 +607,7 @@ const AgregarLibro = () => {
             backgroundColor: "rgba(0, 0, 0, 0.6)",
             zIndex: 9999,
             display: "flex",
+            backdropFilter: "blur(3px)",
             justifyContent: "center",
             alignItems: "center",
             paddingBottom: "300px",
@@ -883,7 +884,7 @@ const AgregarLibro = () => {
                 </div>
               </div>
 
-              <div className="mb-3 col-6">
+              <div className="mb-3 col-4">
                 <label htmlFor="stock" className="form-label" style={{ color: "black", fontWeight: "600" }}>
                   Stock (mínimo 1):
                 </label>
@@ -903,7 +904,7 @@ const AgregarLibro = () => {
                 />
               </div>
 
-              <div className="mb-3 col-6">
+              <div className="mb-3 col-4">
                 <label htmlFor="precio" className="form-label" style={{ color: "black", fontWeight: "600" }}>
                   Precio:
                 </label>
@@ -921,7 +922,7 @@ const AgregarLibro = () => {
                 />
               </div>
 
-              <div className="mb-3 col-12">
+              <div className="mb-3 col-4">
                 <label htmlFor="ubicacion" className="form-label" style={{ color: "black", fontWeight: "600" }}>
                   Ubicación:
                 </label>

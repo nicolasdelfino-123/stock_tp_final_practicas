@@ -479,6 +479,7 @@ const BuscarLibro = () => {
         {
           resultados.length > 0 && (
             <div
+              ref={resultadosRef}
               style={{
                 marginTop: "24px",
                 marginLeft: "10px",

@@ -219,6 +219,7 @@ const BajarLibro = () => {
             backgroundColor: "rgba(0, 0, 0, 0.6)",
             zIndex: 9998,
             display: "flex",
+            backdropFilter: "blur(3px)",
             justifyContent: "center",
             alignItems: "center",
             pointerEvents: "auto"
@@ -448,8 +449,8 @@ const BajarLibro = () => {
                   { label: "Autor:", name: "autor", type: "text", readOnly: true, col: 12 },
                   { label: "Editorial:", name: "editorial", type: "text", readOnly: true, col: 6 },
                   { label: "Ubicación:", name: "ubicacion", type: "text", readOnly: true, col: 6 },
-                  { label: "Stock actual:", name: "stock", type: "number", readOnly: true, col: 6 },
-                  { label: "Precio", name: "precio", type: "number", readOnly: true, col: 6 },
+                  { label: "Stock actual:", name: "stock", type: "number", readOnly: true, col: 4 },
+                  { label: "Precio", name: "precio", type: "number", readOnly: true, col: 4 },
                   {
                     label: "Cantidad a bajar:",
                     name: "cantidad",
@@ -458,7 +459,7 @@ const BajarLibro = () => {
                     min: 1,
                     placeholder: "Cantidad a descontar",
                     required: false,
-                    col: 12,
+                    col: 4,
                   },
                 ];
 
@@ -494,7 +495,7 @@ const BajarLibro = () => {
                           required={required}
                           autoFocus={name === "isbn"}
                           min={min}
-                          onBlur={name === "isbn" ? handleSearch : undefined}
+                          onBlur={undefined}
                           onKeyDown={name === "isbn" ? (e => {
                             if (e.key === "Enter") {
                               e.preventDefault();
