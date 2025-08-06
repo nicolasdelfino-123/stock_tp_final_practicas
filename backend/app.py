@@ -2,7 +2,7 @@ from flask import Flask, jsonify, request
 from sqlalchemy import create_engine, or_, func
 from sqlalchemy.orm import sessionmaker
 from config import ProductionConfig  # usamos configuración segura desde .env
-from models.libro import Base, Libro, Faltante
+from models.libro import Base, Libro, Faltante, Pedido  
 from unidecode import unidecode
 from flask_cors import CORS
 from flask_admin import Admin
@@ -411,6 +411,83 @@ def modificar_faltante(id):
         except Exception as e:
             session.rollback()
             return jsonify({"error": str(e)}), 500
+
+
+
+@app.route('/api/pedidos', methods=['GET'])
+def get_pedidos():
+    session = app.session
+    try:
+        pedidos = session.query(Pedido).order_by(Pedido.id.desc()).all()
+        return jsonify([{
+            'id': p.id,
+            'cliente_nombre': p.cliente_nombre,
+            'seña': p.seña,
+            'fecha': p.fecha.isoformat(),
+            'titulo': p.titulo,
+            'autor': p.autor
+        } for p in pedidos])
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/pedidos', methods=['POST'])
+def crear_pedido():
+    session = app.session
+    data = request.json
+
+    try:
+        nuevo_pedido = Pedido(
+            cliente_nombre=data['cliente_nombre'],
+            seña=data['seña'],
+            titulo=data['titulo'],
+            autor=data['autor']
+        )
+        session.add(nuevo_pedido)
+        session.commit()
+        return jsonify({'mensaje': 'Pedido creado con éxito'}), 201
+    except Exception as e:
+        session.rollback()
+        return jsonify({'error': 'Error al crear el pedido', 'mensaje': str(e)}), 500
+
+
+@app.route('/api/pedidos/<int:pedido_id>', methods=['PUT'])
+def actualizar_pedido(pedido_id):
+    session = app.session
+    data = request.json
+
+    pedido = session.query(Pedido).get(pedido_id)
+    if not pedido:
+        return jsonify({'error': 'Pedido no encontrado'}), 404
+
+    try:
+        pedido.cliente_nombre = data['cliente_nombre']
+        pedido.seña = data['seña']
+        pedido.titulo = data['titulo']
+        pedido.autor = data['autor']
+        session.commit()
+        return jsonify({'mensaje': 'Pedido actualizado con éxito'})
+    except Exception as e:
+        session.rollback()
+        return jsonify({'error': 'Error al actualizar el pedido', 'mensaje': str(e)}), 500
+
+
+@app.route('/api/pedidos/<int:pedido_id>', methods=['DELETE'])
+def eliminar_pedido(pedido_id):
+    session = app.session
+    pedido = session.query(Pedido).get(pedido_id)
+    if not pedido:
+        return jsonify({'error': 'Pedido no encontrado'}), 404
+
+    try:
+        session.delete(pedido)
+        session.commit()
+        return jsonify({'mensaje': 'Pedido eliminado'})
+    except Exception as e:
+        session.rollback()
+        return jsonify({'error': 'Error al eliminar el pedido', 'mensaje': str(e)}), 500
+
+
 
 
 def run():

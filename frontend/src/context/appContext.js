@@ -335,6 +335,67 @@ eliminarFaltante: async (id) => {
   }
 },
 
+// Actions para agregar a tu contexto existente (sin const ni export)
+
+crearPedido: async (pedidoData) => {
+  try {
+    const response = await fetch(`${API_BASE}/api/pedidos`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        cliente_nombre: pedidoData.nombreCliente,
+        titulo: pedidoData.tituloLibro,
+        autor: pedidoData.autorLibro,
+        cantidad: pedidoData.cantidad,
+        fecha: pedidoData.fecha,
+        seña: pedidoData.seña || 0 // Agregar campo seña si es necesario
+      }),
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      return { success: true, pedido: data.pedido };
+    } else {
+      const errorData = await response.json();
+      return { success: false, error: errorData.error || "Error al crear pedido" };
+    }
+  } catch (error) {
+    console.error("Error al crear pedido:", error);
+    return { success: false, error: error.message };
+  }
+},
+
+obtenerPedidos: async () => {
+  try {
+    const res = await fetch(`${API_BASE}/api/pedidos`);
+    if (res.ok) {
+      const data = await res.json();
+      return { success: true, pedidos: data };
+    }
+    const errorData = await res.json();
+    return { success: false, error: errorData.error || "Error al obtener pedidos" };
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+},
+
+eliminarPedido: async (id) => {
+  try {
+    const res = await fetch(`${API_BASE}/api/pedidos/${id}`, {
+      method: "DELETE",
+    });
+
+    if (res.ok) {
+      return { success: true };
+    } else {
+      const errorData = await res.json();
+      return { success: false, error: errorData.error || "Error al eliminar pedido" };
+    }
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+},
+
 
 
 

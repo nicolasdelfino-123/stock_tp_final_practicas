@@ -32,3 +32,22 @@ class Faltante(Base):
 
     def __repr__(self):
         return f"<Faltante {self.descripcion[:20]}...>"
+
+
+class Pedido(Base):
+    __tablename__ = "pedidos"
+    __table_args__ = {'schema': 'stock_charles_schema'}
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    cliente_nombre: Mapped[str] = mapped_column(String(450), nullable=False)
+    seña: Mapped[float] = mapped_column(Float, nullable=False)
+    fecha: Mapped[DateTime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    titulo: Mapped[str] = mapped_column(String(450), nullable=False)
+    autor: Mapped[str] = mapped_column(String(450), nullable=False)
+    comentario: Mapped[str] = mapped_column(String(700), nullable=True)
+
+    def __repr__(self):
+        return f"<Pedido {self.titulo} para {self.cliente_nombre}>"
+
+
+    
