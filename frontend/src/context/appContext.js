@@ -249,6 +249,95 @@ export const AppProvider = ({ children }) => {
         }
       },
 
+
+      getFaltantes: async () => {
+    try {
+      const res = await fetch(`${API_BASE}/api/faltantes`);
+      if (res.ok) {
+        const data = await res.json();
+        return { success: true, faltantes: data };
+      }
+      return { success: false, error: "Error cargando faltantes" };
+    } catch (error) {
+      return { success: false, error: error.message };
+    }
+  },
+
+  crearFaltante: async (descripcion) => {
+    try {
+      const res = await fetch(`${API_BASE}/api/faltantes`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ descripcion }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        return { success: true, faltante: data.faltante };
+      }
+      const errorData = await res.json();
+      return { success: false, error: errorData.error || "Error creando faltante" };
+    } catch (error) {
+      return { success: false, error: error.message };
+    }
+  },
+
+  limpiarFaltantes: async () => {
+    try {
+      const res = await fetch(`${API_BASE}/api/faltantes`, {
+        method: "DELETE",
+      });
+      if (res.ok) {
+        return { success: true };
+      }
+      const errorData = await res.json();
+      return { success: false, error: errorData.error || "Error limpiando faltantes" };
+    } catch (error) {
+      return { success: false, error: error.message };
+    }
+  },
+
+editarFaltante: async (id, descripcion) => {
+  try {
+    const res = await fetch(`${API_BASE}/api/faltantes/${id}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ descripcion }),
+    });
+
+    if (!res.ok) {
+      const errorData = await res.json();
+      return { success: false, error: errorData.message || "Error al editar" };
+    }
+
+    const data = await res.json();
+    return { success: true, faltante: data };
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+},
+
+eliminarFaltante: async (id) => {
+  try {
+    const res = await fetch(`${API_BASE}/api/faltantes/${id}`, {
+      method: "DELETE",
+    });
+
+    if (!res.ok) {
+      const errorData = await res.json();
+      return { success: false, error: errorData.message || "Error al eliminar" };
+    }
+
+    return { success: true };
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+},
+
+
+
+
       buscarLibroPorISBN: async (isbn) => {
         if (!isbn) return null;
 

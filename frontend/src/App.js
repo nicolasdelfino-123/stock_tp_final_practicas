@@ -10,6 +10,7 @@ import BuscarLibro from "./components/BuscarLibro";
 import Login from "./components/Login";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "@fortawesome/fontawesome-free/css/all.min.css";
+import Faltantes from "./components/Faltantes"
 
 // Componente para proteger rutas
 const ProtectedRoute = ({ children }) => {
@@ -122,6 +123,15 @@ function AppContent() {
           element={
             <ProtectedRoute>
               <BuscarLibro />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/faltantes"
+          element={
+            <ProtectedRoute>
+              <Faltantes />
             </ProtectedRoute>
           }
         />

@@ -2,7 +2,7 @@ from flask import Flask, jsonify, request
 from sqlalchemy import create_engine, or_, func
 from sqlalchemy.orm import sessionmaker
 from config import ProductionConfig  # usamos configuración segura desde .env
-from models.libro import Base, Libro
+from models.libro import Base, Libro, Faltante
 from unidecode import unidecode
 from flask_cors import CORS
 from flask_admin import Admin
@@ -14,6 +14,7 @@ import datetime
 import time
 from flask import send_from_directory
 import os
+from flask import abort
 
 
 
@@ -335,6 +336,81 @@ def obtener_editoriales():
             "error": str(e)
         }), 500
 
+
+
+
+
+@app.route('/api/faltantes', methods=['GET'])
+def get_faltantes():
+    session = app.session
+    try:
+        faltantes = session.query(Faltante).order_by(Faltante.id.desc()).all()
+        return jsonify([{"id": f.id, "descripcion": f.descripcion} for f in faltantes])
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/faltantes', methods=['POST'])
+def crear_faltante():
+    session = app.session
+    data = request.json
+    descripcion = data.get("descripcion")
+    if not descripcion:
+        return jsonify({"error": "Faltante sin descripción"}), 400
+    try:
+        nuevo = Faltante(descripcion=descripcion)
+        session.add(nuevo)
+        session.commit()
+        return jsonify({"success": True, "faltante": {"id": nuevo.id, "descripcion": nuevo.descripcion}})
+    except Exception as e:
+        session.rollback()
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/faltantes', methods=['DELETE'])
+def limpiar_faltantes():
+    session = app.session
+    try:
+        session.query(Faltante).delete()
+        session.commit()
+        return jsonify({"success": True})
+    except Exception as e:
+        session.rollback()
+        return jsonify({"error": str(e)}), 500
+
+
+
+@app.route('/api/faltantes/<int:id>', methods=['PUT', 'DELETE'])
+def modificar_faltante(id):
+    session = app.session
+    
+    if request.method == 'PUT':
+        data = request.json
+        descripcion = data.get("descripcion")
+        if not descripcion:
+            return jsonify({"error": "Descripción requerida para editar"}), 400
+        try:
+            faltante = session.query(Faltante).filter(Faltante.id == id).first()
+            if not faltante:
+                return jsonify({"error": "Faltante no encontrado"}), 404
+            
+            faltante.descripcion = descripcion
+            session.commit()
+            return jsonify({"success": True, "faltante": {"id": faltante.id, "descripcion": faltante.descripcion}})
+        except Exception as e:
+            session.rollback()
+            return jsonify({"error": str(e)}), 500
+
+    elif request.method == 'DELETE':
+        try:
+            faltante = session.query(Faltante).filter(Faltante.id == id).first()
+            if not faltante:
+                return jsonify({"error": "Faltante no encontrado"}), 404
+
+            session.delete(faltante)
+            session.commit()
+            return jsonify({"success": True})
+        except Exception as e:
+            session.rollback()
+            return jsonify({"error": str(e)}), 500
 
 
 def run():

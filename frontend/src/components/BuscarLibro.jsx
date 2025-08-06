@@ -169,11 +169,25 @@ const BuscarLibro = () => {
         editorial: formData.editorial,
         stock: formData.stock,
         id: formData.id,
+        ubicacion: formData.ubicacion
       }
     });
   };
 
   const fondoURL = "/fondo-3.jpg"
+  // Mapeo de ubicación => color pastel
+  const coloresUbicacion = {
+    rosa: "#fa8eb4ff",
+    turquesa: "#17c1d7ff",
+    rojo: "#d63131ff",
+    lila: "#c31be0ff",
+    negro: "#151718ff",
+    amarillo: "#FFFF00",
+    naranja: "#f7a308ff",
+    "verde claro": "#00FF00",
+    blanco: "#f5f5f5"
+  };
+
 
   return (
     <>
@@ -522,11 +536,11 @@ const BuscarLibro = () => {
                       gap: "10px",
                       padding: "15px 20px",
                       border: "1px solid black",
-                      backgroundColor: libro.stock === 0 ? "red" : "#bbdefb",
+                      backgroundColor: coloresUbicacion[libro.ubicacion?.toLowerCase()] || "#FFFFFF", // Color por defecto
                       borderRadius: "12px",
                       boxShadow: "0 4px 8px rgba(30, 136, 229, 0.1)",
                       fontSize: "0.95rem",
-                      color: "black",
+                      color: ["rojo", "negro"].includes(libro.ubicacion?.toLowerCase()) ? "white" : "black",
                       fontWeight: "500",
                     }}
                   >
@@ -541,9 +555,37 @@ const BuscarLibro = () => {
                       <div style={{
                         wordWrap: "break-word",
                         wordBreak: "break-word",
-                        overflowWrap: "break-word"
+                        overflowWrap: "break-word",
+
+
                       }}>
-                        <strong>Título:</strong> 📘 {libro.titulo}
+                        <div>
+
+                          <strong style={{
+                            fontStyle: "normal", textDecoration: "underline", fontStyle: "italic",
+                            fontWeight: "900", color: ["rojo", "negro"].includes(libro.ubicacion?.toLowerCase()) ? "white" : "black", marginRight: "8px"
+                          }}>TÍTULO:</strong>
+
+                          <span style={{
+                            fontWeight: "900"
+                          }}>📘 {libro.titulo} </span>
+
+                        </div>
+                      </div>
+
+                      <div style={{
+                        wordWrap: "break-word",
+                        wordBreak: "break-word",
+                        overflowWrap: "break-word",
+
+                      }}>
+                        <strong style={{
+                          fontStyle: "normal", textDecoration: "underline", marginRight: "8px", fontStyle: "italic",
+                          fontWeight: "900", color: ["rojo", "negro"].includes(libro.ubicacion?.toLowerCase()) ? "white" : "black",
+                        }}>AUTOR:</strong>
+                        <span style={{
+                          fontWeight: "900"
+                        }}>{libro.autor}</span>
                       </div>
 
                       <div style={{
@@ -551,7 +593,10 @@ const BuscarLibro = () => {
                         wordBreak: "break-word",
                         overflowWrap: "break-word"
                       }}>
-                        <strong>Autor:</strong> {libro.autor}
+                        <strong style={{
+                          fontStyle: "normal", textDecoration: "underline", fontStyle: "italic",
+                          fontWeight: "900", color: ["rojo", "negro"].includes(libro.ubicacion?.toLowerCase()) ? "white" : "black", marginRight: "8px"
+                        }}>EDITORIAL:</strong ><span style={{ fontWeight: "900" }}>{libro.editorial || "No disponible"}</span>
                       </div>
 
                       <div style={{
@@ -559,7 +604,10 @@ const BuscarLibro = () => {
                         wordBreak: "break-word",
                         overflowWrap: "break-word"
                       }}>
-                        <strong>Editorial:</strong> {libro.editorial || "No disponible"}
+                        <strong style={{
+                          fontStyle: "normal", textDecoration: "underline", fontStyle: "italic",
+                          fontWeight: "900", color: ["rojo", "negro"].includes(libro.ubicacion?.toLowerCase()) ? "white" : "black", marginRight: "8px"
+                        }}>ISBN:</strong> <span style={{ fontWeight: "900" }}>{libro.isbn}</span>
                       </div>
 
                       <div style={{
@@ -567,7 +615,10 @@ const BuscarLibro = () => {
                         wordBreak: "break-word",
                         overflowWrap: "break-word"
                       }}>
-                        <strong>ISBN:</strong> {libro.isbn}
+                        <strong style={{
+                          fontStyle: "normal", textDecoration: "underline", fontStyle: "italic",
+                          fontWeight: "900", color: ["rojo", "negro"].includes(libro.ubicacion?.toLowerCase()) ? "white" : "black", marginRight: "8px"
+                        }}>STOCK:</strong> <span style={{ fontWeight: "900" }}>{libro.stock}</span>
                       </div>
 
                       <div style={{
@@ -575,7 +626,10 @@ const BuscarLibro = () => {
                         wordBreak: "break-word",
                         overflowWrap: "break-word"
                       }}>
-                        <strong>Stock:</strong> {libro.stock}
+                        <strong style={{
+                          fontStyle: "normal", textDecoration: "underline", fontStyle: "italic",
+                          fontWeight: "900", color: ["rojo", "negro"].includes(libro.ubicacion?.toLowerCase()) ? "white" : "black", marginRight: "8px"
+                        }}>UBICACIÓN:</strong> <span style={{ fontWeight: "900" }}>{libro.ubicacion || "No disponible"}</span>
                       </div>
 
                       <div style={{
@@ -583,19 +637,15 @@ const BuscarLibro = () => {
                         wordBreak: "break-word",
                         overflowWrap: "break-word"
                       }}>
-                        <strong style={{ fontWeight: "900" }}>Ubicación:</strong> {libro.ubicacion || "No disponible"}
-                      </div>
-
-                      <div style={{
-                        wordWrap: "break-word",
-                        wordBreak: "break-word",
-                        overflowWrap: "break-word"
-                      }}>
-                        <strong>Precio:</strong> {libro.precio}
+                        <strong style={{
+                          fontStyle: "normal", textDecoration: "underline", fontStyle: "italic",
+                          fontWeight: "900", color: ["rojo", "negro"].includes(libro.ubicacion?.toLowerCase()) ? "white" : "black", marginRight: "8px"
+                        }} >PRECIO:</strong> <span style={{ fontWeight: "900" }}>{libro.precio}</span>
                       </div>
 
                     </div>
 
+                    <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
                     <button
                       className="btn btn-sm btn-success"
                       style={{
@@ -610,6 +660,29 @@ const BuscarLibro = () => {
                     >
                       Seleccionar
                     </button>
+
+                    {parseInt(libro.stock) === 0 && (
+                      <div
+                        style={{
+                          width: "46px",
+                          height: "46px",
+                          borderRadius: "50%",
+                          backgroundColor: "#d32f2f",
+                          color: "white",
+                          border: "2px solid black",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          fontWeight: "bold",
+                          fontSize: "1.9rem",
+                          boxShadow: "0 0 4px rgba(0,0,0,0.4)",
+                        }}
+                        title="Sin stock"
+                      >
+                        ×
+                      </div>
+                    )}
+                  </div>
                   </li>
                 ))}
               </ul>

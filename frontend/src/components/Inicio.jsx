@@ -1,6 +1,6 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import { Trash2, Search, PlusCircle } from "lucide-react";
+import { Trash2, Search, PlusCircle,PackagePlus } from "lucide-react";
 
 const Inicio = () => {
   const navigate = useNavigate();
@@ -61,6 +61,7 @@ const Inicio = () => {
           flexWrap: "wrap",
         }}
       >
+        <div>
         <div className="d-flex flex-wrap justify-content-center gap-5">
           <button
             onClick={() => navigate("/bajarlibro")}
@@ -85,6 +86,24 @@ const Inicio = () => {
             <PlusCircle size={45} />
             <span>Agregar Libro</span>
           </button>
+          </div>
+         
+          <div className="d-flex justify-content-center align-items-center mt-5" style={{ height: "200px" }}>
+            <button
+              onClick={() => navigate("/faltantes")}
+              className="btn btn-warning btn-lg d-flex align-items-center justify-content-center gap-2 px-4 py-3 btn-futurista m-5"
+             style={{
+                      borderRadius: "50px",  // un valor alto que redondea mucho sin cortar
+                      padding: "10px 30px",  // más padding horizontal para el texto
+                      minWidth: "150px",
+                         
+                    }}
+            >
+              <PackagePlus size={45} color="black"/>
+              <span style={{color:"black"}}>Faltantes</span>
+            </button>
+         </div>
+          
         </div>
       </div>
     </>
