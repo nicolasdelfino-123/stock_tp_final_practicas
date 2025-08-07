@@ -251,152 +251,184 @@ export const AppProvider = ({ children }) => {
 
 
       getFaltantes: async () => {
-    try {
-      const res = await fetch(`${API_BASE}/api/faltantes`);
-      if (res.ok) {
-        const data = await res.json();
-        return { success: true, faltantes: data };
-      }
-      return { success: false, error: "Error cargando faltantes" };
-    } catch (error) {
-      return { success: false, error: error.message };
-    }
-  },
-
-  crearFaltante: async (descripcion) => {
-    try {
-      const res = await fetch(`${API_BASE}/api/faltantes`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ descripcion }),
-      });
-      if (res.ok) {
-        const data = await res.json();
-        return { success: true, faltante: data.faltante };
-      }
-      const errorData = await res.json();
-      return { success: false, error: errorData.error || "Error creando faltante" };
-    } catch (error) {
-      return { success: false, error: error.message };
-    }
-  },
-
-  limpiarFaltantes: async () => {
-    try {
-      const res = await fetch(`${API_BASE}/api/faltantes`, {
-        method: "DELETE",
-      });
-      if (res.ok) {
-        return { success: true };
-      }
-      const errorData = await res.json();
-      return { success: false, error: errorData.error || "Error limpiando faltantes" };
-    } catch (error) {
-      return { success: false, error: error.message };
-    }
-  },
-
-editarFaltante: async (id, descripcion) => {
-  try {
-    const res = await fetch(`${API_BASE}/api/faltantes/${id}`, {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
+        try {
+          const res = await fetch(`${API_BASE}/api/faltantes`);
+          if (res.ok) {
+            const data = await res.json();
+            return { success: true, faltantes: data };
+          }
+          return { success: false, error: "Error cargando faltantes" };
+        } catch (error) {
+          return { success: false, error: error.message };
+        }
       },
-      body: JSON.stringify({ descripcion }),
-    });
 
-    if (!res.ok) {
-      const errorData = await res.json();
-      return { success: false, error: errorData.message || "Error al editar" };
-    }
+      crearFaltante: async (descripcion) => {
+        try {
+          const res = await fetch(`${API_BASE}/api/faltantes`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ descripcion }),
+          });
+          if (res.ok) {
+            const data = await res.json();
+            return { success: true, faltante: data.faltante };
+          }
+          const errorData = await res.json();
+          return { success: false, error: errorData.error || "Error creando faltante" };
+        } catch (error) {
+          return { success: false, error: error.message };
+        }
+      },
 
-    const data = await res.json();
-    return { success: true, faltante: data };
-  } catch (error) {
-    return { success: false, error: error.message };
-  }
-},
+      limpiarFaltantes: async () => {
+        try {
+          const res = await fetch(`${API_BASE}/api/faltantes`, {
+            method: "DELETE",
+          });
+          if (res.ok) {
+            return { success: true };
+          }
+          const errorData = await res.json();
+          return { success: false, error: errorData.error || "Error limpiando faltantes" };
+        } catch (error) {
+          return { success: false, error: error.message };
+        }
+      },
 
-eliminarFaltante: async (id) => {
-  try {
-    const res = await fetch(`${API_BASE}/api/faltantes/${id}`, {
-      method: "DELETE",
-    });
+      editarFaltante: async (id, descripcion) => {
+        try {
+          const res = await fetch(`${API_BASE}/api/faltantes/${id}`, {
+            method: "PUT",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ descripcion }),
+          });
 
-    if (!res.ok) {
-      const errorData = await res.json();
-      return { success: false, error: errorData.message || "Error al eliminar" };
-    }
+          if (!res.ok) {
+            const errorData = await res.json();
+            return { success: false, error: errorData.message || "Error al editar" };
+          }
 
-    return { success: true };
-  } catch (error) {
-    return { success: false, error: error.message };
-  }
-},
+          const data = await res.json();
+          return { success: true, faltante: data };
+        } catch (error) {
+          return { success: false, error: error.message };
+        }
+      },
 
-// Actions para agregar a tu contexto existente (sin const ni export)
+      eliminarFaltante: async (id) => {
+        try {
+          const res = await fetch(`${API_BASE}/api/faltantes/${id}`, {
+            method: "DELETE",
+          });
 
-crearPedido: async (pedidoData) => {
-  try {
-    const response = await fetch(`${API_BASE}/api/pedidos`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        cliente_nombre: pedidoData.nombreCliente,
-        titulo: pedidoData.tituloLibro,
-        autor: pedidoData.autorLibro,
-        cantidad: pedidoData.cantidad,
-        fecha: pedidoData.fecha,
-        seña: pedidoData.seña || 0 // Agregar campo seña si es necesario
-      }),
-    });
+          if (!res.ok) {
+            const errorData = await res.json();
+            return { success: false, error: errorData.message || "Error al eliminar" };
+          }
 
-    if (response.ok) {
-      const data = await response.json();
-      return { success: true, pedido: data.pedido };
-    } else {
-      const errorData = await response.json();
-      return { success: false, error: errorData.error || "Error al crear pedido" };
-    }
-  } catch (error) {
-    console.error("Error al crear pedido:", error);
-    return { success: false, error: error.message };
-  }
-},
+          return { success: true };
+        } catch (error) {
+          return { success: false, error: error.message };
+        }
+      },
 
-obtenerPedidos: async () => {
-  try {
-    const res = await fetch(`${API_BASE}/api/pedidos`);
-    if (res.ok) {
-      const data = await res.json();
-      return { success: true, pedidos: data };
-    }
-    const errorData = await res.json();
-    return { success: false, error: errorData.error || "Error al obtener pedidos" };
-  } catch (error) {
-    return { success: false, error: error.message };
-  }
-},
+      // Actions para agregar a tu contexto existente (sin const ni export)
 
-eliminarPedido: async (id) => {
-  try {
-    const res = await fetch(`${API_BASE}/api/pedidos/${id}`, {
-      method: "DELETE",
-    });
+      crearPedido: async (pedidoData) => {
+        try {
+          const response = await fetch(`${API_BASE}/api/pedidos`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              cliente_nombre: pedidoData.nombreCliente,
+              titulo: pedidoData.tituloLibro,
+              autor: pedidoData.autorLibro,
+              cantidad: pedidoData.cantidad,
+              fecha: pedidoData.fecha,
+              seña: pedidoData.seña || 0,
+              comentario: pedidoData.comentario || "",
+              isbn: pedidoData.isbn || "",
+            }),
+          });
 
-    if (res.ok) {
-      return { success: true };
-    } else {
-      const errorData = await res.json();
-      return { success: false, error: errorData.error || "Error al eliminar pedido" };
-    }
-  } catch (error) {
-    return { success: false, error: error.message };
-  }
-},
+          if (response.ok) {
+            const data = await response.json();
+            return { success: true, pedido: data.pedido };
+          } else {
+            const errorData = await response.json();
+            return { success: false, error: errorData.error || "Error al crear pedido" };
+          }
+        } catch (error) {
+          console.error("Error al crear pedido:", error);
+          return { success: false, error: error.message };
+        }
+      },
 
+      obtenerPedidos: async () => {
+        try {
+          const res = await fetch(`${API_BASE}/api/pedidos`);
+          if (res.ok) {
+            const data = await res.json();
+            console.log("Datos recibidos del backend:", data);
+            return { success: true, pedidos: data };
+          }
+          const errorData = await res.json();
+          return { success: false, error: errorData.error || "Error al obtener pedidos" };
+        } catch (error) {
+          return { success: false, error: error.message };
+        }
+      },
 
+      eliminarPedido: async (id) => {
+        try {
+          const res = await fetch(`${API_BASE}/api/pedidos/${id}`, {
+            method: "DELETE",
+          });
+
+          if (res.ok) {
+            return { success: true };
+          } else {
+            const errorData = await res.json();
+            return { success: false, error: errorData.error || "Error al eliminar pedido" };
+          }
+        } catch (error) {
+          return { success: false, error: error.message };
+        }
+      },
+
+      actualizarPedido: async (id, pedidoActualizado) => {
+        try {
+          const res = await fetch(`${API_BASE}/api/pedidos/${id}`, {
+            method: "PUT",
+            headers: {
+              "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+              cliente_nombre: pedidoActualizado.nombreCliente, // Map to backend's expected key
+              titulo: pedidoActualizado.tituloLibro,          // Map to backend's expected key
+              autor: pedidoActualizado.autorLibro,           // Map to backend's expected key
+              cantidad: pedidoActualizado.cantidad,
+              fecha: pedidoActualizado.fecha,
+              seña: pedidoActualizado.seña,
+              comentario: pedidoActualizado.comentario,
+              isbn: pedidoActualizado.isbn
+            })
+          });
+
+          if (res.ok) {
+            const data = await res.json();
+            return { success: true, mensaje: data.mensaje };
+          } else {
+            const errorData = await res.json();
+            return { success: false, error: errorData.error || "Error al actualizar pedido" };
+          }
+        } catch (error) {
+          return { success: false, error: error.message };
+        }
+      },
 
 
       buscarLibroPorISBN: async (isbn) => {

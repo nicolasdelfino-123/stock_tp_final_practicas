@@ -10,11 +10,13 @@ from flask_admin.contrib.sqla import ModelView
 from sqlalchemy import func
 from models.libro import Base
 import jwt 
-import datetime
+
 import time
 from flask import send_from_directory
 import os
 from flask import abort
+from datetime import datetime, timedelta
+from sqlalchemy.exc import SQLAlchemyError
 
 
 
@@ -65,9 +67,11 @@ def login():
         try:
             payload = {
                         'user': username,
-                        'exp': datetime.datetime.utcnow() + datetime.timedelta(hours=2)
+                        'exp': datetime.utcnow() + timedelta(hours=2)  # ✅ FIX
 }
             token = jwt.encode(payload, app.config["SECRET_KEY"], algorithm='HS256')
+           
+            print("TOKEN TYPE:", type(token))
 
 
             return jsonify({
@@ -414,6 +418,7 @@ def modificar_faltante(id):
 
 
 
+
 @app.route('/api/pedidos', methods=['GET'])
 def get_pedidos():
     session = app.session
@@ -423,12 +428,18 @@ def get_pedidos():
             'id': p.id,
             'cliente_nombre': p.cliente_nombre,
             'seña': p.seña,
-            'fecha': p.fecha.isoformat(),
+            'fecha': p.fecha.isoformat() if p.fecha else None,
             'titulo': p.titulo,
-            'autor': p.autor
+            'autor': p.autor,
+            'comentario': p.comentario,
+            'cantidad': p.cantidad,
+            'isbn': p.isbn
         } for p in pedidos])
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
+    except SQLAlchemyError as e:
+        session.rollback()
+        return jsonify({'error': 'Error al obtener pedidos', 'mensaje': str(e)}), 500
+    finally:
+        session.close()
 
 
 @app.route('/api/pedidos', methods=['POST'])
@@ -438,17 +449,37 @@ def crear_pedido():
 
     try:
         nuevo_pedido = Pedido(
-            cliente_nombre=data['cliente_nombre'],
-            seña=data['seña'],
-            titulo=data['titulo'],
-            autor=data['autor']
+            cliente_nombre=data.get('cliente_nombre'),
+            seña=float(data.get('seña', 0)) if data.get('seña') else 0.0,
+            titulo=data.get('titulo'),
+            autor=data.get('autor'),
+            comentario=data.get('comentario', ''),
+            cantidad=int(data.get('cantidad', 1)),
+            isbn=data.get('isbn', '')
         )
         session.add(nuevo_pedido)
         session.commit()
-        return jsonify({'mensaje': 'Pedido creado con éxito'}), 201
-    except Exception as e:
+
+        return jsonify({
+            'mensaje': 'Pedido creado con éxito',
+            'pedido': {
+                'id': nuevo_pedido.id,
+                'cliente_nombre': nuevo_pedido.cliente_nombre,
+                'seña': nuevo_pedido.seña,
+                'fecha': nuevo_pedido.fecha.isoformat() if nuevo_pedido.fecha else None,
+                'titulo': nuevo_pedido.titulo,
+                'autor': nuevo_pedido.autor,
+                'comentario': nuevo_pedido.comentario,
+                'cantidad': nuevo_pedido.cantidad,
+                'isbn': nuevo_pedido.isbn
+            }
+        }), 201
+
+    except SQLAlchemyError as e:
         session.rollback()
         return jsonify({'error': 'Error al crear el pedido', 'mensaje': str(e)}), 500
+    finally:
+        session.close()
 
 
 @app.route('/api/pedidos/<int:pedido_id>', methods=['PUT'])
@@ -456,38 +487,47 @@ def actualizar_pedido(pedido_id):
     session = app.session
     data = request.json
 
-    pedido = session.query(Pedido).get(pedido_id)
-    if not pedido:
-        return jsonify({'error': 'Pedido no encontrado'}), 404
-
     try:
-        pedido.cliente_nombre = data['cliente_nombre']
-        pedido.seña = data['seña']
-        pedido.titulo = data['titulo']
-        pedido.autor = data['autor']
+        pedido = session.query(Pedido).get(pedido_id)
+        if not pedido:
+            return jsonify({'error': 'Pedido no encontrado'}), 404
+
+        pedido.cliente_nombre = data.get('cliente_nombre', pedido.cliente_nombre)
+        pedido.seña = float(data.get('seña', pedido.seña))
+        pedido.titulo = data.get('titulo', pedido.titulo)
+        pedido.autor = data.get('autor', pedido.autor)
+        pedido.comentario = data.get('comentario', pedido.comentario)
+        pedido.cantidad = int(data.get('cantidad', pedido.cantidad))
+        pedido.isbn = data.get('isbn', pedido.isbn)
+
         session.commit()
         return jsonify({'mensaje': 'Pedido actualizado con éxito'})
-    except Exception as e:
+
+    except SQLAlchemyError as e:
         session.rollback()
         return jsonify({'error': 'Error al actualizar el pedido', 'mensaje': str(e)}), 500
+    finally:
+        session.close()
 
 
 @app.route('/api/pedidos/<int:pedido_id>', methods=['DELETE'])
 def eliminar_pedido(pedido_id):
     session = app.session
-    pedido = session.query(Pedido).get(pedido_id)
-    if not pedido:
-        return jsonify({'error': 'Pedido no encontrado'}), 404
 
     try:
+        pedido = session.query(Pedido).get(pedido_id)
+        if not pedido:
+            return jsonify({'error': 'Pedido no encontrado'}), 404
+
         session.delete(pedido)
         session.commit()
-        return jsonify({'mensaje': 'Pedido eliminado'})
-    except Exception as e:
+        return jsonify({'mensaje': 'Pedido eliminado con éxito'})
+
+    except SQLAlchemyError as e:
         session.rollback()
         return jsonify({'error': 'Error al eliminar el pedido', 'mensaje': str(e)}), 500
-
-
+    finally:
+        session.close()
 
 
 def run():
