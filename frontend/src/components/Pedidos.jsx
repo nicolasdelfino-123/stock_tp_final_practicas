@@ -206,7 +206,7 @@ const PedidoForm = () => {
     ventana.document.close();
 
     // Registrar última impresión
-    const ultimoPedido = pedidosFiltrados[pedidosFiltrados.length - 1];
+    const ultimoPedido = pedidosFiltrados[0];
     setUltimaImpresion({
       fecha: new Date().toLocaleDateString('es-AR'),
       libro: ultimoPedido.titulo,
