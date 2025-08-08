@@ -228,37 +228,37 @@ const PedidoForm = () => {
 
 
 
- const handleImprimirTodos = () => {
-  if (pedidosFiltrados.length === 0) {
-    alert("No hay pedidos para imprimir");
-    return;
-  }
-
-  const tabla = document.getElementById('tabla-todos-pedidos');
-  const ventana = window.open('', '_blank');
-  const tablaClonada = tabla.cloneNode(true);
-
-  // Eliminar la última columna (acciones) de encabezados y filas
-  const encabezados = tablaClonada.querySelectorAll('th');
-  const filas = tablaClonada.querySelectorAll('tr');
-
-  // Índice de la última columna
-  const ultimaCol = encabezados.length - 1;
-
-  // Remover el th de la última columna
-  if (encabezados[ultimaCol]) {
-    encabezados[ultimaCol].remove();
-  }
-
-  // Remover la celda td correspondiente en cada fila (excepto la fila de encabezados)
-  filas.forEach(fila => {
-    const celdas = fila.querySelectorAll('td');
-    if (celdas.length > ultimaCol) {
-      celdas[ultimaCol].remove();
+  const handleImprimirTodos = () => {
+    if (pedidosFiltrados.length === 0) {
+      alert("No hay pedidos para imprimir");
+      return;
     }
-  });
 
-  ventana.document.write(`
+    const tabla = document.getElementById('tabla-todos-pedidos');
+    const ventana = window.open('', '_blank');
+    const tablaClonada = tabla.cloneNode(true);
+
+    // Eliminar la última columna (acciones) de encabezados y filas
+    const encabezados = tablaClonada.querySelectorAll('th');
+    const filas = tablaClonada.querySelectorAll('tr');
+
+    // Índice de la última columna
+    const ultimaCol = encabezados.length - 1;
+
+    // Remover el th de la última columna
+    if (encabezados[ultimaCol]) {
+      encabezados[ultimaCol].remove();
+    }
+
+    // Remover la celda td correspondiente en cada fila (excepto la fila de encabezados)
+    filas.forEach(fila => {
+      const celdas = fila.querySelectorAll('td');
+      if (celdas.length > ultimaCol) {
+        celdas[ultimaCol].remove();
+      }
+    });
+
+    ventana.document.write(`
     <html>
       <head>
         <title>Todos los Pedidos - Librería Charles</title>
@@ -330,21 +330,21 @@ const PedidoForm = () => {
       </body>
     </html>
   `);
-  ventana.document.close();
+    ventana.document.close();
 
-  const ultimoPedido = pedidosFiltrados[0];
-  setUltimaImpresion({
-    fecha: new Date().toLocaleString('es-AR'),
-    libro: ultimoPedido.titulo,
-    autor: ultimoPedido.autor,
-    isbn: ultimoPedido.isbn || "N/A",
-    newPedidosCount: 0,
-    lastPrinted: new Date().getTime(),
-    ultimoImpresoId: ultimoPedido.id
-  });
+    const ultimoPedido = pedidosFiltrados[0];
+    setUltimaImpresion({
+      fecha: new Date().toLocaleString('es-AR'),
+      libro: ultimoPedido.titulo,
+      autor: ultimoPedido.autor,
+      isbn: ultimoPedido.isbn || "N/A",
+      newPedidosCount: 0,
+      lastPrinted: new Date().getTime(),
+      ultimoImpresoId: ultimoPedido.id
+    });
 
-  ventana.print();
-};
+    ventana.print();
+  };
 
 
   const handleImprimirParaRicardo = () => {
@@ -652,7 +652,6 @@ const PedidoForm = () => {
               onClick={() => navigate("/")}
               style={{
                 borderRadius: "8px",
-                fontWeight: "600",
                 padding: "10px 20px",
                 boxShadow: "0 4px 8px rgba(0,0,0,0.1)",
                 transition: "background-color 0.3s ease",
@@ -663,36 +662,20 @@ const PedidoForm = () => {
 
               }}
               onMouseEnter={(e) => (e.target.style.backgroundColor = "#e4f00aff")}
-              onMouseLeave={(e) => (e.target.style.backgroundColor = "#f4df26ff")}
+              onMouseLeave={(e) => (e.target.style.backgroundColor = "#fcf00cff")}
             >
               Volver al Inicio
             </button>
             <div style={{ textAlign: 'center', flexGrow: 1 }}>
-              <h2 style={{ color: 'white', marginTop: '10px', fontSize:"50px", fontWeight:"700px", textShadow: '4px 4px 22px rgba(0,0,0,0.9)' }}><strong>Formulario de Pedido</strong></h2>
+              <h2 style={{ color: 'white', marginTop: '10px', fontSize: "50px", fontWeight: "700px", textShadow: '4px 4px 22px rgba(0,0,0,0.9)' }}><strong>Formulario de Pedido</strong></h2>
             </div>
           </div>
-          
-          {ultimaImpresion && (
-            <div style={{
-              backgroundColor: '#e8f5e9',
-              padding: '10px',
-              borderRadius: '5px',
-              marginTop: '10px',
-              border: '1px solid #c8e6c9'
-            }}>
-              <p style={{ margin: '0', color: '#2e7d32' }}>
-                <strong>Última impresión:</strong> {ultimaImpresion.fecha} -
-                <strong> Libro:</strong> {
-                  todosLosPedidos.find(p => p.id === ultimaImpresion.ultimoImpresoId)?.titulo || ultimaImpresion.libro
-                } -
-                <strong> Pedidos nuevos:</strong> {ultimaImpresion.newPedidosCount || 0}
-              </p>
-            </div>
-          )}
+
+
         </div>
 
         <div style={{
-          backgroundColor: 'white',
+          backgroundColor: '#bbf5b6ff',
           padding: '30px',
           borderRadius: '10px',
           boxShadow: '0 4px 8px rgba(0,0,0,0.1)',
@@ -702,13 +685,14 @@ const PedidoForm = () => {
 
           {/* Campos del formulario */}
           <div style={{ marginBottom: '20px' }}>
-            <label style={{ fontWeight: 'bold', color: 'black', display: 'block', marginBottom: '5px' }}>
+            <label style={{ fontWeight: 'bold', color: 'black', display: 'block', marginBottom: '5px', fontSize: '22px' }}>
               Nombre del Cliente
             </label>
             <input
               type="text"
               value={nombreCliente}
               onChange={(e) => setNombreCliente(e.target.value)}
+              placeholder="Ingrese el nombre del cliente"
               style={{
                 width: '100%',
                 padding: '10px',
@@ -721,13 +705,14 @@ const PedidoForm = () => {
           </div>
 
           <div style={{ marginBottom: '20px' }}>
-            <label style={{ fontWeight: 'bold', color: 'black', display: 'block', marginBottom: '5px' }}>
+            <label style={{ fontWeight: 'bold', color: 'black', display: 'block', marginBottom: '5px', fontSize: "22px" }}>
               Título del Libro
             </label>
             <input
               type="text"
               value={tituloLibro}
               onChange={(e) => setTituloLibro(e.target.value)}
+              placeholder="Ingrese el título del libro"
               style={{
                 width: '100%',
                 padding: '10px',
@@ -739,13 +724,14 @@ const PedidoForm = () => {
           </div>
 
           <div style={{ marginBottom: '20px' }}>
-            <label style={{ fontWeight: 'bold', color: 'black', display: 'block', marginBottom: '5px' }}>
+            <label style={{ fontWeight: 'bold', color: 'black', display: 'block', marginBottom: '5px', fontSize: "22px" }}>
               Autor
             </label>
             <input
               type="text"
               value={autorLibro}
               onChange={(e) => setAutorLibro(e.target.value)}
+              placeholder="Ingrese el autor del libro"
               style={{
                 width: '100%',
                 padding: '10px',
@@ -760,7 +746,7 @@ const PedidoForm = () => {
 
           <div className="row g-3 mb-3">
             <div className="col-6 col-md-1">
-              <label className="fw-bold text-black d-block mb-1">Cantidad</label>
+              <label className="fw-bold text-black d-block mb-1" style={{ fontSize: '22px' }}>Cantidad</label>
               <input
                 type="number"
                 min="1"
@@ -774,11 +760,12 @@ const PedidoForm = () => {
                   borderRadius: '5px',
                   fontSize: '20px',
 
+
                 }}
               />
             </div>
             <div className="col-6 col-md-2">
-              <label className="fw-bold text-black d-block mb-1">Fecha</label>
+              <label className="fw-bold text-black d-block mb-1" style={{ fontSize: '22px' }}>Fecha</label>
               <input
                 type="text"
                 value={fecha}
@@ -796,11 +783,12 @@ const PedidoForm = () => {
               />
             </div>
             <div className="col-6 col-md-2">
-              <label className="fw-bold text-black d-block mb-1">ISBN</label>
+              <label className="fw-bold text-black d-block mb-1" style={{ fontSize: '22px' }}>ISBN</label>
               <input
                 type="text"
                 value={isbn}
                 onChange={(e) => setIsbn(e.target.value)}
+                placeholder="Ingrese el ISBN"
                 className="form-control"
                 style={{
                   width: '100%',
@@ -813,7 +801,7 @@ const PedidoForm = () => {
               />
             </div>
             <div className="col-6 col-md-1">
-              <label className="fw-bold text-black d-block mb-1">Seña</label>
+              <label className="fw-bold text-black d-block mb-1" style={{ fontSize: '22px' }}>Seña</label>
               <input
                 type="text"
                 value={formatNumberWithDots(seña)}
@@ -833,12 +821,12 @@ const PedidoForm = () => {
 
             {/* Comentario en fila propia, ancho total */}
             <div className="col-12 col-md-6">
-              <label className="fw-bold text-black d-block mb-1">Comentario</label>
+              <label className="fw-bold text-black d-block mb-1" style={{ fontSize: '22px' }}>Comentario</label>
               <input
                 type="text"
                 value={comentario}
                 onChange={(e) => setComentario(e.target.value)}
-                placeholder=""
+                placeholder="Ingrese un comentario (opcional)"
                 className="form-control"
                 style={{
                   width: '100%',
@@ -1007,7 +995,26 @@ const PedidoForm = () => {
                 alignItems: 'center',
                 marginBottom: '20px'
               }}>
-                <h3><strong>Pedidos Cargados</strong></h3>
+                <div>
+                  <h3><strong>Pedidos Cargados</strong></h3>
+                  {ultimaImpresion && (
+                    <div style={{
+                      backgroundColor: '#e8f5e9',
+                      padding: '10px',
+                      borderRadius: '5px',
+                      marginTop: '10px',
+                      border: '1px solid #c8e6c9'
+                    }}>
+                      <p style={{ margin: '0', color: '#2e7d32' }}>
+                        <strong>Última impresión:</strong> {ultimaImpresion.fecha} -
+                        <strong> Libro:</strong> {
+                          todosLosPedidos.find(p => p.id === ultimaImpresion.ultimoImpresoId)?.titulo || ultimaImpresion.libro
+                        } -
+                        <strong> Pedidos nuevos:</strong> {ultimaImpresion.newPedidosCount || 0}
+                      </p>
+                    </div>
+                  )}
+                </div>
                 <button
                   onClick={() => setShowPedidos(false)}
                   style={{
@@ -1362,7 +1369,7 @@ const PedidoForm = () => {
                           backgroundColor: idx % 2 === 0 ? '#f8f9fa' : 'white'
                         }}>
                           <td style={{
-                            padding: '12px', border: '1px solid #adacac', padding: '12px', border: '1px solid #adacac', width: '100px',            // ancho fijo
+                            padding: '12px', border: '1px solid #adacac', width: '100px',            // ancho fijo
                             maxWidth: '180px',         // opcional, refuerza el límite
                             wordWrap: 'break-word',   // permite cortar palabras si son largas
                             whiteSpace: 'normal',     // permite saltos de línea
@@ -1371,7 +1378,7 @@ const PedidoForm = () => {
                             {pedido.cliente_nombre}
                           </td>
                           <td style={{
-                            padding: '12px', border: '1px solid #adacac', padding: '12px', border: '1px solid #adacac', width: '100px',            // ancho fijo
+                            padding: '12px', border: '1px solid #adacac', width: '100px',            // ancho fijo
                             maxWidth: '180px',         // opcional, refuerza el límite
                             wordWrap: 'break-word',   // permite cortar palabras si son largas
                             whiteSpace: 'normal',     // permite saltos de línea
@@ -1380,7 +1387,7 @@ const PedidoForm = () => {
                             {pedido.titulo}
                           </td>
                           <td style={{
-                            padding: '12px', border: '1px solid #adacac', padding: '12px', border: '1px solid #adacac', width: '100px',            // ancho fijo
+                            border: '1px solid #adacac', padding: '12px', width: '100px',            // ancho fijo
                             maxWidth: '180px',         // opcional, refuerza el límite
                             wordWrap: 'break-word',   // permite cortar palabras si son largas
                             whiteSpace: 'normal',     // permite saltos de línea
@@ -1389,7 +1396,7 @@ const PedidoForm = () => {
                             {pedido.autor}
                           </td>
                           <td style={{
-                            padding: '12px', border: '1px solid #adacac', padding: '12px', border: '1px solid #adacac', width: '100px',            // ancho fijo
+                            border: '1px solid #adacac', padding: '12px', width: '100px',            // ancho fijo
                             maxWidth: '180px',         // opcional, refuerza el límite
                             wordWrap: 'break-word',   // permite cortar palabras si son largas
                             whiteSpace: 'normal',     // permite saltos de línea
@@ -1398,7 +1405,7 @@ const PedidoForm = () => {
                             {pedido.cantidad || 1}
                           </td>
                           <td style={{
-                            padding: '12px', border: '1px solid #adacac', padding: '12px', border: '1px solid #adacac', width: '100px',            // ancho fijo
+                            padding: '12px', border: '1px solid #adacac', width: '100px',            // ancho fijo
                             maxWidth: '180px',         // opcional, refuerza el límite
                             wordWrap: 'break-word',   // permite cortar palabras si son largas
                             whiteSpace: 'normal',     // permite saltos de línea
@@ -1407,7 +1414,7 @@ const PedidoForm = () => {
                             {pedido.isbn || "N/A"}
                           </td>
                           <td style={{
-                            padding: '12px', border: '1px solid #adacac', padding: '12px', border: '1px solid #adacac', width: '100px',            // ancho fijo
+                            padding: '12px', border: '1px solid #adacac', width: '100px',            // ancho fijo
                             maxWidth: '180px',         // opcional, refuerza el límite
                             wordWrap: 'break-word',   // permite cortar palabras si son largas
                             whiteSpace: 'normal',     // permite saltos de línea
@@ -1416,7 +1423,7 @@ const PedidoForm = () => {
                             {formatearFechaArgentina(pedido.fecha)}
                           </td>
                           <td style={{
-                            padding: '12px', border: '1px solid #adacac', padding: '12px', border: '1px solid #adacac', width: '100px',            // ancho fijo
+                            padding: '12px', border: '1px solid #adacac', width: '100px',            // ancho fijo
                             maxWidth: '180px',         // opcional, refuerza el límite
                             wordWrap: 'break-word',   // permite cortar palabras si son largas
                             whiteSpace: 'normal',     // permite saltos de línea
@@ -1425,7 +1432,7 @@ const PedidoForm = () => {
                             ${pedido.seña || 0}
                           </td>
                           <td style={{
-                            padding: '12px', border: '1px solid #adacac', padding: '12px', border: '1px solid #adacac', width: '100px',            // ancho fijo
+                            padding: '12px', border: '1px solid #adacac', width: '100px',            // ancho fijo
                             maxWidth: '180px',         // opcional, refuerza el límite
                             wordWrap: 'break-word',   // permite cortar palabras si son largas
                             whiteSpace: 'normal',     // permite saltos de línea

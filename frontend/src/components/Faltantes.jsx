@@ -159,26 +159,40 @@ return (
       fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
     }}
   >
-    <div style={{ display: "flex", alignItems: "center", marginBottom: "10px" }}>
-      <button
-        onClick={() => navigate("/")}
-        style={{
-          backgroundColor: "#ccc",
-          color: "#333",
-          border: "none",
-          borderRadius: "6px",
-          padding: "6px 12px",
-          cursor: "pointer",
-          fontWeight: "600",
-          marginRight: "10px",
-        }}
-      >
-        <span style={{fontSize: "15px"}}>⬅ Volver al inicio</span>  
-      </button>
-      <h3 style={{ textAlign: "center", color: "#114470", flexGrow: 1, margin: 0, fontWeight: "bold" }}>
-        Faltantes de stock
-      </h3>
-    </div>
+   <div style={{ display: "flex", alignItems: "center", marginBottom: "10px" }}>
+  <button
+    onClick={() => navigate("/")}
+    style={{
+      backgroundColor: "#fcf00cff",
+      color: "#333",
+      border: "none",
+      borderRadius: "6px",
+      padding: "11px 12px",
+      cursor: "pointer",
+      fontWeight: "600",
+      marginRight: "10px",
+    }}
+   onMouseEnter={(e) => (e.target.style.backgroundColor = "#e4f00aff")}
+              onMouseLeave={(e) => (e.target.style.backgroundColor = "#fcf00cff")}
+  >
+    <span style={{ fontSize: "16px" }}>⬅ Volver al inicio</span>  
+  </button>
+
+  <h3
+    style={{
+      textAlign: "center",
+      color: "#114470",
+      flexGrow: 1,
+      margin: 0,
+      fontWeight: "900",
+      fontSize: "40px",
+      textShadow: "2px 2px 30px rgba(0,0,0,0.5)", // 👈 sombra solo al texto
+    }}
+  >
+    Faltantes de stock
+  </h3>
+</div>
+
 
     <textarea
       placeholder="Anotá aquí los productos faltantes..."
