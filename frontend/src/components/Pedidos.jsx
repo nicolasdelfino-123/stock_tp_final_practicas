@@ -154,6 +154,10 @@ const PedidoForm = () => {
 
 
 
+
+
+
+
   const handleImprimirTodos = () => {
     if (pedidosFiltrados.length === 0) {
       alert("No hay pedidos para imprimir");
@@ -366,16 +370,39 @@ const PedidoForm = () => {
     setLoading(false);
   };
 
+  const formatNumberWithDots = (value) => {
+    // Eliminar todo lo que no sea dígito
+    const numericValue = value.replace(/\D/g, '');
+    // Formatear con puntos cada 3 dígitos desde el final
+    return numericValue.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+  };
+
+  const handleSeniaChange = (e) => {
+    const rawValue = e.target.value;
+    // Guardamos el valor formateado en el estado
+    setSenia(formatNumberWithDots(rawValue.replace(/\D/g, '')));
+  };
+
+
+
+  const fondoURL = "/fondo-3.jpg"
+  const fondoURL2 = "/fondo-22.jpg"
+
   return (
     <div style={{
       minHeight: '100vh',
-      backgroundColor: '#e8f5e8',
-      padding: '20px'
+      backgroundColor: '#7ec27e',
+      padding: '20px',
+      backgroundImage: `linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)),url(${fondoURL})`,
+      backgroundSize: "cover",
     }}>
-      <div style={{ maxWidth: '800px', margin: '0 auto' }}>
+      <div
+      >
+
         <div style={{ textAlign: 'center', marginBottom: '30px' }}>
-          <img src="/chaplin1.png" alt="Logo Charles Chaplin" style={{ width: '80px' }} />
-          <h2 style={{ color: '#2c3e50', marginTop: '10px' }}>Formulario de Pedido</h2>
+
+
+          <h2 style={{ color: 'white', marginTop: '10px' }}><strong>Formulario de Pedido</strong></h2>
           {editandoId && <p style={{ color: '#ffc107', fontWeight: 'bold' }}>Editando pedido...</p>}
           {ultimaImpresion && (
             <div style={{
@@ -406,7 +433,7 @@ const PedidoForm = () => {
 
           {/* Campos del formulario */}
           <div style={{ marginBottom: '20px' }}>
-            <label style={{ fontWeight: 'bold', color: '#2c3e50', display: 'block', marginBottom: '5px' }}>
+            <label style={{ fontWeight: 'bold', color: 'black', display: 'block', marginBottom: '5px' }}>
               Nombre del Cliente
             </label>
             <input
@@ -418,13 +445,14 @@ const PedidoForm = () => {
                 padding: '10px',
                 border: '2px solid #95a5a6',
                 borderRadius: '5px',
-                fontSize: '16px'
+                fontSize: '20px',
+                color: 'black'
               }}
             />
           </div>
 
           <div style={{ marginBottom: '20px' }}>
-            <label style={{ fontWeight: 'bold', color: '#2c3e50', display: 'block', marginBottom: '5px' }}>
+            <label style={{ fontWeight: 'bold', color: 'black', display: 'block', marginBottom: '5px' }}>
               Título del Libro
             </label>
             <input
@@ -436,13 +464,13 @@ const PedidoForm = () => {
                 padding: '10px',
                 border: '2px solid #95a5a6',
                 borderRadius: '5px',
-                fontSize: '16px'
+                fontSize: '20px'
               }}
             />
           </div>
 
           <div style={{ marginBottom: '20px' }}>
-            <label style={{ fontWeight: 'bold', color: '#2c3e50', display: 'block', marginBottom: '5px' }}>
+            <label style={{ fontWeight: 'bold', color: 'black', display: 'block', marginBottom: '5px' }}>
               Autor
             </label>
             <input
@@ -454,105 +482,109 @@ const PedidoForm = () => {
                 padding: '10px',
                 border: '2px solid #95a5a6',
                 borderRadius: '5px',
-                fontSize: '16px'
+                fontSize: '20px'
               }}
             />
           </div>
-          <div className="col-12">
-            <div>
-              <div className="" style={{ display: 'flex', gap: '20px', marginBottom: '20px' }}>
-                <div style={{ flex: 1 }}>
-                  <label style={{ fontWeight: 'bold', color: '#2c3e50', display: 'block', marginBottom: '5px' }}>
-                    Cantidad
-                  </label>
-                  <input
-                    type="number"
-                    min="1"
-                    value={cantidad}
-                    onChange={(e) => setCantidad(Number(e.target.value))}
-                    style={{
-                      width: '100%',
-                      padding: '10px',
-                      border: '2px solid #95a5a6',
-                      borderRadius: '5px',
-                      fontSize: '16px'
-                    }}
-                  />
-                </div>
-                <div className="col-3" >
-                  <label style={{ fontWeight: 'bold', color: '#2c3e50', display: 'block', marginBottom: '5px' }}>
-                    Fecha
-                  </label>
-                  <input
-                    type="text"
-                    value={fecha}
-                    onChange={(e) => setFecha(e.target.value)}
-                    placeholder="DD/MM/YYYY"
-                    style={{
-                      width: '100%',
-                      padding: '10px',
-                      border: '2px solid #95a5a6',
-                      borderRadius: '5px',
-                      fontSize: '16px'
-                    }}
-                  />
-                </div>
-                <div style={{ marginBottom: '20px' }}>
-                  <label style={{ fontWeight: 'bold', color: '#2c3e50', display: 'block', marginBottom: '5px' }}>
-                    ISBN
-                  </label>
-                  <input
-                    type="text"
-                    value={isbn}
-                    onChange={(e) => setIsbn(e.target.value)}
-                    style={{
-                      width: '100%',
-                      padding: '10px',
-                      border: '2px solid #95a5a6',
-                      borderRadius: '5px',
-                      fontSize: '16px'
-                    }}
-                  />
-                </div>
-                <div className="col-3" >
-                  <label style={{ fontWeight: 'bold', color: '#2c3e50', display: 'block', marginBottom: '5px' }}>
-                    Seña
-                  </label>
-                  <input
-                    type="text"
-                    value={seña}
-                    onChange={(e) => setSenia(e.target.value)}
-                    placeholder="$$"
-                    style={{
-                      width: '100%',
-                      padding: '10px',
-                      border: '2px solid #95a5a6',
-                      borderRadius: '5px',
-                      fontSize: '16px'
-                    }}
-                  />
-                </div>
-              </div>
-              <div className="col-12 pb-4" >
-                <label style={{ fontWeight: 'bold', color: '#2c3e50', display: 'block', marginBottom: '5px' }}>
-                  Comentario
-                </label>
-                <input
-                  type="text"
-                  value={comentario}
-                  onChange={(e) => setComentario(e.target.value)}
-                  placeholder=""
-                  style={{
-                    width: '100%',
-                    padding: '10px',
-                    border: '2px solid #95a5a6',
-                    borderRadius: '5px',
-                    fontSize: '16px'
-                  }}
-                />
-              </div>
+
+
+
+          <div className="row g-3 mb-3">
+            <div className="col-6 col-md-1">
+              <label className="fw-bold text-black d-block mb-1">Cantidad</label>
+              <input
+                type="number"
+                min="1"
+                value={cantidad}
+                onChange={(e) => setCantidad(Number(e.target.value))}
+                className="form-control"
+                style={{
+                  width: '100%',
+                  padding: '10px',
+                  border: '2px solid #95a5a6',
+                  borderRadius: '5px',
+                  fontSize: '20px',
+
+                }}
+              />
+            </div>
+            <div className="col-6 col-md-2">
+              <label className="fw-bold text-black d-block mb-1">Fecha</label>
+              <input
+                type="text"
+                value={fecha}
+                onChange={(e) => setFecha(e.target.value)}
+                placeholder="DD/MM/YYYY"
+                className="form-control"
+                style={{
+                  width: '100%',
+                  padding: '10px',
+                  border: '2px solid #95a5a6',
+                  borderRadius: '5px',
+                  fontSize: '20px',
+                  color: 'black'
+                }}
+              />
+            </div>
+            <div className="col-6 col-md-2">
+              <label className="fw-bold text-black d-block mb-1">ISBN</label>
+              <input
+                type="text"
+                value={isbn}
+                onChange={(e) => setIsbn(e.target.value)}
+                className="form-control"
+                style={{
+                  width: '100%',
+                  padding: '10px',
+                  border: '2px solid #95a5a6',
+                  borderRadius: '5px',
+                  fontSize: '20px',
+                  color: 'black'
+                }}
+              />
+            </div>
+            <div className="col-6 col-md-1">
+              <label className="fw-bold text-black d-block mb-1">Seña</label>
+              <input
+                type="text"
+                value={formatNumberWithDots(seña)}
+                onChange={(e) => setSenia(e.target.value)}
+                placeholder="$$"
+                className="form-control"
+                style={{
+                  width: '100%',
+                  padding: '10px',
+                  border: '2px solid #95a5a6',
+                  borderRadius: '5px',
+                  fontSize: '20px',
+                  color: 'black'
+                }}
+              />
+            </div>
+
+            {/* Comentario en fila propia, ancho total */}
+            <div className="col-12 col-md-6">
+              <label className="fw-bold text-black d-block mb-1">Comentario</label>
+              <input
+                type="text"
+                value={comentario}
+                onChange={(e) => setComentario(e.target.value)}
+                placeholder=""
+                className="form-control"
+                style={{
+                  width: '100%',
+                  padding: '10px',
+                  border: '2px solid #95a5a6',
+                  borderRadius: '5px',
+                  fontSize: '20px',
+                  color: 'black'
+                }}
+              />
             </div>
           </div>
+
+
+
 
           <div style={{ display: 'flex', gap: '10px', justifyContent: 'center', flexWrap: 'wrap' }}>
             <button
@@ -564,6 +596,7 @@ const PedidoForm = () => {
                 border: 'none',
                 padding: '12px 24px',
                 borderRadius: '5px',
+                fontWeight: 'bold',
                 fontSize: '16px',
                 cursor: loading ? 'not-allowed' : 'pointer',
                 opacity: loading ? 0.6 : 1
@@ -580,7 +613,8 @@ const PedidoForm = () => {
                 padding: '12px 24px',
                 borderRadius: '5px',
                 fontSize: '16px',
-                cursor: 'pointer'
+                cursor: 'pointer',
+                fontWeight: 'bold'
               }}
             >
               Imprimir Boleta Cliente
@@ -592,6 +626,7 @@ const PedidoForm = () => {
                 color: 'white',
                 border: 'none',
                 padding: '12px 24px',
+                fontWeight: 'bold',
                 borderRadius: '5px',
                 fontSize: '16px',
                 cursor: 'pointer'
@@ -608,6 +643,7 @@ const PedidoForm = () => {
                 padding: '12px 24px',
                 borderRadius: '5px',
                 fontSize: '16px',
+                fontWeight: 'bold',
                 cursor: 'pointer'
               }}
             >
@@ -657,7 +693,7 @@ const PedidoForm = () => {
                     <strong>Fecha:</strong> <span className="valor">{fecha}</span>
                   </div>
                   <div className="campo">
-                    <strong>Seña:</strong> <span className="valor">{seña}</span>
+                    <strong>Seña:</strong> <span className="valor">$ {formatNumberWithDots(seña.replace(/\D/g, ''))}</span>
                   </div>
                   <div className="campo">
                     <strong>Comentario:</strong> <span className="valor">{comentario}</span>
@@ -1136,7 +1172,7 @@ const PedidoForm = () => {
           </div>
         )}
       </div>
-    </div>
+    </div >
   );
 };
 

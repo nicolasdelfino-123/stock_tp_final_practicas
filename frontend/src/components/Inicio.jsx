@@ -1,6 +1,6 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import { Trash2, Search, PlusCircle,PackagePlus } from "lucide-react";
+import { Trash2, Search, PlusCircle, PackagePlus } from "lucide-react";
 
 const Inicio = () => {
   const navigate = useNavigate();
@@ -62,63 +62,63 @@ const Inicio = () => {
         }}
       >
         <div>
-        <div className="d-flex flex-wrap justify-content-center gap-5">
-          <button
-            onClick={() => navigate("/bajarlibro")}
-            className="btn btn-danger btn-lg d-flex align-items-center gap-2 px-4 py-4 btn-futurista"
-          >
-            <Trash2 size={45} />
-            <span>Bajar Libro</span>
-          </button>
+          <div className="d-flex flex-wrap justify-content-center gap-5">
+            <button
+              onClick={() => navigate("/bajarlibro")}
+              className="btn btn-danger btn-lg d-flex align-items-center gap-2 px-4 py-4 btn-futurista"
+            >
+              <Trash2 size={45} />
+              <span>Bajar Libro</span>
+            </button>
 
-          <button
-            onClick={() => navigate("/buscarlibro")}
-            className="btn btn-primary btn-lg d-flex align-items-center gap-2 px-4 py-3 btn-futurista"
-          >
-            <Search size={45} />
-            <span>Buscar Libro</span>
-          </button>
+            <button
+              onClick={() => navigate("/buscarlibro")}
+              className="btn btn-primary btn-lg d-flex align-items-center gap-2 px-4 py-3 btn-futurista"
+            >
+              <Search size={45} />
+              <span>Buscar Libro</span>
+            </button>
 
-          <button
-            onClick={() => navigate("/agregarlibro")}
-            className="btn btn-success btn-lg d-flex align-items-center gap-2 px-4 py-3 btn-futurista"
-          >
-            <PlusCircle size={45} />
-            <span>Agregar Libro</span>
-          </button>
+            <button
+              onClick={() => navigate("/agregarlibro")}
+              className="btn btn-success btn-lg d-flex align-items-center gap-2 px-4 py-3 btn-futurista"
+            >
+              <PlusCircle size={45} />
+              <span>Agregar Libro</span>
+            </button>
           </div>
-         
+
           <div className="d-flex justify-content-center align-items-center mt-5" style={{ height: "200px" }}>
             <button
               onClick={() => navigate("/faltantes")}
               className="btn btn-warning btn-lg d-flex align-items-center justify-content-center gap-2 px-4 py-3 btn-futurista m-5"
-             style={{
-                      borderRadius: "50px",  // un valor alto que redondea mucho sin cortar
-                      padding: "10px 30px",  // más padding horizontal para el texto
-                      minWidth: "150px",
-                         
-                    }}
+              style={{
+                borderRadius: "50px",  // un valor alto que redondea mucho sin cortar
+                padding: "10px 30px",  // más padding horizontal para el texto
+                minWidth: "150px",
+
+              }}
             >
-              <PackagePlus size={45} color="black"/>
-              <span style={{color:"black"}}>Faltantes</span>
+              <PackagePlus size={45} color="black" />
+              <span style={{ color: "black" }}>Faltantes</span>
             </button>
 
-              <button
-                  onClick={() => navigate("/pedidos")}
-                  className="btn btn-warning btn-lg d-flex align-items-center justify-content-center gap-2 px-4 py-3 btn-futurista m-5"
-                  style={{
-                          borderRadius: "50px",  // un valor alto que redondea mucho sin cortar
-                          padding: "10px 30px",  // más padding horizontal para el texto
-                          minWidth: "150px",
-                            
-                        }}
-                >
-              <PackagePlus size={45} color="black"/>
-              <span style={{color:"black"}}>Pedidos libros</span>
+            <button
+              onClick={() => navigate("/pedidos")}
+              className="btn btn-warning btn-lg d-flex align-items-center justify-content-center gap-2 px-4 py-3 btn-futurista m-5"
+              style={{
+                borderRadius: "50px",  // un valor alto que redondea mucho sin cortar
+                padding: "10px 30px",  // más padding horizontal para el texto
+                minWidth: "150px",
+
+              }}
+            >
+              <PackagePlus size={45} color="black" />
+              <span style={{ color: "black" }}>Pedidos libros</span>
             </button>
 
-         </div>
-          
+          </div>
+
         </div>
       </div>
     </>
