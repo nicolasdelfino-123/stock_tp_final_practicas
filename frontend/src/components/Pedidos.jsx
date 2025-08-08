@@ -13,6 +13,7 @@ const PedidoForm = () => {
   const [isbn, setIsbn] = useState("");
   const [comentario, setComentario] = useState("");
   const [fecha, setFecha] = useState(new Date().toLocaleDateString('es-AR'));
+  const [terminoBusqueda, setTerminoBusqueda] = useState("");
   const [todosLosPedidos, setTodosLosPedidos] = useState([]);
   const [pedidosFiltrados, setPedidosFiltrados] = useState([]);
   const [showPedidos, setShowPedidos] = useState(false);
@@ -59,41 +60,104 @@ const PedidoForm = () => {
     const contenido = imprimirRef.current.innerHTML;
     const ventana = window.open('', '_blank');
 
-    ventana.document.open();
     ventana.document.write(`
-      <html>
-        <head>
-          <title>Pedido - Librería Charles</title>
-          <style>
-            body { font-family: Arial, sans-serif; margin: 20px; }
-            .logo-container { text-align: center; margin-bottom: 30px; }
-            .logo { width: 80px; height: auto; }
-            .titulo-libreria { color: #2c3e50; margin: 10px 0; }
-            .pedido-container { border: 2px solid #34495e; border-radius: 10px; margin: 20px 0; padding: 20px; background: #f8f9fa; }
-            .destinatario { background: #e3f2fd; padding: 15px; border-radius: 8px; border-left: 4px solid #1976d2; }
-            .campo { margin: 10px 0; }
-            .campo strong { color: #2c3e50; }
-            .valor { color: #34495e; font-weight: 500; }
-            @media print {
-              .pedido-container { page-break-inside: avoid; }
+    <html>
+      <head>
+        <title>Pedido - Librería Charles</title>
+        <style>
+          body { 
+            font-family: Arial, sans-serif; 
+            margin: 0;
+            padding: 0;
+          }
+          .page-container {
+            width: 100%;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+          }
+          .copias-container {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            page-break-inside: avoid;
+          }
+          .logo-container { 
+            text-align: center; 
+            margin-bottom: 10px;
+          }
+          .pedido-container {
+            border: 2px solid #34495e; 
+            border-radius: 10px; 
+            margin: 10px 0;
+            padding: 15px;
+            background: #f8f9fa;
+            flex: 1;
+            page-break-inside: avoid;
+          }
+          .destinatario { 
+            background: #e3f2fd; 
+            padding: 10px;
+            border-radius: 8px; 
+            border-left: 4px solid #1976d2;
+            margin-bottom: 10px;
+          }
+          .campo { 
+            margin: 8px 0; 
+            font-size: 14px;
+          }
+          .campo strong { 
+            color: #2c3e50; 
+          }
+          .valor { 
+            color: #34495e; 
+            font-weight: 500; 
+          }
+          @media print {
+            body {
+              margin: 0;
+              padding: 0;
             }
-          </style>
-        </head>
-        <body>
-          ${contenido}
-          <script>
-            window.onload = function () {
-              window.focus();
+            .page-container {
+              height: auto;
+            }
+            .pedido-container {
+              page-break-inside: avoid;
+              break-inside: avoid;
+            }
+          }
+        </style>
+      </head>
+      <body>
+        <div class="page-container">
+          <div class="copias-container">
+            ${contenido}
+          </div>
+        </div>
+        <script>
+          window.onload = function() {
+            // Ajustar tamaño de fuentes si es necesario
+            const pedidoContainers = document.querySelectorAll('.pedido-container');
+            const pageHeight = window.innerHeight;
+            const contentHeight = document.querySelector('.copias-container').scrollHeight;
+            
+            if (contentHeight > pageHeight * 0.9) {
+              const scaleFactor = (pageHeight * 0.9) / contentHeight;
+              document.body.style.transform = 'scale(' + scaleFactor + ')';
+              document.body.style.transformOrigin = 'top center';
+            }
+            
+            setTimeout(() => {
               window.print();
               window.close();
-            };
-          </script>
-        </body>
-      </html>
-    `);
+            }, 300);
+          };
+        </script>
+      </body>
+    </html>
+  `);
     ventana.document.close();
   };
-
   const handleGuardar = async () => {
     if (!nombreCliente || !tituloLibro || !autorLibro || !seña) {
       alert("Por favor complete todos los campos obligatorios");
@@ -124,6 +188,12 @@ const PedidoForm = () => {
 
       if (result.success) {
         alert(`Pedido ${editandoId ? 'actualizado' : 'guardado'} con éxito`);
+        if (!editandoId) { // Solo si es un pedido nuevo
+          setUltimaImpresion(prev => ({
+            ...prev,
+            newPedidosCount: (prev?.newPedidosCount || 0) + 1
+          }));
+        }
         setEditandoId(null);
         await cargarPedidos();
       } else {
@@ -182,41 +252,44 @@ const PedidoForm = () => {
     });
 
     ventana.document.write(`
-      <html>
-        <head>
-          <title>Todos los Pedidos - Librería Charles</title>
-          <style>
-            body { font-family: Arial, sans-serif; margin: 20px; }
-            .header { text-align: center; margin-bottom: 30px; }
-            .logo { width: 80px; height: auto; }
-            .titulo { color: #2c3e50; margin: 10px 0; }
-            table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-            th, td { border: 1px solid #ddd; padding: 12px; text-align: left; }
-            th { background-color: #3498db; color: white; font-weight: bold; }
-            tr:nth-child(even) { background-color: #f2f2f2; }
-            tr:hover { background-color: #e8f4fd; }
-          </style>
-        </head>
-        <body>
-          <div class="header">
-            <h2 class="titulo">Pedidos Librería Charles</h2>
-            
-            <h5>Fecha de impresión: ${formatearFechaArgentina(new Date())}</h5>
-          </div>
-          ${tablaClonada.outerHTML}
-        </body>
-      </html>
-    `);
+    <html>
+      <head>
+        <title>Todos los Pedidos - Librería Charles</title>
+        <style>
+          body { font-family: Arial, sans-serif; margin: 20px; }
+          .header { text-align: center; margin-bottom: 30px; }
+          .logo { width: 80px; height: auto; }
+          .titulo { color: #2c3e50; margin: 10px 0; }
+          table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+          th, td { border: 1px solid #ddd; padding: 12px; text-align: left; }
+          th { background-color: #3498db; color: white; font-weight: bold; }
+          tr:nth-child(even) { background-color: #f2f2f2; }
+          tr:hover { background-color: #e8f4fd; }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <h2 class="titulo">Pedidos Librería Charles</h2>
+          <h5>Fecha de impresión: ${formatearFechaArgentina(new Date())}</h5>
+        </div>
+        ${tablaClonada.outerHTML}
+      </body>
+    </html>
+  `);
     ventana.document.close();
 
-    // Registrar última impresión
+    // --- NUEVA PARTE MODIFICADA ---
     const ultimoPedido = pedidosFiltrados[0];
     setUltimaImpresion({
-      fecha: new Date().toLocaleDateString('es-AR'),
+      fecha: new Date().toLocaleString('es-AR'),
       libro: ultimoPedido.titulo,
       autor: ultimoPedido.autor,
-      isbn: ultimoPedido.isbn || "N/A"
+      isbn: ultimoPedido.isbn || "N/A",
+      newPedidosCount: 0, // Reiniciamos contador
+      lastPrinted: new Date().getTime(), // Timestamp exacto
+      ultimoImpresoId: ultimoPedido.id // Guardamos el ID del último pedido impreso 
     });
+    // --- FIN DE MODIFICACIÓN ---
 
     ventana.print();
   };
@@ -245,39 +318,43 @@ const PedidoForm = () => {
 
     const ventana = window.open('', '_blank');
     ventana.document.write(`
-      <html>
-        <head>
-          <title>Pedidos Ricardo Delfino - Librería Charles</title>
-          <style>
-            body { font-family: Arial, sans-serif; margin: 20px; }
-            .header { text-align: center; margin-bottom: 30px; }
-            .titulo { color: #2c3e50; margin: 10px 0; }
-            table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-            th, td { border: 1px solid #ddd; padding: 12px; text-align: left; }
-            th { background-color: #6c757d; color: white; font-weight: bold; }
-            tr:nth-child(even) { background-color: #f2f2f2; }
-          </style>
-        </head>
-        <body>
-          <div class="header">
-            <h2 class="titulo">Librería Charles</h2>
-            <h3>Las Varillas, Córdoba - 9 de julio 346 </h3>
-            <h4>Teléfonos: 03533-420183 / Móvil: 03533-682652<h4>
-          </div>
-          ${tablaClonada.outerHTML}
-        </body>
-      </html>
-    `);
+    <html>
+      <head>
+        <title>Pedidos Ricardo Delfino - Librería Charles</title>
+        <style>
+          body { font-family: Arial, sans-serif; margin: 20px; }
+          .header { text-align: center; margin-bottom: 30px; }
+          .titulo { color: #2c3e50; margin: 10px 0; }
+          table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+          th, td { border: 1px solid #ddd; padding: 12px; text-align: left; }
+          th { background-color: #6c757d; color: white; font-weight: bold; }
+          tr:nth-child(even) { background-color: #f2f2f2; }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <h2 class="titulo">Librería Charles</h2>
+          <h3>Las Varillas, Córdoba - 9 de julio 346 </h3>
+          <h4>Teléfonos: 03533-420183 / Móvil: 03533-682652<h4>
+        </div>
+        ${tablaClonada.outerHTML}
+      </body>
+    </html>
+  `);
     ventana.document.close();
 
-    // Registrar última impresión
+    // --- NUEVA PARTE MODIFICADA ---
     const ultimoPedido = pedidosFiltrados[pedidosFiltrados.length - 1];
     setUltimaImpresion({
-      fecha: new Date().toLocaleDateString('es-AR'),
+      fecha: new Date().toLocaleString('es-AR'),
       libro: ultimoPedido.titulo,
       autor: ultimoPedido.autor,
-      isbn: ultimoPedido.isbn
+      isbn: ultimoPedido.isbn,
+      newPedidosCount: 0, // Reiniciamos contador
+      lastPrinted: new Date().getTime(), // Timestamp exacto
+      ultimoImpresoId: ultimoPedido.id
     });
+    // --- FIN DE MODIFICACIÓN ---
 
     ventana.print();
   };
@@ -285,19 +362,88 @@ const PedidoForm = () => {
   const handleEditarPedido = async (id) => {
     const pedido = todosLosPedidos.find(p => p.id === id);
     if (pedido) {
-      navigate("/pedidos");
+      // 1. Cerrar el modal de pedidos primero
+      setShowPedidos(false);
+
+      // 2. Esperar un momento para que se cierre el modal
+      await new Promise(resolve => setTimeout(resolve, 100));
+
+      // 3. Llenar los datos del formulario
       setNombreCliente(pedido.cliente_nombre);
       setTituloLibro(pedido.titulo);
       setAutorLibro(pedido.autor);
       setCantidad(pedido.cantidad || 1);
       setFecha(formatearFechaArgentina(pedido.fecha));
-      setSenia(pedido.seña || "");
+      setSenia(pedido.seña ? pedido.seña.toString() : "");
       setComentario(pedido.comentario || "");
-      setEditandoId(id);
       setIsbn(pedido.isbn || "");
+      setEditandoId(id);
 
+      // 4. Navegar al formulario (si es necesario)
+      navigate("/pedidos"); // Asegúrate que esta ruta sea correcta para tu formulario
 
+      // 5. Hacer scroll al formulario para mejor experiencia de usuario
+      window.scrollTo({
+        top: 0,
+        behavior: 'smooth'
+      });
+    }
+  };
 
+  const handleImprimirDesdeUltimaImpresion = async () => {
+    if (!ultimaImpresion?.lastPrinted) {
+      alert("No hay registro de última impresión");
+      return;
+    }
+
+    setLoading(true); // Activar estado de carga
+
+    try {
+      // 1. Obtener pedidos actualizados del servidor
+      const result = await actions.obtenerPedidos();
+      if (!result.success) {
+        alert("Error al cargar pedidos");
+        return;
+      }
+
+      // 2. Filtrar pedidos posteriores a la última impresión
+      const pedidosPosteriores = result.pedidos.filter(pedido => {
+        const fechaPedido = new Date(pedido.fecha).getTime();
+        return fechaPedido > ultimaImpresion.lastPrinted;
+      });
+
+      if (pedidosPosteriores.length === 0) {
+        alert("No hay nuevos pedidos desde la última impresión");
+        return;
+      }
+
+      // 3. Actualizar lista filtrada
+      setPedidosFiltrados(pedidosPosteriores);
+
+      // 4. Esperar breve momento para que React actualice el DOM
+      await new Promise(resolve => setTimeout(resolve, 300));
+
+      // 5. Ejecutar la impresión
+      handleImprimirParaRicardo();
+
+      // 6. Actualizar estado de última impresión (conservando el ID original)
+      setUltimaImpresion(prev => ({
+        ...prev,
+        fecha: new Date().toLocaleString('es-AR'),
+        newPedidosCount: 0,
+        lastPrinted: new Date().getTime(),
+        // Mantenemos el libro/autor/isbn original del último impreso
+        libro: prev.libro,
+        autor: prev.autor,
+        isbn: prev.isbn,
+        ultimoImpresoId: prev.ultimoImpresoId
+      }));
+
+    } catch (error) {
+      console.error("Error en impresión desde última:", error);
+      alert("Ocurrió un error al procesar la impresión");
+    } finally {
+      setLoading(false); // Desactivar carga independientemente del resultado
     }
   };
 
@@ -379,6 +525,18 @@ const PedidoForm = () => {
   };
 
 
+  const filtrarPorBusqueda = (pedidos) => {
+    if (!terminoBusqueda) return pedidos;
+
+    const termino = terminoBusqueda.toLowerCase();
+    return pedidos.filter(pedido =>
+    (pedido.cliente_nombre?.toLowerCase().includes(termino) ||
+      (pedido.titulo?.toLowerCase().includes(termino)) ||
+      (pedido.autor?.toLowerCase().includes(termino)) ||
+      (pedido.isbn?.toLowerCase().includes(termino))
+    ));
+  };
+
   const handleVerTodosLosPedidos = async () => {
     setLoading(true);
     try {
@@ -397,6 +555,14 @@ const PedidoForm = () => {
   };
 
   const formatNumberWithDots = (value) => {
+    // Si es número, convertirlo a string
+    if (typeof value === 'number') {
+      value = value.toString();
+    }
+    // Si no es string, devolver vacío
+    if (typeof value !== 'string') {
+      return '';
+    }
     // Eliminar todo lo que no sea dígito
     const numericValue = value.replace(/\D/g, '');
     // Formatear con puntos cada 3 dígitos desde el final
@@ -413,7 +579,7 @@ const PedidoForm = () => {
 
   const fondoURL = "/fondo-3.jpg"
   const fondoURL2 = "/fondo-22.jpg"
-
+  const pedidosMostrados = filtrarPorBusqueda(pedidosFiltrados);
   return (
     <div style={{
       minHeight: '100vh',
@@ -426,10 +592,31 @@ const PedidoForm = () => {
       >
 
         <div style={{ textAlign: 'center', marginBottom: '30px' }}>
+          <div className="d-flex ">
+            <button
+              type="button"
+              className="btn"
+              onClick={() => navigate("/")}
+              style={{
+                borderRadius: "8px",
+                fontWeight: "600",
+                padding: "10px 20px",
+                boxShadow: "0 4px 8px rgba(0,0,0,0.1)",
+                transition: "background-color 0.3s ease",
+                zIndex: 2,
+                backgroundColor: "#bb6f5eff",
+                fontWeight: 'bold',
 
-
-          <h2 style={{ color: 'white', marginTop: '10px' }}><strong>Formulario de Pedido</strong></h2>
-          {editandoId && <p style={{ color: '#ffc107', fontWeight: 'bold' }}>Editando pedido...</p>}
+              }}
+              onMouseEnter={(e) => (e.target.style.backgroundColor = "#495057")}
+              onMouseLeave={(e) => (e.target.style.backgroundColor = "")}
+            >
+              Volver al Inicio
+            </button>
+            <div style={{ textAlign: 'center', flexGrow: 1 }}>
+              <h2 style={{ color: 'white', marginTop: '10px' }}><strong>Formulario de Pedido</strong></h2>
+            </div>
+          </div>
           {ultimaImpresion && (
             <div style={{
               backgroundColor: '#e8f5e9',
@@ -440,9 +627,10 @@ const PedidoForm = () => {
             }}>
               <p style={{ margin: '0', color: '#2e7d32' }}>
                 <strong>Última impresión:</strong> {ultimaImpresion.fecha} -
-                <strong> Libro:</strong> {ultimaImpresion.libro} -
-                <strong> Autor:</strong> {ultimaImpresion.autor} -
-                <strong> ISBN:</strong> {ultimaImpresion.isbn || 'N/A'}
+                <strong> Libro:</strong> {
+                  todosLosPedidos.find(p => p.id === ultimaImpresion.ultimoImpresoId)?.titulo || ultimaImpresion.libro
+                } -
+                <strong> Pedidos nuevos:</strong> {ultimaImpresion.newPedidosCount || 0}
               </p>
             </div>
           )}
@@ -574,7 +762,7 @@ const PedidoForm = () => {
               <input
                 type="text"
                 value={formatNumberWithDots(seña)}
-                onChange={(e) => setSenia(e.target.value)}
+                onChange={(e) => setSenia(e.target.value.replace(/\D/g, ''))}
                 placeholder="$$"
                 className="form-control"
                 style={{
@@ -889,6 +1077,31 @@ const PedidoForm = () => {
                 >
                   Mostrar Todos
                 </button>
+                <button
+                  onClick={handleImprimirDesdeUltimaImpresion}
+                  style={{
+                    backgroundColor: '#9c27b0',
+                    color: 'white',
+                    border: 'none',
+                    padding: '10px 20px',
+                    borderRadius: '5px',
+                    cursor: 'pointer'
+                  }}
+                >
+                  Imprimir desde última impresión
+                </button>
+                <input
+                  type="text"
+                  placeholder="🔍 Cliente, libro, autor..."
+                  value={terminoBusqueda}
+                  onChange={(e) => setTerminoBusqueda(e.target.value)}
+                  style={{
+                    padding: '8px 12px',
+                    borderRadius: '4px',
+                    border: '2px solid black',
+                    width: '250px'
+                  }}
+                />
               </div>
 
               <div style={{ overflowX: 'auto' }}>
@@ -914,53 +1127,43 @@ const PedidoForm = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {pedidosFiltrados.length > 0 ? (
-                      pedidosFiltrados.map((pedido, idx) => (
+                    {filtrarPorBusqueda(pedidosFiltrados).length > 0 ? (
+                      filtrarPorBusqueda(pedidosFiltrados).map((pedido, idx) => (
                         <tr key={pedido.id || idx} style={{
                           backgroundColor: idx % 2 === 0 ? '#f8f9fa' : 'white'
                         }}>
                           <td style={{
-                            padding: '12px', border: '1px solid #adacac', padding: '12px', border: '1px solid #adacac', width: '100px',            // ancho fijo
-                            maxWidth: '180px',         // opcional, refuerza el límite
-                            wordWrap: 'break-word',   // permite cortar palabras si son largas
-                            whiteSpace: 'normal',     // permite saltos de línea
-                            overflowWrap: 'break-word'
+                            padding: '12px', border: '1px solid #adacac', width: '100px',
+                            maxWidth: '180px', wordWrap: 'break-word',
+                            whiteSpace: 'normal', overflowWrap: 'break-word'
                           }}>
                             {pedido.cliente_nombre}
                           </td>
                           <td style={{
-                            padding: '12px', border: '1px solid #adacac', padding: '12px', border: '1px solid #adacac', width: '100px',            // ancho fijo
-                            maxWidth: '180px',         // opcional, refuerza el límite
-                            wordWrap: 'break-word',   // permite cortar palabras si son largas
-                            whiteSpace: 'normal',     // permite saltos de línea
-                            overflowWrap: 'break-word'
+                            padding: '12px', border: '1px solid #adacac', width: '100px',
+                            maxWidth: '180px', wordWrap: 'break-word',
+                            whiteSpace: 'normal', overflowWrap: 'break-word'
                           }}>
                             {pedido.titulo}
                           </td>
                           <td style={{
-                            padding: '12px', border: '1px solid #adacac', padding: '12px', border: '1px solid #adacac', width: '100px',            // ancho fijo
-                            maxWidth: '180px',         // opcional, refuerza el límite
-                            wordWrap: 'break-word',   // permite cortar palabras si son largas
-                            whiteSpace: 'normal',     // permite saltos de línea
-                            overflowWrap: 'break-word'
+                            padding: '12px', border: '1px solid #adacac', width: '100px',
+                            maxWidth: '180px', wordWrap: 'break-word',
+                            whiteSpace: 'normal', overflowWrap: 'break-word'
                           }}>
                             {pedido.autor}
                           </td>
                           <td style={{
-                            padding: '12px', border: '1px solid #adacac', padding: '12px', border: '1px solid #adacac', width: '100px',            // ancho fijo
-                            maxWidth: '100px',         // opcional, refuerza el límite
-                            wordWrap: 'break-word',   // permite cortar palabras si son largas
-                            whiteSpace: 'normal',     // permite saltos de línea
-                            overflowWrap: 'break-word'
+                            padding: '12px', border: '1px solid #adacac', width: '100px',
+                            maxWidth: '100px', wordWrap: 'break-word',
+                            whiteSpace: 'normal', overflowWrap: 'break-word'
                           }}>
                             {pedido.cantidad || 1}
                           </td>
                           <td style={{
-                            padding: '12px', border: '1px solid #adacac', padding: '12px', border: '1px solid #adacac', width: '100px',            // ancho fijo
-                            maxWidth: '180px',         // opcional, refuerza el límite
-                            wordWrap: 'break-word',   // permite cortar palabras si son largas
-                            whiteSpace: 'normal',     // permite saltos de línea
-                            overflowWrap: 'break-word'
+                            padding: '12px', border: '1px solid #adacac', width: '100px',
+                            maxWidth: '180px', wordWrap: 'break-word',
+                            whiteSpace: 'normal', overflowWrap: 'break-word'
                           }}>
                             {pedido.isbn || '-'}
                           </td>
@@ -971,11 +1174,9 @@ const PedidoForm = () => {
                             ${pedido.seña || 0}
                           </td>
                           <td style={{
-                            padding: '12px', border: '1px solid #adacac', width: '200px',            // ancho fijo
-                            maxWidth: '210px',         // opcional, refuerza el límite
-                            wordWrap: 'break-word',   // permite cortar palabras si son largas
-                            whiteSpace: 'normal',     // permite saltos de línea
-                            overflowWrap: 'break-word'
+                            padding: '12px', border: '1px solid #adacac', width: '200px',
+                            maxWidth: '210px', wordWrap: 'break-word',
+                            whiteSpace: 'normal', overflowWrap: 'break-word'
                           }}>
                             {pedido.comentario || '-'}
                           </td>
@@ -1020,7 +1221,10 @@ const PedidoForm = () => {
                             border: '1px solid #ddd'
                           }}
                         >
-                          {loading ? "Cargando pedidos..." : "No hay pedidos cargados"}
+                          {terminoBusqueda
+                            ? "No hay pedidos que coincidan con la búsqueda"
+                            : (loading ? "Cargando pedidos..." : "No hay pedidos cargados")
+                          }
                         </td>
                       </tr>
                     )}
