@@ -228,43 +228,97 @@ const PedidoForm = () => {
 
 
 
-  const handleImprimirTodos = () => {
-    if (pedidosFiltrados.length === 0) {
-      alert("No hay pedidos para imprimir");
-      return;
+ const handleImprimirTodos = () => {
+  if (pedidosFiltrados.length === 0) {
+    alert("No hay pedidos para imprimir");
+    return;
+  }
+
+  const tabla = document.getElementById('tabla-todos-pedidos');
+  const ventana = window.open('', '_blank');
+  const tablaClonada = tabla.cloneNode(true);
+
+  // Eliminar la última columna (acciones) de encabezados y filas
+  const encabezados = tablaClonada.querySelectorAll('th');
+  const filas = tablaClonada.querySelectorAll('tr');
+
+  // Índice de la última columna
+  const ultimaCol = encabezados.length - 1;
+
+  // Remover el th de la última columna
+  if (encabezados[ultimaCol]) {
+    encabezados[ultimaCol].remove();
+  }
+
+  // Remover la celda td correspondiente en cada fila (excepto la fila de encabezados)
+  filas.forEach(fila => {
+    const celdas = fila.querySelectorAll('td');
+    if (celdas.length > ultimaCol) {
+      celdas[ultimaCol].remove();
     }
+  });
 
-    const tabla = document.getElementById('tabla-todos-pedidos');
-    const ventana = window.open('', '_blank');
-    const tablaClonada = tabla.cloneNode(true);
-
-    // Elimina la columna de Acciones
-    const encabezados = tablaClonada.querySelectorAll('th');
-    const celdas = tablaClonada.querySelectorAll('td');
-    const columnasAEliminar = [8]; // Índice de Acciones
-    const cantidadColumnas = 9; // Total de columnas actuales
-
-    columnasAEliminar.forEach(index => {
-      if (encabezados[index]) encabezados[index].remove();
-      celdas.forEach((celda, i) => {
-        if (i % cantidadColumnas === index) celda.remove();
-      });
-    });
-
-    ventana.document.write(`
+  ventana.document.write(`
     <html>
       <head>
         <title>Todos los Pedidos - Librería Charles</title>
         <style>
-          body { font-family: Arial, sans-serif; margin: 20px; }
-          .header { text-align: center; margin-bottom: 30px; }
-          .logo { width: 80px; height: auto; }
-          .titulo { color: #2c3e50; margin: 10px 0; }
-          table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-          th, td { border: 1px solid #ddd; padding: 12px; text-align: left; }
-          th { background-color: #3498db; color: white; font-weight: bold; }
-          tr:nth-child(even) { background-color: #f2f2f2; }
-          tr:hover { background-color: #e8f4fd; }
+          body {
+            font-family: Arial, sans-serif;
+            margin: 10px;
+          }
+          .header {
+            text-align: center;
+            margin-bottom: 15px;
+          }
+          .titulo {
+            color: #2c3e50;
+            margin: 10px 0;
+          }
+          table {
+            border-collapse: collapse;
+            width: 100%;
+            table-layout: fixed;
+            font-size: 10px;
+          }
+          th, td {
+            border: 1px solid #ddd;
+            padding: 4px 6px;
+            text-align: left;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            white-space: normal;
+          }
+          th {
+            background-color: #3498db;
+            color: white;
+            font-weight: bold;
+          }
+          tr:nth-child(even) {
+            background-color: #f2f2f2;
+          }
+          tr:hover {
+            background-color: #e8f4fd;
+          }
+          @media print {
+            body {
+              margin: 0.5cm;
+            }
+            table {
+              font-size: 8pt;
+              width: 100%;
+              table-layout: fixed;
+              page-break-inside: auto;
+            }
+            th, td {
+              padding: 2px 4px;
+              white-space: normal;
+            }
+            tr {
+              page-break-inside: avoid;
+              page-break-after: auto;
+            }
+          }
         </style>
       </head>
       <body>
@@ -276,23 +330,22 @@ const PedidoForm = () => {
       </body>
     </html>
   `);
-    ventana.document.close();
+  ventana.document.close();
 
-    // --- NUEVA PARTE MODIFICADA ---
-    const ultimoPedido = pedidosFiltrados[0];
-    setUltimaImpresion({
-      fecha: new Date().toLocaleString('es-AR'),
-      libro: ultimoPedido.titulo,
-      autor: ultimoPedido.autor,
-      isbn: ultimoPedido.isbn || "N/A",
-      newPedidosCount: 0, // Reiniciamos contador
-      lastPrinted: new Date().getTime(), // Timestamp exacto
-      ultimoImpresoId: ultimoPedido.id // Guardamos el ID del último pedido impreso 
-    });
-    // --- FIN DE MODIFICACIÓN ---
+  const ultimoPedido = pedidosFiltrados[0];
+  setUltimaImpresion({
+    fecha: new Date().toLocaleString('es-AR'),
+    libro: ultimoPedido.titulo,
+    autor: ultimoPedido.autor,
+    isbn: ultimoPedido.isbn || "N/A",
+    newPedidosCount: 0,
+    lastPrinted: new Date().getTime(),
+    ultimoImpresoId: ultimoPedido.id
+  });
 
-    ventana.print();
-  };
+  ventana.print();
+};
+
 
   const handleImprimirParaRicardo = () => {
     if (pedidosFiltrados.length === 0) {
@@ -604,19 +657,21 @@ const PedidoForm = () => {
                 boxShadow: "0 4px 8px rgba(0,0,0,0.1)",
                 transition: "background-color 0.3s ease",
                 zIndex: 2,
-                backgroundColor: "#bb6f5eff",
+                backgroundColor: "#fcf00cff",
                 fontWeight: 'bold',
+                height: '50px',
 
               }}
-              onMouseEnter={(e) => (e.target.style.backgroundColor = "#495057")}
-              onMouseLeave={(e) => (e.target.style.backgroundColor = "")}
+              onMouseEnter={(e) => (e.target.style.backgroundColor = "#e4f00aff")}
+              onMouseLeave={(e) => (e.target.style.backgroundColor = "#f4df26ff")}
             >
               Volver al Inicio
             </button>
             <div style={{ textAlign: 'center', flexGrow: 1 }}>
-              <h2 style={{ color: 'white', marginTop: '10px' }}><strong>Formulario de Pedido</strong></h2>
+              <h2 style={{ color: 'white', marginTop: '10px', fontSize:"50px", fontWeight:"700px", textShadow: '4px 4px 22px rgba(0,0,0,0.9)' }}><strong>Formulario de Pedido</strong></h2>
             </div>
           </div>
+          
           {ultimaImpresion && (
             <div style={{
               backgroundColor: '#e8f5e9',
@@ -805,7 +860,7 @@ const PedidoForm = () => {
               onClick={handleGuardar}
               disabled={loading}
               style={{
-                backgroundColor: editandoId ? '#ffc107' : '#28a745',
+                backgroundColor: editandoId ? '#ffc107' : '#3cae23ff',
                 color: 'white',
                 border: 'none',
                 padding: '12px 24px',
@@ -821,7 +876,7 @@ const PedidoForm = () => {
             <button
               onClick={handleImprimir}
               style={{
-                backgroundColor: '#007bff',
+                backgroundColor: '#0c62beff',
                 color: 'white',
                 border: 'none',
                 padding: '12px 24px',
@@ -836,7 +891,7 @@ const PedidoForm = () => {
             <button
               onClick={handleVerPedidos}
               style={{
-                backgroundColor: '#17a2b8',
+                backgroundColor: '#0f4d57ff',
                 color: 'white',
                 border: 'none',
                 padding: '12px 24px',
@@ -851,7 +906,7 @@ const PedidoForm = () => {
             <button
               onClick={handleLimpiarFormulario}
               style={{
-                backgroundColor: '#dc3545',
+                backgroundColor: '#ec182dff',
                 color: 'white',
                 border: 'none',
                 padding: '12px 24px',
