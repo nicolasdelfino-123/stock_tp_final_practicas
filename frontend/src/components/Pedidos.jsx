@@ -327,10 +327,28 @@ const PedidoForm = () => {
     }
 
     try {
-      const desde = new Date(fechaDesde);
-      const hasta = new Date(fechaHasta);
+      // Convertir las fechas del input a formato DD/MM/YYYY
+      const parseInputDate = (dateStr) => {
+        const [year, month, day] = dateStr.split('-');
+        return `${day.padStart(2, '0')}/${month.padStart(2, '0')}/${year}`;
+      };
 
-      if (desde > hasta) {
+      // Convertir fechas a objetos Date ignorando la zona horaria
+      const createDate = (dateStr) => {
+        const [day, month, year] = dateStr.split('/');
+        return new Date(year, month - 1, day);
+      };
+
+      const desdeFormatted = parseInputDate(fechaDesde);
+      const hastaFormatted = parseInputDate(fechaHasta);
+
+      const desdeDate = createDate(desdeFormatted);
+      desdeDate.setHours(0, 0, 0, 0);
+
+      const hastaDate = createDate(hastaFormatted);
+      hastaDate.setHours(23, 59, 59, 999);
+
+      if (desdeDate > hastaDate) {
         alert("La fecha 'Desde' no puede ser mayor que la fecha 'Hasta'");
         return;
       }
@@ -338,12 +356,19 @@ const PedidoForm = () => {
       const result = await actions.obtenerPedidos();
       if (result.success) {
         const pedidosFiltrados = result.pedidos.filter(pedido => {
+          // Convertir fecha del pedido a objeto Date
           const fechaPedido = new Date(pedido.fecha);
-          return fechaPedido >= desde && fechaPedido <= hasta;
+          return fechaPedido >= desdeDate && fechaPedido <= hastaDate;
         });
 
         setPedidosFiltrados(pedidosFiltrados);
-        alert(`Se encontraron ${pedidosFiltrados.length} pedidos entre las fechas seleccionadas`);
+
+        // Mostrar alerta con las fechas en formato DD/MM/YYYY
+        if (desdeFormatted === hastaFormatted) {
+          alert(`Se encontraron ${pedidosFiltrados.length} pedidos para el día ${desdeFormatted}`);
+        } else {
+          alert(`Se encontraron ${pedidosFiltrados.length} pedidos entre ${desdeFormatted} y ${hastaFormatted}`);
+        }
       } else {
         alert("Error al cargar pedidos para filtrar");
       }
@@ -352,6 +377,7 @@ const PedidoForm = () => {
       alert("Error al filtrar por fecha");
     }
   };
+
 
   const handleVerTodosLosPedidos = async () => {
     setLoading(true);
