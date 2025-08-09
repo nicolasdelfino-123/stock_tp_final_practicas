@@ -24,6 +24,9 @@ const PedidoForm = () => {
   const [ultimaImpresion, setUltimaImpresion] = useState(null);
   const [showHistorialCompleto, setShowHistorialCompleto] = useState(false);
   const imprimirRef = useRef();
+  const [ultimoNombreCliente, setUltimoNombreCliente] = useState("");
+
+  const [nombreInput, setNombreInput] = useState(''); // para controlar el input
 
   const formatearFechaArgentina = (fecha) => {
     const date = new Date(fecha);
@@ -163,6 +166,7 @@ const PedidoForm = () => {
       alert("Por favor complete todos los campos obligatorios");
       return;
     }
+    setUltimoNombreCliente(nombreCliente);
 
     const pedidoData = {
       nombreCliente,
@@ -631,7 +635,14 @@ const PedidoForm = () => {
 
 
   const fondoURL = "/fondo-3.jpg"
-  
+
+  const handleCheckboxChange = (e) => {
+    if (e.target.checked && ultimoNombreCliente) {
+      setNombreCliente(ultimoNombreCliente);
+    } else {
+      setNombreCliente("");
+    }
+  };
   return (
     <div style={{
       minHeight: '100vh',
@@ -684,9 +695,33 @@ const PedidoForm = () => {
 
           {/* Campos del formulario */}
           <div style={{ marginBottom: '20px' }}>
-            <label style={{ fontWeight: 'bold', color: 'black', display: 'block', marginBottom: '5px', fontSize: '22px', fontFamily:'Roboto' }}>
-              Nombre del Cliente:
-            </label>
+            <div className="d-flex justify-content-between align-items-center mb-3">
+              <label
+                value={nombreCliente}
+                style={{ fontWeight: 'bold', color: 'black', display: 'block', marginBottom: '5px', fontSize: '22px', fontFamily: 'Roboto' }}>
+                Nombre del Cliente:
+              </label>
+              <div className="d-flex align-items-center">
+
+
+                <label style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '10px' }}>
+                  <input
+                    type="checkbox"
+                    onChange={handleCheckboxChange}
+                    style={{
+                      width: '28px',
+                      height: '28px',
+                      cursor: 'pointer',
+                      accentColor: '#4caf50',
+                    }}
+                  />
+                  Usar nombre escrito
+                </label>
+
+
+              </div>
+
+            </div>
             <input
               type="text"
               value={nombreCliente}
@@ -699,13 +734,13 @@ const PedidoForm = () => {
                 borderRadius: '14px',
                 fontSize: '20px',
                 color: 'black',
-                  fontWeight: '700'
+                fontWeight: '700'
               }}
             />
           </div>
 
           <div style={{ marginBottom: '20px' }}>
-            <label style={{ fontWeight: 'bold', color: 'black', display: 'block', marginBottom: '5px', fontSize: "22px", fontFamily:'Roboto' }}>
+            <label style={{ fontWeight: 'bold', color: 'black', display: 'block', marginBottom: '5px', fontSize: "22px", fontFamily: 'Roboto' }}>
               Título del Libro
             </label>
             <input
@@ -719,13 +754,13 @@ const PedidoForm = () => {
                 border: '2px solid #95a5a6',
                 borderRadius: '14px',
                 fontSize: '20px',
-                  fontWeight: '700'
+                fontWeight: '700'
               }}
             />
           </div>
 
           <div style={{ marginBottom: '20px' }}>
-            <label style={{ fontWeight: 'bold', color: 'black', display: 'block', marginBottom: '5px', fontSize: "22px",fontFamily:'Roboto' }}>
+            <label style={{ fontWeight: 'bold', color: 'black', display: 'block', marginBottom: '5px', fontSize: "22px", fontFamily: 'Roboto' }}>
               Autor
             </label>
             <input
@@ -739,7 +774,7 @@ const PedidoForm = () => {
                 border: '2px solid #95a5a6',
                 borderRadius: '14px',
                 fontSize: '20px',
-                  fontWeight: '700'
+                fontWeight: '700'
               }}
             />
           </div>
@@ -748,7 +783,7 @@ const PedidoForm = () => {
 
           <div className="row g-3 mb-3">
             <div className="col-6 col-md-1">
-              <label className="fw-bold text-black d-block mb-1" style={{ fontSize: '22px',fontFamily:'Roboto' }}>Cantidad</label>
+              <label className="fw-bold text-black d-block mb-1" style={{ fontSize: '22px', fontFamily: 'Roboto' }}>Cantidad</label>
               <input
                 type="number"
                 min="1"
@@ -761,15 +796,15 @@ const PedidoForm = () => {
                   border: '2px solid #95a5a6',
                   borderRadius: '14px',
                   fontSize: '20px',
-                    fontWeight: '700',
-      
+                  fontWeight: '700',
+
 
 
                 }}
               />
             </div>
             <div className="col-6 col-md-2">
-              <label className="fw-bold text-black d-block mb-1" style={{ fontSize: '22px',fontFamily:'Roboto' }}>Fecha</label>
+              <label className="fw-bold text-black d-block mb-1" style={{ fontSize: '22px', fontFamily: 'Roboto' }}>Fecha</label>
               <input
                 type="text"
                 value={fecha}
@@ -783,13 +818,13 @@ const PedidoForm = () => {
                   borderRadius: '14px',
                   fontSize: '20px',
                   color: 'black',
-                    fontWeight: '700'
+                  fontWeight: '700'
 
                 }}
               />
             </div>
             <div className="col-6 col-md-2">
-              <label className="fw-bold text-black d-block mb-1" style={{ fontSize: '22px',fontFamily:'Roboto' }}>ISBN</label>
+              <label className="fw-bold text-black d-block mb-1" style={{ fontSize: '22px', fontFamily: 'Roboto' }}>ISBN</label>
               <input
                 type="text"
                 value={isbn}
@@ -803,12 +838,12 @@ const PedidoForm = () => {
                   borderRadius: '14px',
                   fontSize: '20px',
                   color: 'black',
-                    fontWeight: '700'
+                  fontWeight: '700'
                 }}
               />
             </div>
             <div className="col-6 col-md-1">
-              <label className="fw-bold text-black d-block mb-1" style={{ fontSize: '22px',fontFamily:'Roboto' }}>Seña</label>
+              <label className="fw-bold text-black d-block mb-1" style={{ fontSize: '22px', fontFamily: 'Roboto' }}>Seña</label>
               <input
                 type="text"
                 value={formatNumberWithDots(seña)}
@@ -822,14 +857,14 @@ const PedidoForm = () => {
                   borderRadius: '14px',
                   fontSize: '20px',
                   color: 'black',
-                    fontWeight: '700'
+                  fontWeight: '700'
                 }}
               />
             </div>
 
             {/* Comentario en fila propia, ancho total */}
             <div className="col-12 col-md-6">
-              <label className="fw-bold text-black d-block mb-1" style={{ fontSize: '22px',fontFamily:'Roboto' }}>Comentario</label>
+              <label className="fw-bold text-black d-block mb-1" style={{ fontSize: '22px', fontFamily: 'Roboto' }}>Comentario</label>
               <input
                 type="text"
                 value={comentario}
@@ -844,7 +879,7 @@ const PedidoForm = () => {
                   fontSize: '20px',
                   color: 'black',
                   fontWeight: '700'
-                 
+
                 }}
               />
             </div>
@@ -1080,7 +1115,7 @@ const PedidoForm = () => {
                   }}
                 >
                   <strong>Filtrar por Fecha</strong>
-                  
+
                 </button>
                 <button
                   onClick={handleVerTodosLosPedidos}
@@ -1098,7 +1133,7 @@ const PedidoForm = () => {
                 >
                   <strong>
 
-                  Ver Historial Completo
+                    Ver Historial Completo
                   </strong>
                 </button>
               </div>
@@ -1121,7 +1156,7 @@ const PedidoForm = () => {
                   }}
                 >
                   <strong>
-                  Imprimir Todos (Librería)
+                    Imprimir Todos (Librería)
 
                   </strong>
                 </button>
@@ -1138,7 +1173,7 @@ const PedidoForm = () => {
                 >
                   <strong>
 
-                  Imprimir Para Ricardo
+                    Imprimir Para Ricardo
                   </strong>
                 </button>
 
@@ -1159,7 +1194,7 @@ const PedidoForm = () => {
                 >
                   <strong>
 
-                  Mostrar Todos
+                    Mostrar Todos
                   </strong>
                 </button>
                 <button
@@ -1175,7 +1210,7 @@ const PedidoForm = () => {
                 >
                   <strong>
 
-                  Imprimir desde última impresión
+                    Imprimir desde última impresión
                   </strong>
                 </button>
                 <input
@@ -1190,14 +1225,14 @@ const PedidoForm = () => {
                     width: '250px'
                   }}
                 />
-                <span style={{ 
-  marginLeft: '10px', 
-  fontWeight: 'bold',
-  color: '#333',
-  alignSelf: 'center'
-}}>
-  Pedidos en página: {filtrarPorBusqueda(pedidosFiltrados).length}
-</span>
+                <span style={{
+                  marginLeft: '10px',
+                  fontWeight: 'bold',
+                  color: '#333',
+                  alignSelf: 'center'
+                }}>
+                  Pedidos en página: {filtrarPorBusqueda(pedidosFiltrados).length}
+                </span>
               </div>
 
               <div style={{ overflowX: 'auto' }}>
@@ -1238,41 +1273,41 @@ const PedidoForm = () => {
                           <td style={{
                             padding: '12px', border: '1px solid #adacac', width: '100px',
                             maxWidth: '180px', wordWrap: 'break-word',
-                            whiteSpace: 'normal', overflowWrap: 'break-word',color: 'black', fontWeight: 'bold'
+                            whiteSpace: 'normal', overflowWrap: 'break-word', color: 'black', fontWeight: 'bold'
                           }}>
                             {pedido.titulo}
                           </td>
                           <td style={{
                             padding: '12px', border: '1px solid #adacac', width: '100px',
                             maxWidth: '180px', wordWrap: 'break-word',
-                            whiteSpace: 'normal', overflowWrap: 'break-word',color: 'black', fontWeight: 'bold'
+                            whiteSpace: 'normal', overflowWrap: 'break-word', color: 'black', fontWeight: 'bold'
                           }}>
                             {pedido.autor}
                           </td>
                           <td style={{
                             padding: '12px', border: '1px solid #adacac', width: '100px',
                             maxWidth: '100px', wordWrap: 'break-word',
-                            whiteSpace: 'normal', overflowWrap: 'break-word',color: 'black', fontWeight: 'bold'
+                            whiteSpace: 'normal', overflowWrap: 'break-word', color: 'black', fontWeight: 'bold'
                           }}>
                             {pedido.cantidad || 1}
                           </td>
                           <td style={{
                             padding: '12px', border: '1px solid #adacac', width: '100px',
                             maxWidth: '180px', wordWrap: 'break-word',
-                            whiteSpace: 'normal', overflowWrap: 'break-word',color: 'black', fontWeight: 'bold'
+                            whiteSpace: 'normal', overflowWrap: 'break-word', color: 'black', fontWeight: 'bold'
                           }}>
                             {pedido.isbn || '-'}
                           </td>
-                          <td style={{ padding: '12px', border: '1px solid #adacac',color: 'black', fontWeight: 'bold' }}>
+                          <td style={{ padding: '12px', border: '1px solid #adacac', color: 'black', fontWeight: 'bold' }}>
                             {formatearFechaArgentina(pedido.fecha)}
                           </td>
-                          <td style={{ padding: '12px', border: '1px solid #adacac',color: 'black', fontWeight: 'bold' }}>
+                          <td style={{ padding: '12px', border: '1px solid #adacac', color: 'black', fontWeight: 'bold' }}>
                             ${pedido.seña || 0}
                           </td>
                           <td style={{
                             padding: '12px', border: '1px solid #adacac', width: '200px',
                             maxWidth: '210px', wordWrap: 'break-word',
-                            whiteSpace: 'normal', overflowWrap: 'break-word',color: 'black', fontWeight: 'bold'
+                            whiteSpace: 'normal', overflowWrap: 'break-word', color: 'black', fontWeight: 'bold'
                           }}>
                             {pedido.comentario || '-'}
                           </td>
@@ -1301,7 +1336,7 @@ const PedidoForm = () => {
                                 borderRadius: '3px',
                                 cursor: 'pointer',
                                 fontWeight: 'bold'
-                            
+
                               }}
                             >
                               Eliminar
@@ -1410,7 +1445,7 @@ const PedidoForm = () => {
                             maxWidth: '180px',         // opcional, refuerza el límite
                             wordWrap: 'break-word',   // permite cortar palabras si son largas
                             whiteSpace: 'normal',     // permite saltos de línea
-                            overflowWrap: 'break-word',color: 'black', fontWeight: 'bold'
+                            overflowWrap: 'break-word', color: 'black', fontWeight: 'bold'
                           }}>
                             {pedido.cliente_nombre}
                           </td>
@@ -1419,7 +1454,7 @@ const PedidoForm = () => {
                             maxWidth: '180px',         // opcional, refuerza el límite
                             wordWrap: 'break-word',   // permite cortar palabras si son largas
                             whiteSpace: 'normal',     // permite saltos de línea
-                            overflowWrap: 'break-word',color: 'black', fontWeight: 'bold'
+                            overflowWrap: 'break-word', color: 'black', fontWeight: 'bold'
                           }}>
                             {pedido.titulo}
                           </td>
@@ -1428,7 +1463,7 @@ const PedidoForm = () => {
                             maxWidth: '180px',         // opcional, refuerza el límite
                             wordWrap: 'break-word',   // permite cortar palabras si son largas
                             whiteSpace: 'normal',     // permite saltos de línea
-                            overflowWrap: 'break-word',color: 'black', fontWeight: 'bold'
+                            overflowWrap: 'break-word', color: 'black', fontWeight: 'bold'
                           }}>
                             {pedido.autor}
                           </td>
@@ -1437,7 +1472,7 @@ const PedidoForm = () => {
                             maxWidth: '180px',         // opcional, refuerza el límite
                             wordWrap: 'break-word',   // permite cortar palabras si son largas
                             whiteSpace: 'normal',     // permite saltos de línea
-                            overflowWrap: 'break-word',color: 'black', fontWeight: 'bold'
+                            overflowWrap: 'break-word', color: 'black', fontWeight: 'bold'
                           }}>
                             {pedido.cantidad || 1}
                           </td>
@@ -1446,7 +1481,7 @@ const PedidoForm = () => {
                             maxWidth: '180px',         // opcional, refuerza el límite
                             wordWrap: 'break-word',   // permite cortar palabras si son largas
                             whiteSpace: 'normal',     // permite saltos de línea
-                            overflowWrap: 'break-word',color: 'black', fontWeight: 'bold'
+                            overflowWrap: 'break-word', color: 'black', fontWeight: 'bold'
                           }}>
                             {pedido.isbn || "N/A"}
                           </td>
@@ -1455,7 +1490,7 @@ const PedidoForm = () => {
                             maxWidth: '180px',         // opcional, refuerza el límite
                             wordWrap: 'break-word',   // permite cortar palabras si son largas
                             whiteSpace: 'normal',     // permite saltos de línea
-                            overflowWrap: 'break-word',color: 'black', fontWeight: 'bold'
+                            overflowWrap: 'break-word', color: 'black', fontWeight: 'bold'
                           }}>
                             {formatearFechaArgentina(pedido.fecha)}
                           </td>
@@ -1464,7 +1499,7 @@ const PedidoForm = () => {
                             maxWidth: '180px',         // opcional, refuerza el límite
                             wordWrap: 'break-word',   // permite cortar palabras si son largas
                             whiteSpace: 'normal',     // permite saltos de línea
-                            overflowWrap: 'break-word',color: 'black', fontWeight: 'bold'
+                            overflowWrap: 'break-word', color: 'black', fontWeight: 'bold'
                           }}>
                             ${pedido.seña || 0}
                           </td>
@@ -1473,7 +1508,7 @@ const PedidoForm = () => {
                             maxWidth: '180px',         // opcional, refuerza el límite
                             wordWrap: 'break-word',   // permite cortar palabras si son largas
                             whiteSpace: 'normal',     // permite saltos de línea
-                            overflowWrap: 'break-word',color: 'black', fontWeight: 'bold'
+                            overflowWrap: 'break-word', color: 'black', fontWeight: 'bold'
                           }}>
                             {pedido.comentario || '-'}
                           </td>
