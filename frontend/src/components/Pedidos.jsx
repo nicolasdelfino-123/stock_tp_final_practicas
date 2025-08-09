@@ -22,7 +22,6 @@ const PedidoForm = () => {
   const [fechaDesde, setFechaDesde] = useState("");
   const [fechaHasta, setFechaHasta] = useState("");
   const [ultimaImpresion, setUltimaImpresion] = useState(null);
-  const [showHistorialCompleto, setShowHistorialCompleto] = useState(false);
   const imprimirRef = useRef();
   const [ultimoNombreCliente, setUltimoNombreCliente] = useState("");
 
@@ -263,92 +262,163 @@ const PedidoForm = () => {
     });
 
     ventana.document.write(`
-    <html>
-      <head>
-        <title>Todos los Pedidos - Librería Charles</title>
-        <style>
-          body {
-            font-family: Arial, sans-serif;
-            margin: 10px;
-          }
-          .header {
-            text-align: center;
-            margin-bottom: 15px;
-          }
-          .titulo {
-            color: #2c3e50;
-            margin: 10px 0;
-          }
-          table {
-            border-collapse: collapse;
-            width: 100%;
-            table-layout: fixed;
-            font-size: 10px;
-          }
-          th, td {
-            border: 1px solid #ddd;
-            padding: 4px 6px;
-            text-align: left;
-            word-wrap: break-word;
-            overflow-wrap: break-word;
-            white-space: normal;
-          }
-          th {
-            background-color: #3498db;
-            color: white;
-            font-weight: bold;
-          }
-          tr:nth-child(even) {
-            background-color: #f2f2f2;
-          }
-          tr:hover {
-            background-color: #e8f4fd;
-          }
-          @media print {
-            body {
-              margin: 0.5cm;
-            }
-            table {
-              font-size: 8pt;
-              width: 100%;
-              table-layout: fixed;
-              page-break-inside: auto;
-            }
-            th, td {
-              padding: 2px 4px;
-              white-space: normal;
-            }
-            tr {
-              page-break-inside: avoid;
-              page-break-after: auto;
-            }
-          }
-        </style>
-      </head>
-      <body>
-        <div class="header">
-          <h2 class="titulo">Pedidos Librería Charles</h2>
-          <h5>Fecha de impresión: ${formatearFechaArgentina(new Date())}</h5>
-        </div>
-        ${tablaClonada.outerHTML}
-      </body>
-    </html>
+  <html>
+  <head>
+    <title>Todos los Pedidos - Librería Charles</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        margin: 10px;
+      }
+      .header {
+        text-align: center;
+        margin-bottom: 15px;
+      }
+      .titulo {
+        color: #2c3e50;
+        margin: 10px 0;
+      }
+      table {
+        border-collapse: collapse;
+        width: 100%;
+        table-layout: fixed;
+        font-size: 10px;
+      }
+      th, td {
+        border: 1px solid black;
+        padding: 4px 6px;
+        text-align: left;
+        word-wrap: break-word;
+        overflow-wrap: break-word;
+        white-space: normal;
+      }
+      th {
+        background-color: white;
+        color: black;
+        font-weight: bold;
+        border: 1px solid black;
+      }
+
+      /* ********************************************** */
+      /* AJUSTES DE ANCHO DE COLUMNAS - MODIFICAR AQUÍ */
+      /* ********************************************** */
+      
+      /* Columna 1: Cliente - nth-child(1) */
+      th:nth-child(1), td:nth-child(1) {
+        width: 15% !important; /* Ajustar porcentaje según necesidad */
+      }
+      
+      /* Columna 2: Título - nth-child(2) */
+      th:nth-child(2), td:nth-child(2) {
+        width: 20% !important; /* Ajustar porcentaje según necesidad */
+      }
+      
+      /* Columna 3: Autor - nth-child(3) */
+      th:nth-child(3), td:nth-child(3) {
+        width: 15% !important; /* Ajustar porcentaje según necesidad */
+      }
+      
+      /* Columna 4: Cantidad - nth-child(4) */
+      th:nth-child(4), td:nth-child(4) {
+        width: 4% !important;  /* Columna más estrecha */
+        max-width: 50px;
+      }
+      
+      /* Columna 5: ISBN - nth-child(5) */
+      th:nth-child(5), td:nth-child(5) {
+        width: 10% !important; /* Ajustar porcentaje según necesidad */
+      }
+      
+      /* Columna 6: Fecha - nth-child(6) */
+      th:nth-child(6), td:nth-child(6) {
+        width: 8% !important; /* Ajustar porcentaje según necesidad */
+      }
+      
+      /* Columna 7: Seña - nth-child(7) */
+      th:nth-child(7), td:nth-child(7) {
+        width: 10% !important; /* Ajustar porcentaje según necesidad */
+      }
+      
+      /* Columna 8: Comentarios - nth-child(8) */
+      th:nth-child(8), td:nth-child(8) {
+        width: 18% !important; /* Columna más ancha */
+      }
+
+      tr:nth-child(even) {
+        background-color: #f2f2f2;
+      }
+      tr:hover {
+        background-color: #e8f4fd;
+      }
+      @media print {
+        body {
+          margin: 0.5cm;
+        }
+        table {
+          font-size: 8pt;
+          width: 100%;
+          table-layout: fixed;
+          page-break-inside: auto;
+        }
+        th, td {
+          padding: 2px 4px;
+          white-space: normal;
+          color: black !important;
+          border: 1px solid black !important;
+        }
+        th {
+          background-color: white !important;
+          -webkit-print-color-adjust: exact;
+          print-color-adjust: exact;
+        }
+        tr {
+          page-break-inside: avoid;
+          page-break-after: auto;
+        }
+        
+        /* ********************************************** */
+        /* AJUSTES DE IMPRESIÓN (opcional) */
+        /* ********************************************** */
+        th:nth-child(4), td:nth-child(4) {
+          width: 5% !important;
+        }
+        th:nth-child(8), td:nth-child(8) {
+          width: 25% !important;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="header">
+      <h2 class="titulo">Pedidos Librería Charles</h2>
+      <h5>Fecha de impresión: ${formatearFechaArgentina(new Date())}</h5>
+    </div>
+    ${tablaClonada.outerHTML}
+  </body>
+</html>
   `);
     ventana.document.close();
 
+
+    // Tomar el ÚLTIMO pedido de la lista filtrada
     const ultimoPedido = pedidosFiltrados[0];
     setUltimaImpresion({
       fecha: new Date().toLocaleString('es-AR'),
-      libro: ultimoPedido.titulo,
-      autor: ultimoPedido.autor,
-      isbn: ultimoPedido.isbn || "N/A",
+      libro: pedidosFiltrados[0].titulo, // Primer pedido como referencia
+      autor: pedidosFiltrados[0].autor,
+      isbn: pedidosFiltrados[0].isbn || "N/A",
       newPedidosCount: 0,
       lastPrinted: new Date().getTime(),
-      ultimoImpresoId: ultimoPedido.id
+      ultimoImpresoId: pedidosFiltrados[0].id,
+      // Guardamos TODOS los IDs de los pedidos que se están imprimiendo
+      lastPrintedIds: pedidosFiltrados.map(p => p.id),
+      // También guardamos la cantidad de pedidos impresos
+      cantidadImpresos: pedidosFiltrados.length
     });
 
     ventana.print();
   };
+
 
 
   const handleImprimirParaRicardo = () => {
@@ -375,47 +445,101 @@ const PedidoForm = () => {
 
     const ventana = window.open('', '_blank');
     ventana.document.write(`
-    <html>
-      <head>
-        <title>Pedidos Ricardo Delfino - Librería Charles</title>
-        <style>
-          body { font-family: Arial, sans-serif; margin: 20px; }
-          .header { text-align: center; margin-bottom: 30px; }
-          .titulo { color: #2c3e50; margin: 10px 0; }
-          table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-          th, td { border: 1px solid #ddd; padding: 12px; text-align: left; }
-          th { background-color: #6c757d; color: white; font-weight: bold; }
-          tr:nth-child(even) { background-color: #f2f2f2; }
-        </style>
-      </head>
-      <body>
-        <div class="header">
-          <h2 class="titulo">Librería Charles</h2>
-          <h3>Las Varillas, Córdoba - 9 de julio 346 </h3>
-          <h4>Teléfonos: 03533-420183 / Móvil: 03533-682652<h4>
-        </div>
-        ${tablaClonada.outerHTML}
-      </body>
-    </html>
+  <html>
+  <head>
+    <title>Pedidos Ricardo Delfino - Librería Charles</title>
+    <style>
+      body { font-family: Arial, sans-serif; margin: 20px; }
+      .header { text-align: center; margin-bottom: 30px; }
+      .titulo { color: #2c3e50; margin: 10px 0; }
+      table { 
+        width: 100%; 
+        border-collapse: collapse; 
+        margin-top: 20px;
+        border: 1px solid black;
+      }
+      th, td { 
+        border: 1px solid black;
+        padding: 12px; 
+        text-align: left; 
+      }
+      th { 
+        background-color: white;
+        color: black;
+        font-weight: bold; 
+        border-bottom: 2px solid black;
+      }
+
+      /* ***************************************** */
+      /* AJUSTES DE ANCHO (APLICAN EN PANTALLA E IMPRESIÓN) */
+      /* 1ra columna: Título */
+      th:nth-child(1), td:nth-child(1) {
+        width: 40% !important;
+      }
+      
+      /* 2da columna: Autor */
+      th:nth-child(2), td:nth-child(2) {
+        width: 30% !important;
+      }
+      
+      /* 3ra columna: Cantidad */
+      th:nth-child(3), td:nth-child(3) {
+        width: 10% !important;
+      }
+      
+      /* 4ta columna: ISBN */
+      th:nth-child(4), td:nth-child(4) {
+        width: 10% !important; /* ESTE ES EL VALOR QUE DEBES CAMBIAR */
+      }
+      /* ***************************************** */
+
+      tr:nth-child(even) { 
+        background-color: #f2f2f2;
+      }
+      
+      @media print {
+        /* MANTIENE TODOS TUS ESTILOS ORIGINALES */
+        th {
+          background-color: white !important;
+          color: black !important;
+          -webkit-print-color-adjust: exact;
+          print-color-adjust: exact;
+        }
+        /* HEREDA LOS AJUSTES DE ANCHO DEL ESTILO PRINCIPAL */
+        /* (No es necesario repetirlos gracias al !important) */
+      }
+    </style>
+  </head>
+  <body>
+    <div class="header">
+      <h2 class="titulo">Librería Charles</h2>
+      <h3>Las Varillas, Córdoba - 9 de julio 346 </h3>
+      <h4>Teléfonos: 03533-420183 / Móvil: 03533-682652<h4>
+    </div>
+    ${tablaClonada.outerHTML}
+  </body>
+</html>
   `);
     ventana.document.close();
 
-    // --- NUEVA PARTE MODIFICADA ---
-    const ultimoPedido = pedidosFiltrados[pedidosFiltrados.length - 1];
+    // Tomar el ÚLTIMO pedido de la lista filtrada
+    const ultimoPedido = pedidosFiltrados[0];
     setUltimaImpresion({
       fecha: new Date().toLocaleString('es-AR'),
-      libro: ultimoPedido.titulo,
-      autor: ultimoPedido.autor,
-      isbn: ultimoPedido.isbn,
-      newPedidosCount: 0, // Reiniciamos contador
-      lastPrinted: new Date().getTime(), // Timestamp exacto
-      ultimoImpresoId: ultimoPedido.id
+      libro: pedidosFiltrados[0].titulo, // Primer pedido como referencia
+      autor: pedidosFiltrados[0].autor,
+      isbn: pedidosFiltrados[0].isbn || "N/A",
+      newPedidosCount: 0,
+      lastPrinted: new Date().getTime(),
+      ultimoImpresoId: pedidosFiltrados[0].id,
+      // Guardamos TODOS los IDs de los pedidos que se están imprimiendo
+      lastPrintedIds: pedidosFiltrados.map(p => p.id),
+      // También guardamos la cantidad de pedidos impresos
+      cantidadImpresos: pedidosFiltrados.length
     });
-    // --- FIN DE MODIFICACIÓN ---
 
     ventana.print();
   };
-
   const handleEditarPedido = async (id) => {
     const pedido = todosLosPedidos.find(p => p.id === id);
     if (pedido) {
@@ -453,43 +577,58 @@ const PedidoForm = () => {
       return;
     }
 
-    setLoading(true); // Activar estado de carga
-
+    setLoading(true);
     try {
-      // 1. Obtener pedidos actualizados del servidor
       const result = await actions.obtenerPedidos();
       if (!result.success) {
         alert("Error al cargar pedidos");
         return;
       }
 
-      // 2. Filtrar pedidos posteriores a la última impresión
+      // 1. Verificamos si hay pedidos nuevos desde la última impresión
       const pedidosPosteriores = result.pedidos.filter(pedido => {
         const fechaPedido = new Date(pedido.fecha).getTime();
         return fechaPedido > ultimaImpresion.lastPrinted;
       });
 
-      if (pedidosPosteriores.length === 0) {
-        alert("No hay nuevos pedidos desde la última impresión");
-        return;
+      if (pedidosPosteriores.length > 0) {
+        // Si hay pedidos nuevos, los mostramos
+        setPedidosFiltrados(pedidosPosteriores);
+        await new Promise(resolve => setTimeout(resolve, 300));
+        handleImprimirParaRicardo();
+      } else {
+        // Si no hay pedidos nuevos, preguntamos si quiere reimprimir los mismos
+        const confirmar = window.confirm(
+          `No hay nuevos pedidos desde la última impresión. ¿Desea reimprimir los mismos ${ultimaImpresion.cantidadImpresos || ''} pedidos?`
+        );
+
+        if (confirmar) {
+          // Filtramos los pedidos actuales que coincidan con los IDs guardados
+          const pedidosAReimprimir = result.pedidos.filter(pedido =>
+            ultimaImpresion.lastPrintedIds?.includes(pedido.id)
+          );
+
+          if (pedidosAReimprimir.length === 0) {
+            alert("No se encontraron los pedidos de la última impresión");
+            return;
+          }
+
+          setPedidosFiltrados(pedidosAReimprimir);
+          await new Promise(resolve => setTimeout(resolve, 300));
+          handleImprimirParaRicardo();
+        }
       }
 
-      // 3. Actualizar lista filtrada
-      setPedidosFiltrados(pedidosPosteriores);
-
-      // 4. Esperar breve momento para que React actualice el DOM
-      await new Promise(resolve => setTimeout(resolve, 300));
-
-      // 5. Ejecutar la impresión
-      handleImprimirParaRicardo();
-
-      // 6. Actualizar estado de última impresión (conservando el ID original)
+      // Actualizamos el estado de última impresión
       setUltimaImpresion(prev => ({
         ...prev,
         fecha: new Date().toLocaleString('es-AR'),
         newPedidosCount: 0,
         lastPrinted: new Date().getTime(),
-        // Mantenemos el libro/autor/isbn original del último impreso
+        // Mantenemos los mismos IDs de la última impresión
+        lastPrintedIds: prev.lastPrintedIds || [],
+        // Mantenemos la misma cantidad
+        cantidadImpresos: prev.cantidadImpresos || 0,
         libro: prev.libro,
         autor: prev.autor,
         isbn: prev.isbn,
@@ -500,7 +639,7 @@ const PedidoForm = () => {
       console.error("Error en impresión desde última:", error);
       alert("Ocurrió un error al procesar la impresión");
     } finally {
-      setLoading(false); // Desactivar carga independientemente del resultado
+      setLoading(false);
     }
   };
 
@@ -594,22 +733,7 @@ const PedidoForm = () => {
     ));
   };
 
-  const handleVerTodosLosPedidos = async () => {
-    setLoading(true);
-    try {
-      const result = await actions.obtenerPedidos();
-      if (result.success) {
-        setPedidosFiltrados(result.pedidos);
-        setShowHistorialCompleto(true);
-      } else {
-        alert("Error al cargar todos los pedidos");
-      }
-    } catch (error) {
-      console.error("Error:", error);
-      alert("Error al conectar con el servidor");
-    }
-    setLoading(false);
-  };
+
 
   const formatNumberWithDots = (value) => {
     // Si es número, convertirlo a string
@@ -1117,25 +1241,7 @@ const PedidoForm = () => {
                   <strong>Filtrar por Fecha</strong>
 
                 </button>
-                <button
-                  onClick={handleVerTodosLosPedidos}
-                  style={{
-                    backgroundColor: '#6c757d',
-                    color: 'white',
-                    border: 'none',
-                    padding: '10px 20px',
-                    borderRadius: '5px',
-                    cursor: 'pointer',
-                    height: '40px',
-                    alignSelf: 'flex-end',
 
-                  }}
-                >
-                  <strong>
-
-                    Ver Historial Completo
-                  </strong>
-                </button>
               </div>
 
               <div style={{
@@ -1369,172 +1475,7 @@ const PedidoForm = () => {
           </div>
         )}
 
-        {showHistorialCompleto && (
-          <div className="container-fluid " style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: 'rgba(0,0,0,0.5)',
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-            zIndex: 1000,
 
-          }}>
-            <div style={{
-              backgroundColor: 'white',
-              padding: '30px',
-              borderRadius: '10px',
-              maxWidth: '3000px',
-              maxHeight: '80%',
-              overflow: 'auto',
-              width: '1800px'
-            }}>
-              <div style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                marginBottom: '20px'
-              }}>
-                <h3><strong> Historial Completo de Pedidos</strong></h3>
-                <button
-                  onClick={() => setShowHistorialCompleto(false)}
-                  style={{
-                    backgroundColor: '#dc3545',
-                    color: 'white',
-                    border: 'none',
-                    padding: '8px 16px',
-                    borderRadius: '5px',
-                    cursor: 'pointer'
-                  }}
-                >
-                  ✕ Cerrar
-                </button>
-              </div>
-
-              <div style={{ overflowX: 'auto' }}>
-                <table
-                  style={{
-                    width: '100%',
-                    borderCollapse: 'collapse',
-                    border: '1px solid #ddd'
-                  }}
-                >
-                  <thead>
-                    <tr style={{ backgroundColor: '#28a745', color: 'white', }}>
-                      <th style={{ padding: '12px', border: '1px solid #ddd' }}>Cliente</th>
-                      <th style={{ padding: '12px', border: '1px solid #ddd' }}>Título</th>
-                      <th style={{ padding: '12px', border: '1px solid #ddd' }}>Autor</th>
-                      <th style={{ padding: '12px', border: '1px solid #ddd' }}>Cantidad</th>
-                      <th style={{ padding: '12px', border: '1px solid #ddd' }}>ISBN</th>
-                      <th style={{ padding: '12px', border: '1px solid #ddd' }}>Fecha</th>
-                      <th style={{ padding: '12px', border: '1px solid #ddd' }}>Seña</th>
-                      <th style={{ padding: '12px', border: '1px solid #ddd' }}>Comentarios</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {pedidosFiltrados.length > 0 ? (
-                      pedidosFiltrados.map((pedido, idx) => (
-                        <tr key={pedido.id || idx} style={{
-                          backgroundColor: idx % 2 === 0 ? '#f8f9fa' : 'white'
-                        }}>
-                          <td style={{
-                            padding: '12px', border: '1px solid #adacac', width: '100px',            // ancho fijo
-                            maxWidth: '180px',         // opcional, refuerza el límite
-                            wordWrap: 'break-word',   // permite cortar palabras si son largas
-                            whiteSpace: 'normal',     // permite saltos de línea
-                            overflowWrap: 'break-word', color: 'black', fontWeight: 'bold'
-                          }}>
-                            {pedido.cliente_nombre}
-                          </td>
-                          <td style={{
-                            padding: '12px', border: '1px solid #adacac', width: '100px',            // ancho fijo
-                            maxWidth: '180px',         // opcional, refuerza el límite
-                            wordWrap: 'break-word',   // permite cortar palabras si son largas
-                            whiteSpace: 'normal',     // permite saltos de línea
-                            overflowWrap: 'break-word', color: 'black', fontWeight: 'bold'
-                          }}>
-                            {pedido.titulo}
-                          </td>
-                          <td style={{
-                            border: '1px solid #adacac', padding: '12px', width: '100px',            // ancho fijo
-                            maxWidth: '180px',         // opcional, refuerza el límite
-                            wordWrap: 'break-word',   // permite cortar palabras si son largas
-                            whiteSpace: 'normal',     // permite saltos de línea
-                            overflowWrap: 'break-word', color: 'black', fontWeight: 'bold'
-                          }}>
-                            {pedido.autor}
-                          </td>
-                          <td style={{
-                            border: '1px solid #adacac', padding: '12px', width: '100px',            // ancho fijo
-                            maxWidth: '180px',         // opcional, refuerza el límite
-                            wordWrap: 'break-word',   // permite cortar palabras si son largas
-                            whiteSpace: 'normal',     // permite saltos de línea
-                            overflowWrap: 'break-word', color: 'black', fontWeight: 'bold'
-                          }}>
-                            {pedido.cantidad || 1}
-                          </td>
-                          <td style={{
-                            padding: '12px', border: '1px solid #adacac', width: '100px',            // ancho fijo
-                            maxWidth: '180px',         // opcional, refuerza el límite
-                            wordWrap: 'break-word',   // permite cortar palabras si son largas
-                            whiteSpace: 'normal',     // permite saltos de línea
-                            overflowWrap: 'break-word', color: 'black', fontWeight: 'bold'
-                          }}>
-                            {pedido.isbn || "N/A"}
-                          </td>
-                          <td style={{
-                            padding: '12px', border: '1px solid #adacac', width: '100px',            // ancho fijo
-                            maxWidth: '180px',         // opcional, refuerza el límite
-                            wordWrap: 'break-word',   // permite cortar palabras si son largas
-                            whiteSpace: 'normal',     // permite saltos de línea
-                            overflowWrap: 'break-word', color: 'black', fontWeight: 'bold'
-                          }}>
-                            {formatearFechaArgentina(pedido.fecha)}
-                          </td>
-                          <td style={{
-                            padding: '12px', border: '1px solid #adacac', width: '100px',            // ancho fijo
-                            maxWidth: '180px',         // opcional, refuerza el límite
-                            wordWrap: 'break-word',   // permite cortar palabras si son largas
-                            whiteSpace: 'normal',     // permite saltos de línea
-                            overflowWrap: 'break-word', color: 'black', fontWeight: 'bold'
-                          }}>
-                            ${pedido.seña || 0}
-                          </td>
-                          <td style={{
-                            padding: '12px', border: '1px solid #adacac', width: '100px',            // ancho fijo
-                            maxWidth: '180px',         // opcional, refuerza el límite
-                            wordWrap: 'break-word',   // permite cortar palabras si son largas
-                            whiteSpace: 'normal',     // permite saltos de línea
-                            overflowWrap: 'break-word', color: 'black', fontWeight: 'bold'
-                          }}>
-                            {pedido.comentario || '-'}
-                          </td>
-                        </tr>
-                      ))
-                    ) : (
-                      <tr>
-                        <td
-                          colSpan="7"
-                          style={{
-                            padding: '20px',
-                            textAlign: 'center',
-                            color: '#6c757d',
-                            border: '1px solid #ddd'
-                          }}
-                        >
-                          {loading ? "Cargando pedidos..." : "No hay pedidos en el historial"}
-                        </td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </div>
-        )}
       </div>
     </div >
   );
