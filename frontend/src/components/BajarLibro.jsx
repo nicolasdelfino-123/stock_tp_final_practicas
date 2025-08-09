@@ -158,7 +158,14 @@ const BajarLibro = () => {
           cantidad: "",
         }));
 
-        const mensaje = `✅ Stock actualizado correctamente. Se dio de baja la cantidad ${cantidad} del libro "${formData.titulo}" de ${formData.autor}.`;
+        const mensaje = (
+          <>
+            ✅ Stock actualizado correctamente. Se dio de baja la cantidad{" "}
+            <span style={{ color: "black", fontWeight:'bold' }}>{cantidad}</span> del libro "
+            <span style={{ color: "black", fontWeight:'bold' }}>{formData.titulo}</span>" de{" "}
+            <span style={{ color: "black", fontWeight:'bold' }}>{formData.autor}</span>.
+          </>
+        );
         setAlerta(mensaje);
 
         setResultados([
@@ -237,6 +244,7 @@ const BajarLibro = () => {
             onKeyDown={(e) => {
               if (e.key === "Enter" || e.key === "Escape") {
                 e.preventDefault();
+
                 setAlertaCantidad("");
               }
             }}
@@ -428,7 +436,12 @@ const BajarLibro = () => {
             </h2>
           </div>
 
-          <form onSubmit={handleSubmit}>
+          <form onSubmit={(e) => {
+            e.preventDefault();
+            if (document.activeElement.name !== "isbn") {
+              handleSubmit(e);
+            }
+          }}>
             {
               (() => {
                 const rows = [];
@@ -492,13 +505,19 @@ const BajarLibro = () => {
                           onChange={handleChange}
                           readOnly={readOnly}
                           placeholder={placeholder}
+
                           required={required}
                           autoFocus={name === "isbn"}
                           min={min}
-                          onBlur={undefined}
+                          onBlur={name === "isbn" ? () => {
+                            if (formData.isbn.trim() !== "") {
+                              handleSearch();
+                            }
+                          } : undefined}
                           onKeyDown={name === "isbn" ? (e => {
                             if (e.key === "Enter") {
                               e.preventDefault();
+                              e.stopPropagation(); // evita que se propague al form
                               handleSearch();
                             }
                           }) : undefined}
@@ -506,10 +525,10 @@ const BajarLibro = () => {
                             width: "100%",
                             padding: "10px 15px",
                             borderRadius: "8px",
-                            border: "1.5px solid #a83232",
+                            border: "1.5px solid #000000",
                             backgroundColor: readOnly ? "#f4dede" : "#fff0f0",
-                            color: "#000",
-                            fontWeight: "500",
+                            color: "#000000",
+                            fontWeight: "600",
                             fontSize: "1rem",
                             boxShadow: "inset 1px 1px 3px rgba(168,50,50,0.15)",
                             transition: "border-color 0.3s ease",

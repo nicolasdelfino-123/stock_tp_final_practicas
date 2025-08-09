@@ -7,10 +7,10 @@ const inputStyle = {
   width: "100%",
   padding: "10px 15px",
   borderRadius: "8px",
-  border: "1.5px solid #2e7d32",
+  border: "1.5px solid #000000",
   backgroundColor: "#e8f5e9",
   color: "black",
-  fontWeight: "500",
+  fontWeight: "700",
   fontSize: "1rem",
   boxShadow: "inset 1px 1px 3px rgba(46, 125, 50, 0.15)",
   transition: "border-color 0.3s ease",
@@ -593,6 +593,8 @@ const AgregarLibro = () => {
 
   const fondoURL = "/fondo-3.jpg";
 
+
+
   return (
     <>
       {/* Modal de mensaje */}
@@ -658,6 +660,8 @@ const AgregarLibro = () => {
           </div>
         </div>
       )}
+
+      
 
       {/* Contenedor principal */}
       <div
@@ -755,7 +759,7 @@ const AgregarLibro = () => {
                     }}
                     disabled={generandoIsbn}
                   />
-                  <label htmlFor="crearSinIsbn" className="form-check-label small" style={{ color: "black" }}>
+                  <label htmlFor="crearSinIsbn" className="form-check-label small" style={{ color: "black", fontWeight: "700" }}>
                     Crear sin ISBN
                   </label>
                   {generandoIsbn && (

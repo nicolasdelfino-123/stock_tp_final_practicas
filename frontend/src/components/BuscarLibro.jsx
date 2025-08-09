@@ -410,7 +410,7 @@ const BuscarLibro = () => {
                             width: "100%",
                             padding: "10px 15px",
                             borderRadius: "8px",
-                            border: `1.5px solid #1e88e5`,
+                            border: `1.5px solid #000000`,
                             backgroundColor:
                               name === "stock" && formData.stock !== ""
                                 ? formData.stock == 0  // Usar == para comparación flexible
@@ -420,7 +420,7 @@ const BuscarLibro = () => {
                                   ? "#d3e3fc"
                                   : "#e8f1fc",
                             color: "black",
-                            fontWeight: "500",
+                            fontWeight: "600",
                             fontSize: "1rem",
                             boxShadow: "inset 1px 1px 3px rgba(30, 136, 229, 0.15)",
                             transition: "border-color 0.3s ease",
@@ -562,8 +562,8 @@ const BuscarLibro = () => {
                         <div>
 
                           <strong style={{
-                            fontStyle: "normal", textDecoration: "underline", fontStyle: "italic",
-                            fontWeight: "900", color: ["rojo", "negro"].includes(libro.ubicacion?.toLowerCase()) ? "white" : "black", marginRight: "8px"
+                            textDecoration: "underline", fontStyle: "italic",
+                            fontWeight: "900", color: ["rojo", "negro"].includes(libro.ubicacion?.toLowerCase()) ? "white" : "black", marginRight: "8px", fontFamily: "'Roboto', 'Verdana', sans-serif"
                           }}>TÍTULO:</strong>
 
                           <span style={{
@@ -580,8 +580,8 @@ const BuscarLibro = () => {
 
                       }}>
                         <strong style={{
-                          fontStyle: "normal", textDecoration: "underline", marginRight: "8px", fontStyle: "italic",
-                          fontWeight: "900", color: ["rojo", "negro"].includes(libro.ubicacion?.toLowerCase()) ? "white" : "black",
+                          textDecoration: "underline", marginRight: "8px", fontStyle: "italic",
+                          fontWeight: "900", color: ["rojo", "negro"].includes(libro.ubicacion?.toLowerCase()) ? "white" : "black", fontFamily: "'Roboto', 'Verdana', sans-serif"
                         }}>AUTOR:</strong>
                         <span style={{
                           fontWeight: "900"
@@ -594,8 +594,8 @@ const BuscarLibro = () => {
                         overflowWrap: "break-word"
                       }}>
                         <strong style={{
-                          fontStyle: "normal", textDecoration: "underline", fontStyle: "italic",
-                          fontWeight: "900", color: ["rojo", "negro"].includes(libro.ubicacion?.toLowerCase()) ? "white" : "black", marginRight: "8px"
+                          textDecoration: "underline", fontStyle: "italic",
+                          fontWeight: "900", color: ["rojo", "negro"].includes(libro.ubicacion?.toLowerCase()) ? "white" : "black", marginRight: "8px",fontFamily: "'Roboto', 'Verdana', sans-serif"
                         }}>EDITORIAL:</strong ><span style={{ fontWeight: "900" }}>{libro.editorial || "No disponible"}</span>
                       </div>
 
@@ -605,8 +605,8 @@ const BuscarLibro = () => {
                         overflowWrap: "break-word"
                       }}>
                         <strong style={{
-                          fontStyle: "normal", textDecoration: "underline", fontStyle: "italic",
-                          fontWeight: "900", color: ["rojo", "negro"].includes(libro.ubicacion?.toLowerCase()) ? "white" : "black", marginRight: "8px"
+                          textDecoration: "underline", fontStyle: "italic",
+                          fontWeight: "900", color: ["rojo", "negro"].includes(libro.ubicacion?.toLowerCase()) ? "white" : "black", marginRight: "8px",fontFamily: "'Roboto', 'Verdana', sans-serif"
                         }}>ISBN:</strong> <span style={{ fontWeight: "900" }}>{libro.isbn}</span>
                       </div>
 
@@ -616,8 +616,8 @@ const BuscarLibro = () => {
                         overflowWrap: "break-word"
                       }}>
                         <strong style={{
-                          fontStyle: "normal", textDecoration: "underline", fontStyle: "italic",
-                          fontWeight: "900", color: ["rojo", "negro"].includes(libro.ubicacion?.toLowerCase()) ? "white" : "black", marginRight: "8px"
+                          textDecoration: "underline", fontStyle: "italic",
+                          fontWeight: "900", color: ["rojo", "negro"].includes(libro.ubicacion?.toLowerCase()) ? "white" : "black", marginRight: "8px",fontFamily: "'Roboto', 'Verdana', sans-serif"
                         }}>STOCK:</strong> <span style={{ fontWeight: "900" }}>{libro.stock}</span>
                       </div>
 
@@ -627,8 +627,8 @@ const BuscarLibro = () => {
                         overflowWrap: "break-word"
                       }}>
                         <strong style={{
-                          fontStyle: "normal", textDecoration: "underline", fontStyle: "italic",
-                          fontWeight: "900", color: ["rojo", "negro"].includes(libro.ubicacion?.toLowerCase()) ? "white" : "black", marginRight: "8px"
+                         textDecoration: "underline", fontStyle: "italic",
+                          fontWeight: "900", color: ["rojo", "negro"].includes(libro.ubicacion?.toLowerCase()) ? "white" : "black", marginRight: "8px",fontFamily: "'Roboto', 'Verdana', sans-serif"
                         }}>UBICACIÓN:</strong> <span style={{ fontWeight: "900" }}>{libro.ubicacion || "No disponible"}</span>
                       </div>
 
@@ -638,8 +638,8 @@ const BuscarLibro = () => {
                         overflowWrap: "break-word"
                       }}>
                         <strong style={{
-                          fontStyle: "normal", textDecoration: "underline", fontStyle: "italic",
-                          fontWeight: "900", color: ["rojo", "negro"].includes(libro.ubicacion?.toLowerCase()) ? "white" : "black", marginRight: "8px"
+                         textDecoration: "underline", fontStyle: "italic",
+                          fontWeight: "900", color: ["rojo", "negro"].includes(libro.ubicacion?.toLowerCase()) ? "white" : "black", marginRight: "8px",fontFamily: "'Roboto', 'Verdana', sans-serif"
                         }} >PRECIO:</strong> <span style={{ fontWeight: "900" }}>{libro.precio}</span>
                       </div>
 
