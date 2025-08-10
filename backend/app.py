@@ -431,7 +431,7 @@ def get_pedidos():
             'fecha': p.fecha.isoformat() if p.fecha else None,
             'titulo': p.titulo,
             'autor': p.autor,
-            'telefono': p.telefono,
+            'telefonoCliente': p.telefono,
             'comentario': p.comentario,
             'cantidad': p.cantidad,
             'isbn': p.isbn
@@ -454,7 +454,7 @@ def crear_pedido():
             seña=float(data.get('seña', 0)) if data.get('seña') else 0.0,
             titulo=data.get('titulo'),
             autor=data.get('autor'),
-            telefono=data.get('telefono', ''),
+            telefono=data.get('telefonoCliente', ''),
             fecha=data.get('fecha'), 
             comentario=data.get('comentario', ''),
             cantidad=int(data.get('cantidad', 1)),
@@ -471,7 +471,7 @@ def crear_pedido():
                 'seña': nuevo_pedido.seña,
                 'fecha': nuevo_pedido.fecha.isoformat() if nuevo_pedido.fecha else None,
                 'titulo': nuevo_pedido.titulo,
-                'telefono': nuevo_pedido.telefono,
+                'telefonoCliente': nuevo_pedido.telefono,
                 'autor': nuevo_pedido.autor,
                 'comentario': nuevo_pedido.comentario,
                 'cantidad': nuevo_pedido.cantidad,
@@ -498,6 +498,7 @@ def actualizar_pedido(pedido_id):
 
         pedido.cliente_nombre = data.get('cliente_nombre', pedido.cliente_nombre)
         pedido.seña = float(data.get('seña', pedido.seña))
+        pedido.telefono = data.get('telefonoCliente', pedido.telefono)
         pedido.titulo = data.get('titulo', pedido.titulo)
         pedido.autor = data.get('autor', pedido.autor)
         pedido.comentario = data.get('comentario', pedido.comentario)

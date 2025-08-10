@@ -344,6 +344,7 @@ export const AppProvider = ({ children }) => {
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
               cliente_nombre: pedidoData.nombreCliente,
+              telefono: pedidoData.telefonoCliente || "",
               titulo: pedidoData.tituloLibro,
               autor: pedidoData.autorLibro,
               cantidad: pedidoData.cantidad,
@@ -409,6 +410,7 @@ export const AppProvider = ({ children }) => {
             body: JSON.stringify({
               cliente_nombre: pedidoActualizado.nombreCliente, // Map to backend's expected key
               titulo: pedidoActualizado.tituloLibro,          // Map to backend's expected key
+              telefono: pedidoActualizado.telefonoCliente || "", // Map to backend's expected key
               autor: pedidoActualizado.autorLibro,           // Map to backend's expected key
               cantidad: pedidoActualizado.cantidad,
               fecha: pedidoActualizado.fecha,

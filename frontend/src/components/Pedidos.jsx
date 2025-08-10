@@ -428,7 +428,6 @@ const PedidoForm = () => {
   };
 
 
-
   const handleImprimirParaRicardo = () => {
     if (pedidosFiltrados.length === 0) {
       alert("No hay pedidos para imprimir");
@@ -441,8 +440,8 @@ const PedidoForm = () => {
     const encabezados = tablaClonada.querySelectorAll('th');
     const celdas = tablaClonada.querySelectorAll('td');
 
-    const columnasAEliminar = [0, 5, 6, 7, 8]; // Seña, Comentarios, Acciones
-    const cantidadColumnas = 9;
+    const columnasAEliminar = [0, 1, 6, 7, 8, 9]; // Seña, Comentarios, Acciones
+    const cantidadColumnas = 10;
 
     columnasAEliminar.forEach(index => {
       if (encabezados[index]) encabezados[index].remove();
@@ -453,82 +452,76 @@ const PedidoForm = () => {
 
     const ventana = window.open('', '_blank');
     ventana.document.write(`
-  <html>
-  <head>
-    <title>Pedidos Ricardo Delfino - Librería Charles</title>
-    <style>
-      body { font-family: Arial, sans-serif; margin: 20px; }
-      .header { text-align: center; margin-bottom: 30px; }
-      .titulo { color: #2c3e50; margin: 10px 0; }
-      table { 
-        width: 100%; 
-        border-collapse: collapse; 
-        margin-top: 20px;
-        border: 1px solid black;
-      }
-      th, td { 
-        border: 1px solid black;
-        padding: 12px; 
-        text-align: left; 
-      }
-      th { 
-        background-color: white;
-        color: black;
-        font-weight: bold; 
-        border-bottom: 2px solid black;
-      }
+<html>
+<head>
+  <title>Pedidos Ricardo Delfino - Librería Charles</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    .header { text-align: center; margin-bottom: 30px; }
+    .titulo { color: #2c3e50; margin: 10px 0; }
+    table { 
+      width: 100%; 
+      border-collapse: collapse; 
+      margin-top: 20px;
+      border: 1px solid black;
+      table-layout: fixed; /* clave para impresión */
+    }
+    th, td { 
+      border: 1px solid black;
+      padding: 12px; 
+      text-align: left; 
+      word-wrap: break-word;
+      overflow-wrap: break-word;
+    }
+    th { 
+      background-color: white;
+      color: black;
+      font-weight: bold; 
+      border-bottom: 2px solid black;
+    }
 
-      /* ***************************************** */
-      /* AJUSTES DE ANCHO (APLICAN EN PANTALLA E IMPRESIÓN) */
-      /* 1ra columna: Título */
-      th:nth-child(1), td:nth-child(1) {
-        width: 40% !important;
-      }
-      
-      /* 2da columna: Autor */
-      th:nth-child(2), td:nth-child(2) {
-        width: 30% !important;
-      }
-      
-      /* 3ra columna: Cantidad */
-      th:nth-child(3), td:nth-child(3) {
-        width: 10% !important;
-      }
-      
-      /* 4ta columna: ISBN */
-      th:nth-child(4), td:nth-child(4) {
-        width: 10% !important; /* ESTE ES EL VALOR QUE DEBES CAMBIAR */
-      }
-      /* ***************************************** */
+    /* ***************************************** */
+    /* ANCHOS POR DEFECTO (PANTALLA) */
+    th:nth-child(1), td:nth-child(1) { width: 20% !important; } /* Título */
+    th:nth-child(2), td:nth-child(2) { width: 20% !important; } /* Autor */
+    th:nth-child(3), td:nth-child(3) { width: 10% !important; } /* Cantidad */
+    th:nth-child(4), td:nth-child(4) { width: 20% !important; } /* ISBN */
+    /* ***************************************** */
 
-      tr:nth-child(even) { 
-        background-color: #f2f2f2;
+    tr:nth-child(even) { 
+      background-color: #f2f2f2;
+    }
+    
+    @media print {
+      th {
+        background-color: white !important;
+        color: black !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
       }
-      
-      @media print {
-        /* MANTIENE TODOS TUS ESTILOS ORIGINALES */
-        th {
-          background-color: white !important;
-          color: black !important;
-          -webkit-print-color-adjust: exact;
-          print-color-adjust: exact;
-        }
-        /* HEREDA LOS AJUSTES DE ANCHO DEL ESTILO PRINCIPAL */
-        /* (No es necesario repetirlos gracias al !important) */
+      table {
+        table-layout: fixed !important;
       }
-    </style>
-  </head>
-  <body>
-    <div class="header">
-      <h2 class="titulo">Librería Charles</h2>
-      <h3>Las Varillas, Córdoba - 9 de julio 346 </h3>
-      <h4>Teléfonos: 03533-420183 / Móvil: 03533-682652<h4>
-    </div>
-    ${tablaClonada.outerHTML}
-  </body>
+      th:nth-child(1), td:nth-child(1) { width: 25% !important; }
+      th:nth-child(2), td:nth-child(2) { width: 20% !important; }
+      th:nth-child(3), td:nth-child(3) { width: 10% !important; }
+      th:nth-child(4), td:nth-child(4) { width: 20% !important; }
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h2 class="titulo">Librería Charles</h2>
+    <h3>Las Varillas, Córdoba - 9 de julio 346 </h3>
+    <h4>Teléfonos: 03533-420183 / Móvil: 03533-682652</h4>
+  </div>
+  ${tablaClonada.outerHTML}
+</body>
 </html>
   `);
     ventana.document.close();
+
+
 
     // Tomar el ÚLTIMO pedido de la lista filtrada
     const ultimoPedido = pedidosFiltrados[0];
@@ -855,7 +848,7 @@ const PedidoForm = () => {
                       marginLeft: '15px',
                     }}
                   >
-                    Nombre del Cliente
+                    Nombre y Apellido
                   </label>
                 </div>
 
@@ -917,7 +910,7 @@ const PedidoForm = () => {
                     type="text"
                     value={nombreCliente}
                     onChange={(e) => setNombreCliente(e.target.value)}
-                    placeholder="Ingrese el nombre del cliente"
+                    placeholder="Ingrese el nombre y apellido del cliente"
                     style={{
                       width: '100%',
                       padding: '10px',
@@ -1239,17 +1232,25 @@ const PedidoForm = () => {
             justifyContent: 'center',
             alignItems: 'center',
             zIndex: 1000,
-            color: 'black'
+            color: 'black',
           }}>
-            <div className="container-pedidos-cargados" style={{
-              backgroundColor: 'white',
-              padding: '30px',
-              borderRadius: '10px',
-              maxWidth: '1500px',
-              maxHeight: '80%',
-              overflow: 'auto',
-              width: '1500px'
-            }}>
+            <div
+              className="container-pedidos-cargados"
+              style={{
+                backgroundColor: 'white',
+                padding: '30px',
+                borderRadius: '10px',
+                maxWidth: '90vw',
+                width: 'max-content',
+                maxHeight: '80vh',
+                overflow: 'auto',
+                overscrollBehavior: 'contain',
+                margin: '0 auto',
+                // Estilos específicos para scrollbars (funcionan en Chrome/Safari)
+                scrollbarColor: '#888 #f1f1f1', // Para Firefox
+                minWidth: '80vw'
+              }}
+            >
               <div style={{
                 display: 'flex',
                 justifyContent: 'space-between',
@@ -1433,18 +1434,24 @@ const PedidoForm = () => {
                 </span>
               </div>
 
-              <div style={{ overflowX: 'auto' }}>
+              <div style={{
+                overflowX: 'auto',
+                width: 'max-content',
+                minWidth: '100%'
+              }}>
                 <table
                   id="tabla-todos-pedidos"
                   style={{
                     width: '100%',
                     borderCollapse: 'collapse',
-                    border: '1px solid #ddd'
+                    border: '1px solid #ddd',
+                    minWidth: '1200px' // Asegura que la tabla sea más ancha que el contenedor
                   }}
                 >
                   <thead>
                     <tr style={{ backgroundColor: '#0655a8ff', color: 'white' }}>
                       <th style={{ padding: '12px', border: '1px solid #ddd' }}>Cliente</th>
+                      <th style={{ padding: '12px', border: '1px solid #ddd' }}>Teléfono</th>
                       <th style={{ padding: '12px', border: '1px solid #ddd' }}>Título</th>
                       <th style={{ padding: '12px', border: '1px solid #ddd' }}>Autor</th>
                       <th style={{ padding: '12px', border: '1px solid #ddd' }}>Cantidad</th>
@@ -1467,6 +1474,13 @@ const PedidoForm = () => {
                             whiteSpace: 'normal', overflowWrap: 'break-word', color: 'black', fontWeight: 'bold'
                           }}>
                             {pedido.cliente_nombre}
+                          </td>
+                          <td style={{
+                            padding: '12px', border: '1px solid #adacac', width: '100px',
+                            maxWidth: '180px', wordWrap: 'break-word',
+                            whiteSpace: 'normal', overflowWrap: 'break-word', color: 'black', fontWeight: 'bold'
+                          }}>
+                            {pedido.telefonoCliente || '-'}
                           </td>
                           <td style={{
                             padding: '12px', border: '1px solid #adacac', width: '100px',
