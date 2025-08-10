@@ -23,7 +23,9 @@ const PedidoForm = () => {
   const [fechaHasta, setFechaHasta] = useState("");
   const [ultimaImpresion, setUltimaImpresion] = useState(null);
   const imprimirRef = useRef();
+  const [telefonoCliente, setTelefonoCliente] = useState("");
   const [ultimoNombreCliente, setUltimoNombreCliente] = useState("");
+  const [ultimoTelefono, setUltimoTelefono] = useState(localStorage.getItem('ultimoTelefono') || "");
 
   const [nombreInput, setNombreInput] = useState(''); // para controlar el input
 
@@ -166,6 +168,9 @@ const PedidoForm = () => {
       return;
     }
     setUltimoNombreCliente(nombreCliente);
+    setUltimoTelefono(telefonoCliente);
+    localStorage.setItem('ultimoNombreCliente', nombreCliente);
+    localStorage.setItem('ultimoTelefono', telefonoCliente);
 
     const pedidoData = {
       nombreCliente,
@@ -175,7 +180,8 @@ const PedidoForm = () => {
       fecha,
       seña,
       comentario,
-      isbn
+      isbn,
+      telefonoCliente
     };
 
     setLoading(true);
@@ -219,6 +225,7 @@ const PedidoForm = () => {
     setComentario("");
     setEditandoId(null);
     setIsbn("");
+    setTelefonoCliente("");
   };
 
   const handleVerPedidos = () => {
@@ -407,6 +414,7 @@ const PedidoForm = () => {
       libro: pedidosFiltrados[0].titulo, // Primer pedido como referencia
       autor: pedidosFiltrados[0].autor,
       isbn: pedidosFiltrados[0].isbn || "N/A",
+      telefonoLibro: pedidosFiltrados[0].telefonoLibro || "N/A",
       newPedidosCount: 0,
       lastPrinted: new Date().getTime(),
       ultimoImpresoId: pedidosFiltrados[0].id,
@@ -530,6 +538,7 @@ const PedidoForm = () => {
       autor: pedidosFiltrados[0].autor,
       isbn: pedidosFiltrados[0].isbn || "N/A",
       newPedidosCount: 0,
+      telefonoLibro: pedidosFiltrados[0].telefonoLibro || "N/A",
       lastPrinted: new Date().getTime(),
       ultimoImpresoId: pedidosFiltrados[0].id,
       // Guardamos TODOS los IDs de los pedidos que se están imprimiendo
@@ -558,6 +567,7 @@ const PedidoForm = () => {
       setSenia(pedido.seña ? pedido.seña.toString() : "");
       setComentario(pedido.comentario || "");
       setIsbn(pedido.isbn || "");
+      setTelefonoCliente(pedido.telefonoCliente || "");
       setEditandoId(id);
 
       // 4. Navegar al formulario (si es necesario)
@@ -763,8 +773,10 @@ const PedidoForm = () => {
   const handleCheckboxChange = (e) => {
     if (e.target.checked && ultimoNombreCliente) {
       setNombreCliente(ultimoNombreCliente);
+      setTelefonoCliente(ultimoTelefono);  // Limpiamos el teléfono si se usa el nombre del último cliente
     } else {
       setNombreCliente("");
+      setTelefonoCliente("");
     }
   };
   return (
@@ -817,18 +829,58 @@ const PedidoForm = () => {
         }}>
 
 
+
+
+
+
+
           {/* Campos del formulario */}
           <div style={{ marginBottom: '20px' }}>
             <div className="d-flex justify-content-between align-items-center mb-3">
-              <label
-                value={nombreCliente}
-                style={{ fontWeight: 'bold', color: 'black', display: 'block', marginBottom: '5px', fontSize: '22px', fontFamily: 'Roboto' }}>
-                Nombre del Cliente:
-              </label>
-              <div className="d-flex align-items-center">
 
+            </div>
+            <div style={{ marginBottom: '20px' }}>
+              {/* Fila de etiquetas y checkbox - TODOS EN LA MISMA LÍNEA */}
+              <div className="row align-items-center mb-2">
+                {/* Nombre del Cliente */}
+                <div className="col-12 col-md-6" style={{ padding: 0 }}>
+                  <label
+                    style={{
+                      fontWeight: 'bold',
+                      color: 'black',
+                      fontSize: '22px',
+                      fontFamily: 'Roboto',
+                      marginBottom: 0,
+                      display: 'block',
+                      marginLeft: '15px',
+                    }}
+                  >
+                    Nombre del Cliente
+                  </label>
+                </div>
 
-                <label style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '10px' }}>
+                {/* Teléfono */}
+                <div className="col-12 col-md-4" style={{ padding: 0 }}>
+                  <label
+                    value={telefonoCliente}
+                    onChange={handleCheckboxChange}
+                    style={{
+                      fontWeight: 'bold',
+                      color: 'black',
+                      fontSize: '22px',
+                      fontFamily: 'Roboto',
+                      marginBottom: 0,
+                      display: 'block',
+                      marginLeft: '10px',
+                    }}
+                  >
+                    Teléfono
+                  </label>
+                </div>
+
+                {/* Checkbox - Usar nombre escrito */}
+                <div className="col-12 col-md-2 d-flex justify-content-end align-items-center"
+                  style={{ gap: '10px', padding: 0 }}>
                   <input
                     type="checkbox"
                     onChange={handleCheckboxChange}
@@ -838,53 +890,93 @@ const PedidoForm = () => {
                       cursor: 'pointer',
                       accentColor: '#4caf50',
                     }}
+                    id="usarNombreCheckbox"
                   />
-                  Usar nombre escrito
-                </label>
-
-
+                  <label
+                    htmlFor="usarNombreCheckbox"
+                    style={{
+                      fontWeight: 'bold',
+                      color: 'black',
+                      fontSize: '18px',
+                      fontFamily: 'Roboto',
+                      marginBottom: 0,
+                      cursor: 'pointer',
+                      whiteSpace: 'nowrap' // Evita que el texto se divida en dos líneas
+                    }}
+                  >
+                    Usar nombre escrito
+                  </label>
+                </div>
               </div>
 
+              {/* Fila de inputs - 6 columnas cada uno */}
+              <div className="row mb-0">
+                {/* Input Nombre */}
+                <div className="col-12 col-md-6 mb-3" style={{ paddingRight: '10px' }}>
+                  <input
+                    type="text"
+                    value={nombreCliente}
+                    onChange={(e) => setNombreCliente(e.target.value)}
+                    placeholder="Ingrese el nombre del cliente"
+                    style={{
+                      width: '100%',
+                      padding: '10px',
+                      border: '2px solid #95a5a6',
+                      borderRadius: '14px',
+                      fontSize: '20px',
+                      color: 'black',
+                      fontWeight: '700',
+                    }}
+                  />
+                </div>
+
+                {/* Input Teléfono */}
+                <div className="col-12 col-md-6 mb-3" style={{ paddingLeft: '10px' }}>
+                  <input
+                    type="text"
+                    value={telefonoCliente}
+                    onChange={(e) => setTelefonoCliente(e.target.value)}
+                    placeholder="Ingrese el teléfono del cliente"
+                    style={{
+                      width: '100%',
+                      padding: '10px',
+                      border: '2px solid #95a5a6',
+                      borderRadius: '14px',
+                      fontSize: '20px',
+                      fontWeight: '700',
+                    }}
+                  />
+                </div>
+              </div>
             </div>
-            <input
-              type="text"
-              value={nombreCliente}
-              onChange={(e) => setNombreCliente(e.target.value)}
-              placeholder="Ingrese el nombre del cliente"
-              style={{
-                width: '100%',
-                padding: '10px',
-                border: '2px solid #95a5a6',
-                borderRadius: '14px',
-                fontSize: '20px',
-                color: 'black',
-                fontWeight: '700'
-              }}
-            />
           </div>
 
-          <div style={{ marginBottom: '20px' }}>
-            <label style={{ fontWeight: 'bold', color: 'black', display: 'block', marginBottom: '5px', fontSize: "22px", fontFamily: 'Roboto' }}>
-              Título del Libro
-            </label>
-            <input
-              type="text"
-              value={tituloLibro}
-              onChange={(e) => setTituloLibro(e.target.value)}
-              placeholder="Ingrese el título del libro"
-              style={{
-                width: '100%',
-                padding: '10px',
-                border: '2px solid #95a5a6',
-                borderRadius: '14px',
-                fontSize: '20px',
-                fontWeight: '700'
-              }}
-            />
-          </div>
+
+
+
+
+          <label style={{ fontWeight: 'bold', color: 'black', display: 'block', marginBottom: '5px', marginTop: '-15px', fontSize: "22px", fontFamily: 'Roboto' }}>
+            Título del Libro
+          </label>
+          <input
+            type="text"
+            value={tituloLibro}
+            onChange={(e) => setTituloLibro(e.target.value)}
+            placeholder="Ingrese el título del libro"
+            style={{
+              width: '100%',
+              padding: '10px',
+              border: '2px solid #95a5a6',
+              borderRadius: '14px',
+              fontSize: '20px',
+              fontWeight: '700'
+            }}
+          />
+
+
 
           <div style={{ marginBottom: '20px' }}>
-            <label style={{ fontWeight: 'bold', color: 'black', display: 'block', marginBottom: '5px', fontSize: "22px", fontFamily: 'Roboto' }}>
+            <label style={{ fontWeight: 'bold', color: 'black', display: 'block', marginBottom: '5px', marginTop: '15px', fontSize: "22px", fontFamily: 'Roboto' }}>
               Autor
             </label>
             <input
@@ -1480,7 +1572,6 @@ const PedidoForm = () => {
     </div >
   );
 };
-
 
 
 export default PedidoForm;

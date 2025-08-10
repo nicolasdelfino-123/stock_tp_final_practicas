@@ -431,6 +431,7 @@ def get_pedidos():
             'fecha': p.fecha.isoformat() if p.fecha else None,
             'titulo': p.titulo,
             'autor': p.autor,
+            'telefono': p.telefono,
             'comentario': p.comentario,
             'cantidad': p.cantidad,
             'isbn': p.isbn
@@ -453,6 +454,8 @@ def crear_pedido():
             seña=float(data.get('seña', 0)) if data.get('seña') else 0.0,
             titulo=data.get('titulo'),
             autor=data.get('autor'),
+            telefono=data.get('telefono', ''),
+            fecha=data.get('fecha'), 
             comentario=data.get('comentario', ''),
             cantidad=int(data.get('cantidad', 1)),
             isbn=data.get('isbn', '')
@@ -468,6 +471,7 @@ def crear_pedido():
                 'seña': nuevo_pedido.seña,
                 'fecha': nuevo_pedido.fecha.isoformat() if nuevo_pedido.fecha else None,
                 'titulo': nuevo_pedido.titulo,
+                'telefono': nuevo_pedido.telefono,
                 'autor': nuevo_pedido.autor,
                 'comentario': nuevo_pedido.comentario,
                 'cantidad': nuevo_pedido.cantidad,

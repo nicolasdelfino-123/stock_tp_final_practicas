@@ -43,6 +43,7 @@ class Pedido(Base):
     seña: Mapped[float] = mapped_column(Float, nullable=False)
     fecha: Mapped[DateTime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     titulo: Mapped[str] = mapped_column(String(800), nullable=False)
+    telefono: Mapped[str] = mapped_column(String(90), nullable=True)
     autor: Mapped[str] = mapped_column(String(800), nullable=False)
     comentario: Mapped[str] = mapped_column(String(1000), nullable=True)
     cantidad: Mapped[int] = mapped_column(Integer, nullable=False)
@@ -52,4 +53,4 @@ class Pedido(Base):
         return f"<Pedido {self.titulo} para {self.cliente_nombre}>"
 
 
-    
+   
