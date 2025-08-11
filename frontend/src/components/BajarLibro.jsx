@@ -161,9 +161,9 @@ const BajarLibro = () => {
         const mensaje = (
           <>
             ✅ Stock actualizado correctamente. Se dio de baja la cantidad{" "}
-            <span style={{ color: "black", fontWeight:'bold' }}>{cantidad}</span> del libro "
-            <span style={{ color: "black", fontWeight:'bold' }}>{formData.titulo}</span>" de{" "}
-            <span style={{ color: "black", fontWeight:'bold' }}>{formData.autor}</span>.
+            <span style={{ color: "black", fontWeight: 'bold' }}>{cantidad}</span> del libro "
+            <span style={{ color: "black", fontWeight: 'bold' }}>{formData.titulo}</span>" de{" "}
+            <span style={{ color: "black", fontWeight: 'bold' }}>{formData.autor}</span>.
           </>
         );
         setAlerta(mensaje);
@@ -534,10 +534,13 @@ const BajarLibro = () => {
                             transition: "border-color 0.3s ease",
                           }}
                           onFocus={(e) => {
-                            if (!readOnly) e.target.style.borderColor = "#7a1f1f";
+                            e.target.style.borderColor = "#7a1f1f";
+                            e.target.style.borderWidth = "3px"; // Aumenta el grosor
+
                           }}
                           onBlurCapture={(e) => {
-                            if (!readOnly) e.target.style.borderColor = "#a83232";
+                            e.target.style.borderColor = "#a83232";
+                            e.target.style.borderWidth = "1.5px"; // Vuelve al original
                           }}
                         />
                       </div>

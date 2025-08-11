@@ -426,10 +426,16 @@ const BuscarLibro = () => {
                             transition: "border-color 0.3s ease",
                           }}
                           onFocus={(e) => {
-                            if (!readOnly) e.target.style.borderColor = "#1565c0";
+
+                            e.target.style.borderColor = "#1565c0";
+                            e.target.style.borderWidth = "3px"; // Aumenta el grosor
+
                           }}
                           onBlurCapture={(e) => {
-                            if (!readOnly) e.target.style.borderColor = "#1e88e5";
+
+                            e.target.style.borderColor = "#031228ff";
+                            e.target.style.borderWidth = "1.5px"; // Vuelve al original
+
                           }}
                         />
                       </div>
@@ -595,7 +601,7 @@ const BuscarLibro = () => {
                       }}>
                         <strong style={{
                           textDecoration: "underline", fontStyle: "italic",
-                          fontWeight: "900", color: ["rojo", "negro"].includes(libro.ubicacion?.toLowerCase()) ? "white" : "black", marginRight: "8px",fontFamily: "'Roboto', 'Verdana', sans-serif"
+                          fontWeight: "900", color: ["rojo", "negro"].includes(libro.ubicacion?.toLowerCase()) ? "white" : "black", marginRight: "8px", fontFamily: "'Roboto', 'Verdana', sans-serif"
                         }}>EDITORIAL:</strong ><span style={{ fontWeight: "900" }}>{libro.editorial || "No disponible"}</span>
                       </div>
 
@@ -606,7 +612,7 @@ const BuscarLibro = () => {
                       }}>
                         <strong style={{
                           textDecoration: "underline", fontStyle: "italic",
-                          fontWeight: "900", color: ["rojo", "negro"].includes(libro.ubicacion?.toLowerCase()) ? "white" : "black", marginRight: "8px",fontFamily: "'Roboto', 'Verdana', sans-serif"
+                          fontWeight: "900", color: ["rojo", "negro"].includes(libro.ubicacion?.toLowerCase()) ? "white" : "black", marginRight: "8px", fontFamily: "'Roboto', 'Verdana', sans-serif"
                         }}>ISBN:</strong> <span style={{ fontWeight: "900" }}>{libro.isbn}</span>
                       </div>
 
@@ -617,7 +623,7 @@ const BuscarLibro = () => {
                       }}>
                         <strong style={{
                           textDecoration: "underline", fontStyle: "italic",
-                          fontWeight: "900", color: ["rojo", "negro"].includes(libro.ubicacion?.toLowerCase()) ? "white" : "black", marginRight: "8px",fontFamily: "'Roboto', 'Verdana', sans-serif"
+                          fontWeight: "900", color: ["rojo", "negro"].includes(libro.ubicacion?.toLowerCase()) ? "white" : "black", marginRight: "8px", fontFamily: "'Roboto', 'Verdana', sans-serif"
                         }}>STOCK:</strong> <span style={{ fontWeight: "900" }}>{libro.stock}</span>
                       </div>
 
@@ -627,8 +633,8 @@ const BuscarLibro = () => {
                         overflowWrap: "break-word"
                       }}>
                         <strong style={{
-                         textDecoration: "underline", fontStyle: "italic",
-                          fontWeight: "900", color: ["rojo", "negro"].includes(libro.ubicacion?.toLowerCase()) ? "white" : "black", marginRight: "8px",fontFamily: "'Roboto', 'Verdana', sans-serif"
+                          textDecoration: "underline", fontStyle: "italic",
+                          fontWeight: "900", color: ["rojo", "negro"].includes(libro.ubicacion?.toLowerCase()) ? "white" : "black", marginRight: "8px", fontFamily: "'Roboto', 'Verdana', sans-serif"
                         }}>UBICACIÓN:</strong> <span style={{ fontWeight: "900" }}>{libro.ubicacion || "No disponible"}</span>
                       </div>
 
@@ -638,51 +644,51 @@ const BuscarLibro = () => {
                         overflowWrap: "break-word"
                       }}>
                         <strong style={{
-                         textDecoration: "underline", fontStyle: "italic",
-                          fontWeight: "900", color: ["rojo", "negro"].includes(libro.ubicacion?.toLowerCase()) ? "white" : "black", marginRight: "8px",fontFamily: "'Roboto', 'Verdana', sans-serif"
+                          textDecoration: "underline", fontStyle: "italic",
+                          fontWeight: "900", color: ["rojo", "negro"].includes(libro.ubicacion?.toLowerCase()) ? "white" : "black", marginRight: "8px", fontFamily: "'Roboto', 'Verdana', sans-serif"
                         }} >PRECIO:</strong> <span style={{ fontWeight: "900" }}>{libro.precio}</span>
                       </div>
 
                     </div>
 
                     <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                    <button
-                      className="btn btn-sm btn-success"
-                      style={{
-                        padding: "6px 12px",
-                        fontSize: "0.9rem",
-                        fontWeight: "600",
-                        borderRadius: "6px",
-                        whiteSpace: "nowrap",
-                        flexShrink: 0
-                      }}
-                      onClick={() => handleSelectBook(libro)}
-                    >
-                      Seleccionar
-                    </button>
-
-                    {parseInt(libro.stock) === 0 && (
-                      <div
+                      <button
+                        className="btn btn-sm btn-success"
                         style={{
-                          width: "46px",
-                          height: "46px",
-                          borderRadius: "50%",
-                          backgroundColor: "#d32f2f",
-                          color: "white",
-                          border: "2px solid black",
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          fontWeight: "bold",
-                          fontSize: "1.9rem",
-                          boxShadow: "0 0 4px rgba(0,0,0,0.4)",
+                          padding: "6px 12px",
+                          fontSize: "0.9rem",
+                          fontWeight: "600",
+                          borderRadius: "6px",
+                          whiteSpace: "nowrap",
+                          flexShrink: 0
                         }}
-                        title="Sin stock"
+                        onClick={() => handleSelectBook(libro)}
                       >
-                        ×
-                      </div>
-                    )}
-                  </div>
+                        Seleccionar
+                      </button>
+
+                      {parseInt(libro.stock) === 0 && (
+                        <div
+                          style={{
+                            width: "46px",
+                            height: "46px",
+                            borderRadius: "50%",
+                            backgroundColor: "#d32f2f",
+                            color: "white",
+                            border: "2px solid black",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            fontWeight: "bold",
+                            fontSize: "1.9rem",
+                            boxShadow: "0 0 4px rgba(0,0,0,0.4)",
+                          }}
+                          title="Sin stock"
+                        >
+                          ×
+                        </div>
+                      )}
+                    </div>
                   </li>
                 ))}
               </ul>
