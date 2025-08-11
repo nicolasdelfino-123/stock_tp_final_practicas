@@ -445,8 +445,11 @@ def get_pedidos():
 
 @app.route('/api/pedidos', methods=['POST'])
 def crear_pedido():
+   
+   
     session = app.session
     data = request.json
+    print("📦 Datos recibidos para crear pedido:", data)
 
     try:
         nuevo_pedido = Pedido(

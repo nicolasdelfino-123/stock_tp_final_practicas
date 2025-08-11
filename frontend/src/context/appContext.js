@@ -339,12 +339,14 @@ export const AppProvider = ({ children }) => {
 
       crearPedido: async (pedidoData) => {
         try {
+          console.log("Datos que se envían al backend:", pedidoData);
+
           const response = await fetch(`${API_BASE}/api/pedidos`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
               cliente_nombre: pedidoData.nombreCliente,
-              telefono: pedidoData.telefonoCliente || "",
+              telefonoCliente: pedidoData.telefonoCliente || "",
               titulo: pedidoData.tituloLibro,
               autor: pedidoData.autorLibro,
               cantidad: pedidoData.cantidad,
@@ -410,7 +412,7 @@ export const AppProvider = ({ children }) => {
             body: JSON.stringify({
               cliente_nombre: pedidoActualizado.nombreCliente, // Map to backend's expected key
               titulo: pedidoActualizado.tituloLibro,          // Map to backend's expected key
-              telefono: pedidoActualizado.telefonoCliente || "", // Map to backend's expected key
+              telefonoCliente: pedidoActualizado.telefonoCliente || "", // Map to backend's expected key
               autor: pedidoActualizado.autorLibro,           // Map to backend's expected key
               cantidad: pedidoActualizado.cantidad,
               fecha: pedidoActualizado.fecha,

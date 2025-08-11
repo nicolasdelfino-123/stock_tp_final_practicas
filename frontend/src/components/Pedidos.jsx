@@ -167,6 +167,12 @@ const PedidoForm = () => {
       alert("Por favor complete todos los campos obligatorios");
       return;
     }
+    if (cantidad === 0) {
+      alert("La cantidad no puede ser cero");
+      return;
+    }
+
+
     setUltimoNombreCliente(nombreCliente);
     setUltimoTelefono(telefonoCliente);
     localStorage.setItem('ultimoNombreCliente', nombreCliente);
@@ -414,7 +420,7 @@ const PedidoForm = () => {
       libro: pedidosFiltrados[0].titulo, // Primer pedido como referencia
       autor: pedidosFiltrados[0].autor,
       isbn: pedidosFiltrados[0].isbn || "N/A",
-      telefonoLibro: pedidosFiltrados[0].telefonoLibro || "N/A",
+      telefonoCliente: pedidosFiltrados[0].telefonoCliente || "N/A",
       newPedidosCount: 0,
       lastPrinted: new Date().getTime(),
       ultimoImpresoId: pedidosFiltrados[0].id,
@@ -1480,7 +1486,8 @@ const PedidoForm = () => {
                             maxWidth: '180px', wordWrap: 'break-word',
                             whiteSpace: 'normal', overflowWrap: 'break-word', color: 'black', fontWeight: 'bold'
                           }}>
-                            {pedido.telefonoCliente || '-'}
+
+                            {pedido.telefonoCliente ? pedido.telefonoCliente.toString() : '-'}
                           </td>
                           <td style={{
                             padding: '12px', border: '1px solid #adacac', width: '100px',
