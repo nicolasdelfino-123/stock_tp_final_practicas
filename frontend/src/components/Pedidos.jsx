@@ -1321,7 +1321,10 @@ const PedidoForm = () => {
                   )}
                 </div>
                 <button
-                  onClick={() => setShowPedidos(false)}
+                  onKeyDown={(e) => {
+                    console.log("Tecla presionada:", e.key);
+                  }}
+                  onClick={(e) => setShowPedidos(false)}
                   style={{
                     backgroundColor: '#dc3545',
                     color: 'white',

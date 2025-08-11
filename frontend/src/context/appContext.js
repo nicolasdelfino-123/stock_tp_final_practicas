@@ -250,6 +250,7 @@ export const AppProvider = ({ children }) => {
       },
 
 
+      // Obtener faltantes activos (no eliminados)
       getFaltantes: async () => {
         try {
           const res = await fetch(`${API_BASE}/api/faltantes`);
@@ -257,12 +258,14 @@ export const AppProvider = ({ children }) => {
             const data = await res.json();
             return { success: true, faltantes: data };
           }
-          return { success: false, error: "Error cargando faltantes" };
+          const errorData = await res.json();
+          return { success: false, error: errorData.error || "Error al obtener faltantes" };
         } catch (error) {
           return { success: false, error: error.message };
         }
       },
 
+      // Crear un faltante nuevo
       crearFaltante: async (descripcion) => {
         try {
           const res = await fetch(`${API_BASE}/api/faltantes`, {
@@ -275,12 +278,80 @@ export const AppProvider = ({ children }) => {
             return { success: true, faltante: data.faltante };
           }
           const errorData = await res.json();
-          return { success: false, error: errorData.error || "Error creando faltante" };
+          return { success: false, error: errorData.error || "Error al crear faltante" };
         } catch (error) {
           return { success: false, error: error.message };
         }
       },
 
+      // Editar un faltante existente
+      editarFaltante: async (id, descripcion) => {
+        try {
+          const res = await fetch(`${API_BASE}/api/faltantes/${id}`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ descripcion }),
+          });
+          if (res.ok) {
+            const data = await res.json();
+            return { success: true, faltante: data.faltante };
+          }
+          const errorData = await res.json();
+          return { success: false, error: errorData.error || "Error al editar faltante" };
+        } catch (error) {
+          return { success: false, error: error.message };
+        }
+      },
+
+      // Borrado lógico: marcar faltante como eliminado
+      eliminarFaltante: async (id) => {
+        try {
+          const res = await fetch(`${API_BASE}/api/faltantes/${id}`, {
+            method: "DELETE",
+          });
+          if (res.ok) {
+            return { success: true };
+          }
+          const errorData = await res.json();
+          return { success: false, error: errorData.error || "Error al eliminar faltante" };
+        } catch (error) {
+          return { success: false, error: error.message };
+        }
+      },
+
+      // Obtener faltantes eliminados (para listar y recuperar)
+      obtenerFaltantesEliminados: async () => {
+        try {
+          const res = await fetch(`${API_BASE}/api/faltantes/eliminados`);
+          if (res.ok) {
+            const data = await res.json();
+            return { success: true, faltantesEliminados: data };
+          }
+          const errorData = await res.json();
+          return { success: false, error: errorData.error || "Error al obtener faltantes eliminados" };
+        } catch (error) {
+          return { success: false, error: error.message };
+        }
+      },
+
+      // Recuperar un faltante eliminado (borrado lógico inverso)
+      recuperarFaltante: async (id) => {
+        try {
+          const res = await fetch(`${API_BASE}/api/faltantes/recuperar/${id}`, {
+            method: "PUT",
+          });
+          if (res.ok) {
+            const data = await res.json();
+            return { success: true, faltante: data.faltante };
+          }
+          const errorData = await res.json();
+          return { success: false, error: errorData.error || "Error al recuperar faltante" };
+        } catch (error) {
+          return { success: false, error: error.message };
+        }
+      },
+
+      // Limpiar todo — ojo, deberías decidir si limpiar también solo los activos o todos (activos + eliminados)
       limpiarFaltantes: async () => {
         try {
           const res = await fetch(`${API_BASE}/api/faltantes`, {
@@ -290,50 +361,12 @@ export const AppProvider = ({ children }) => {
             return { success: true };
           }
           const errorData = await res.json();
-          return { success: false, error: errorData.error || "Error limpiando faltantes" };
+          return { success: false, error: errorData.error || "Error al limpiar faltantes" };
         } catch (error) {
           return { success: false, error: error.message };
         }
       },
 
-      editarFaltante: async (id, descripcion) => {
-        try {
-          const res = await fetch(`${API_BASE}/api/faltantes/${id}`, {
-            method: "PUT",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({ descripcion }),
-          });
-
-          if (!res.ok) {
-            const errorData = await res.json();
-            return { success: false, error: errorData.message || "Error al editar" };
-          }
-
-          const data = await res.json();
-          return { success: true, faltante: data };
-        } catch (error) {
-          return { success: false, error: error.message };
-        }
-      },
-
-      eliminarFaltante: async (id) => {
-        try {
-          const res = await fetch(`${API_BASE}/api/faltantes/${id}`, {
-            method: "DELETE",
-          });
-
-          if (!res.ok) {
-            const errorData = await res.json();
-            return { success: false, error: errorData.message || "Error al eliminar" };
-          }
-
-          return { success: true };
-        } catch (error) {
-          return { success: false, error: error.message };
-        }
-      },
 
       // Actions para agregar a tu contexto existente (sin const ni export)
 

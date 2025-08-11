@@ -348,7 +348,9 @@ def obtener_editoriales():
 def get_faltantes():
     session = app.session
     try:
-        faltantes = session.query(Faltante).order_by(Faltante.id.desc()).all()
+     
+        faltantes = session.query(Faltante).filter(Faltante.eliminado == False).order_by(Faltante.id.desc()).all()
+
         return jsonify([{"id": f.id, "descripcion": f.descripcion} for f in faltantes])
     except Exception as e:
         return jsonify({"error": str(e)}), 500
@@ -369,11 +371,11 @@ def crear_faltante():
         session.rollback()
         return jsonify({"error": str(e)}), 500
 
-@app.route('/api/faltantes', methods=['DELETE'])
+@app.route('/api/faltantes', methods=['DELETE'],strict_slashes=False)
 def limpiar_faltantes():
     session = app.session
     try:
-        session.query(Faltante).delete()
+        session.query(Faltante).filter(Faltante.eliminado == False).update({"eliminado": True})
         session.commit()
         return jsonify({"success": True})
     except Exception as e:
@@ -382,7 +384,7 @@ def limpiar_faltantes():
 
 
 
-@app.route('/api/faltantes/<int:id>', methods=['PUT', 'DELETE'])
+@app.route('/api/faltantes/<int:id>', methods=['PUT', 'DELETE'],strict_slashes=False)
 def modificar_faltante(id):
     session = app.session
     
@@ -409,15 +411,52 @@ def modificar_faltante(id):
             if not faltante:
                 return jsonify({"error": "Faltante no encontrado"}), 404
 
-            session.delete(faltante)
+            faltante.eliminado = True
             session.commit()
+
             return jsonify({"success": True})
         except Exception as e:
             session.rollback()
             return jsonify({"error": str(e)}), 500
 
 
+@app.route('/api/faltantes/recuperar/<int:id>', methods=['PUT'])
+def recuperar_faltante(id):
+    session = app.session
+    try:
+        faltante = session.query(Faltante).filter(Faltante.id == id, Faltante.eliminado == True).first()
+        if not faltante:
+            return jsonify({"error": "Faltante no encontrado o no está eliminado"}), 404
+        faltante.eliminado = False
+        session.commit()
+        return jsonify({"success": True, "faltante": {"id": faltante.id, "descripcion": faltante.descripcion}})
+    except Exception as e:
+        session.rollback()
+        return jsonify({"error": str(e)}), 500
 
+@app.route('/api/faltantes/eliminados', methods=['GET'])
+def get_faltantes_eliminados():
+    session = app.session
+    try:
+        eliminados = session.query(Faltante).filter(Faltante.eliminado == True).order_by(Faltante.id.desc()).all()
+        return jsonify([
+            {
+                "id": f.id,
+                "descripcion": f.descripcion,
+                "fecha_creacion": f.fecha_creacion.isoformat() if f.fecha_creacion else None
+            }
+            for f in eliminados
+        ])
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+    
+
+
+
+
+
+    
 
 @app.route('/api/pedidos', methods=['GET'])
 def get_pedidos():

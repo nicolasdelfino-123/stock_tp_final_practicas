@@ -1,5 +1,5 @@
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
-from sqlalchemy import Integer, String, Float, DateTime, func
+from sqlalchemy import Integer, String, Float, DateTime, func, Boolean
 
 
 
@@ -28,6 +28,7 @@ class Faltante(Base):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     descripcion: Mapped[str] = mapped_column(String, nullable=False)
+    eliminado: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     fecha_creacion: Mapped[DateTime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
     def __repr__(self):
