@@ -26,8 +26,9 @@ const PedidoForm = () => {
   const [telefonoCliente, setTelefonoCliente] = useState("");
   const [ultimoNombreCliente, setUltimoNombreCliente] = useState("");
   const [ultimoTelefono, setUltimoTelefono] = useState(localStorage.getItem('ultimoTelefono') || "");
+  const inputRef = useRef([]);
 
-  const [nombreInput, setNombreInput] = useState(''); // para controlar el input
+
 
   const formatearFechaArgentina = (fecha) => {
     const date = new Date(fecha);
@@ -765,9 +766,20 @@ const PedidoForm = () => {
     setSenia(formatNumberWithDots(rawValue.replace(/\D/g, '')));
   };
 
+  const handleKeyDown = (e, index) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      const nextInput = inputRef.current[index + 1];
+      if (nextInput) {
+        nextInput.focus();
+      }
 
+    }
+  };
 
   const fondoURL = "/fondo-3.jpg"
+
+
 
   const handleCheckboxChange = (e) => {
     if (e.target.checked && ultimoNombreCliente) {
@@ -914,8 +926,10 @@ const PedidoForm = () => {
                 <div className="col-12 col-md-6 mb-3" style={{ paddingRight: '10px' }}>
                   <input
                     type="text"
+                    ref={el => inputRef.current[0] = el}
                     value={nombreCliente}
                     onChange={(e) => setNombreCliente(e.target.value)}
+                    onKeyDown={(e) => { handleKeyDown(e, 0) }}
                     placeholder="Ingrese el nombre y apellido del cliente"
                     style={{
                       width: '100%',
@@ -932,6 +946,8 @@ const PedidoForm = () => {
                 {/* Input Teléfono */}
                 <div className="col-12 col-md-6 mb-3" style={{ paddingLeft: '10px' }}>
                   <input
+                    ref={el => inputRef.current[1] = el}
+                    onKeyDown={(e) => handleKeyDown(e, 1)}
                     type="text"
                     value={telefonoCliente}
                     onChange={(e) => setTelefonoCliente(e.target.value)}
@@ -959,6 +975,8 @@ const PedidoForm = () => {
           </label>
           <input
             type="text"
+            ref={el => inputRef.current[2] = el}
+            onKeyDown={(e) => handleKeyDown(e, 2)}
             value={tituloLibro}
             onChange={(e) => setTituloLibro(e.target.value)}
             placeholder="Ingrese el título del libro"
@@ -979,6 +997,8 @@ const PedidoForm = () => {
               Autor
             </label>
             <input
+              ref={el => inputRef.current[3] = el}
+              onKeyDown={(e) => handleKeyDown(e, 3)}
               type="text"
               value={autorLibro}
               onChange={(e) => setAutorLibro(e.target.value)}
@@ -1000,11 +1020,13 @@ const PedidoForm = () => {
             <div className="col-6 col-md-1">
               <label className="fw-bold text-black d-block mb-1" style={{ fontSize: '22px', fontFamily: 'Roboto' }}>Cantidad</label>
               <input
+                ref={el => inputRef.current[4] = el}
+                onKeyDown={(e) => handleKeyDown(e, 4)}
                 type="number"
                 min="1"
                 value={cantidad}
                 onChange={(e) => setCantidad(Number(e.target.value))}
-                className="form-control"
+
                 style={{
                   width: '100%',
                   padding: '10px',
@@ -1021,11 +1043,13 @@ const PedidoForm = () => {
             <div className="col-6 col-md-2">
               <label className="fw-bold text-black d-block mb-1" style={{ fontSize: '22px', fontFamily: 'Roboto' }}>Fecha</label>
               <input
+                ref={el => inputRef.current[5] = el}
+                onKeyDown={(e) => handleKeyDown(e, 5)}
                 type="text"
                 value={fecha}
                 onChange={(e) => setFecha(e.target.value)}
                 placeholder="DD/MM/YYYY"
-                className="form-control"
+
                 style={{
                   width: '100%',
                   padding: '10px',
@@ -1041,11 +1065,13 @@ const PedidoForm = () => {
             <div className="col-6 col-md-2">
               <label className="fw-bold text-black d-block mb-1" style={{ fontSize: '22px', fontFamily: 'Roboto' }}>ISBN</label>
               <input
+                ref={el => inputRef.current[6] = el}
+                onKeyDown={(e) => handleKeyDown(e, 6)}
                 type="text"
                 value={isbn}
                 onChange={(e) => setIsbn(e.target.value)}
                 placeholder="Ingrese el ISBN"
-                className="form-control"
+
                 style={{
                   width: '100%',
                   padding: '10px',
@@ -1060,11 +1086,13 @@ const PedidoForm = () => {
             <div className="col-6 col-md-1">
               <label className="fw-bold text-black d-block mb-1" style={{ fontSize: '22px', fontFamily: 'Roboto' }}>Seña</label>
               <input
+                ref={el => inputRef.current[7] = el}
+                onKeyDown={(e) => handleKeyDown(e, 7)}
                 type="text"
                 value={formatNumberWithDots(seña)}
                 onChange={(e) => setSenia(e.target.value.replace(/\D/g, ''))}
                 placeholder="$$"
-                className="form-control"
+
                 style={{
                   width: '100%',
                   padding: '10px',
@@ -1081,11 +1109,13 @@ const PedidoForm = () => {
             <div className="col-12 col-md-6">
               <label className="fw-bold text-black d-block mb-1" style={{ fontSize: '22px', fontFamily: 'Roboto' }}>Comentario</label>
               <input
+                ref={el => inputRef.current[8] = el}
+                onKeyDown={(e) => handleKeyDown(e, 8)}
                 type="text"
                 value={comentario}
                 onChange={(e) => setComentario(e.target.value)}
                 placeholder="Ingrese un comentario (opcional)"
-                className="form-control"
+
                 style={{
                   width: '100%',
                   padding: '10px',
@@ -1105,6 +1135,13 @@ const PedidoForm = () => {
 
           <div style={{ display: 'flex', gap: '10px', justifyContent: 'center', flexWrap: 'wrap' }}>
             <button
+              ref={ele => inputRef.current[9] = ele}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  handleGuardar()
+                }
+              }}
               onClick={handleGuardar}
               disabled={loading}
               style={{
