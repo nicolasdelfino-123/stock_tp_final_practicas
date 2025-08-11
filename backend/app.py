@@ -340,6 +340,7 @@ def obtener_editoriales():
             "error": str(e)
         }), 500
 
+from flask import jsonify
 
 
 

@@ -661,7 +661,7 @@ const AgregarLibro = () => {
         </div>
       )}
 
-      
+
 
       {/* Contenedor principal */}
       <div
@@ -871,7 +871,7 @@ const AgregarLibro = () => {
                           }}
                           onMouseEnter={(e) => {
                             if (index !== indiceSeleccionado) {
-                              e.target.style.backgroundColor = "#f5f5f5";
+                              e.target.style.backgroundColor = "#59c84fff";
                             }
                           }}
                           onMouseLeave={(e) => {
