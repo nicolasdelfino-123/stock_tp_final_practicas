@@ -27,6 +27,8 @@ const PedidoForm = () => {
   const [ultimoNombreCliente, setUltimoNombreCliente] = useState("");
   const [ultimoTelefono, setUltimoTelefono] = useState(localStorage.getItem('ultimoTelefono') || "");
   const inputRef = useRef([]);
+  const inputModalRef = useRef(null);
+  const modalRef = useRef(null);
 
 
 
@@ -43,6 +45,11 @@ const PedidoForm = () => {
     cargarPedidos();
   }, []);
 
+  useEffect(() => {
+    if (showPedidos && modalRef.current) {
+      modalRef.current.focus();
+    }
+  }, [showPedidos]);
   const cargarPedidos = async () => {
     setLoading(true);
     try {
@@ -239,9 +246,15 @@ const PedidoForm = () => {
     setShowPedidos(true);
   };
 
+  const handleCerrarPedidos = () => {
+    setShowPedidos(false);
+  }
 
-
-
+  useEffect(() => {
+    if (inputModalRef.current) {
+      inputModalRef.current.focus(); // Le da foco al input cuando el componente carga
+    }
+  }, []);
 
 
 
@@ -1278,6 +1291,14 @@ const PedidoForm = () => {
             color: 'black',
           }}>
             <div
+              ref={modalRef}
+              tabIndex={-1}
+              onKeyDown={(e) => {
+                if (e.key === 'Escape') {
+                  e.preventDefault();
+                  handleCerrarPedidos();
+                }
+              }}
               className="container-pedidos-cargados"
               style={{
                 backgroundColor: 'white',
@@ -1289,8 +1310,7 @@ const PedidoForm = () => {
                 overflow: 'auto',
                 overscrollBehavior: 'contain',
                 margin: '0 auto',
-                // Estilos específicos para scrollbars (funcionan en Chrome/Safari)
-                scrollbarColor: '#888 #f1f1f1', // Para Firefox
+                scrollbarColor: '#888 #f1f1f1',
                 minWidth: '80vw'
               }}
             >
@@ -1321,9 +1341,7 @@ const PedidoForm = () => {
                   )}
                 </div>
                 <button
-                  onKeyDown={(e) => {
-                    console.log("Tecla presionada:", e.key);
-                  }}
+                  ref={inputModalRef}
                   onClick={(e) => setShowPedidos(false)}
                   style={{
                     backgroundColor: '#dc3545',
@@ -1337,6 +1355,8 @@ const PedidoForm = () => {
                   ✕ Cerrar
                 </button>
               </div>
+
+
 
               {/* Filtro por fechas */}
               <div style={{
