@@ -9,6 +9,7 @@ const Login = () => {
     const { actions } = useAppContext();
     const navigate = useNavigate();
     const [error, setError] = useState(null);
+    const [isHover, setIsHover] = useState(false);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -32,6 +33,10 @@ const Login = () => {
             setLoading(false);
         }
     };
+
+    const baseColor = '#1976d2'; // Color base para el botón y otros elementos
+    const hoverColor = '#115293'; // Color al pasar el mouse
+    const disabledColor = '#ccc'; // Color para el botón deshabilitado
 
     return (
         <div style={styles.container}>
@@ -60,11 +65,16 @@ const Login = () => {
                 <button
                     style={{
                         ...styles.button,
-                        backgroundColor: loading ? '#ccc' : '#1976d2',
+                        backgroundColor: loading ? disabledColor : (isHover ? hoverColor : baseColor),
                         cursor: loading ? 'not-allowed' : 'pointer'
                     }}
                     type="submit"
                     disabled={loading}
+                    onMouseEnter={(e) => { setIsHover(true); }}
+                    onMouseLeave={(e) => { setIsHover(false); }}
+
+
+
                 >
                     {loading ? 'Iniciando...' : 'Entrar'}
                 </button>
