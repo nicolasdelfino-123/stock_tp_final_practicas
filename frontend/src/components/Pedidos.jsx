@@ -491,10 +491,10 @@ const PedidoForm = () => {
         th:nth-child(4), td:nth-child(4) { width: 11% !important; } /* AUTOR */
         th:nth-child(5), td:nth-child(5) { width: 7% !important; max-width: 50px; } /* CANTIDAD */
         th:nth-child(6), td:nth-child(6) { width: 8% !important; max-width: 40px; } /* ISBN */
-        th:nth-child(7), td:nth-child(7) { width: 9% !important; } /* FECHA */
+        th:nth-child(7), td:nth-child(7) { width: 8% !important; } /* FECHA */
         th:nth-child(8), td:nth-child(8) { width: 9% !important; white-space: normal; } /* SEÑA */
         th:nth-child(9), td:nth-child(9) { 
-          width: 21% !important; 
+          width: 20% !important; 
           border-right: 1px solid black !important;
           white-space: normal;
         }
@@ -560,64 +560,111 @@ const PedidoForm = () => {
 <head>
   <title>Pedidos Ricardo Delfino - Librería Charles</title>
   <style>
-    body { font-family: Arial, sans-serif; margin: 20px; }
-    .header { text-align: center; margin-bottom: 30px; }
-    .titulo { color: #2c3e50; margin: 10px 0; }
-    table { 
-      width: 100%; 
-      border-collapse: collapse; 
-      margin-top: 20px;
-      border: 1px solid black;
-      table-layout: fixed; /* clave para impresión */
+    body {
+      font-family: Arial, sans-serif;
+      margin: 10px;
     }
-    th, td { 
-      border: 1px solid black;
-      padding: 12px; 
-      text-align: left; 
+    .header {
+      text-align: center;
+      margin-bottom: 15px;
+    }
+    .titulo {
+      color: #2c3e50;
+      margin: 10px 0;
+    }
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      max-width: 100%;
+      table-layout: fixed;
+      font-size: 10px;
+      overflow-wrap: break-word;
+      word-wrap: break-word;
+      border: 1px solid black !important;
+    }
+    th, td {
+      border: 1px solid black !important;
+      padding: 4px 6px;
+      text-align: left;
       word-wrap: break-word;
       overflow-wrap: break-word;
+      white-space: normal;
+      box-sizing: border-box;
+      vertical-align: top;
     }
-    th { 
+    th {
       background-color: white;
       color: black;
-      font-weight: bold; 
-      border-bottom: 2px solid black;
+      font-weight: bold;
+      border: 1px solid black !important;
+      white-space: nowrap;
     }
-
-    /* ***************************************** */
-    /* ANCHOS POR DEFECTO (PANTALLA) */
-    th:nth-child(1), td:nth-child(1) { width: 20% !important; } /* Título */
+    /* Anchos columnas */
+    th:nth-child(1), td:nth-child(1) { width: 25% !important; } /* Título */
     th:nth-child(2), td:nth-child(2) { width: 20% !important; } /* Autor */
     th:nth-child(3), td:nth-child(3) { width: 10% !important; } /* Cantidad */
-    th:nth-child(4), td:nth-child(4) { width: 20% !important; } /* ISBN */
-    /* ***************************************** */
-
-    tr:nth-child(even) { 
+    th:nth-child(4), td:nth-child(4) { 
+      width: 20% !important; 
+      border-right: 1px solid black !important;
+      white-space: normal;
+    } /* ISBN */
+    tr:nth-child(even) {
       background-color: #f2f2f2;
     }
-    
+    tr:hover {
+      background-color: #e8f4fd;
+    }
     @media print {
+      body {
+        margin: 0.5cm;
+      }
+      table {
+        font-size: 8pt;
+        width: 100% !important;
+        max-width: 100% !important;
+        min-width: 100% !important;
+        table-layout: fixed;
+        page-break-inside: auto;
+        overflow-wrap: break-word;
+        border: 1px solid black !important;
+      }
+      th, td {
+        padding: 2px 4px;
+        white-space: normal;
+        color: black !important;
+        border: 1px solid black !important;
+        word-wrap: break-word;
+        overflow-wrap: break-word;
+        word-break: break-all !important;
+        box-sizing: border-box !important;
+      }
       th {
         background-color: white !important;
-        color: black !important;
         -webkit-print-color-adjust: exact;
         print-color-adjust: exact;
       }
-      table {
-        table-layout: fixed !important;
+      tr {
+        page-break-inside: avoid;
+        page-break-after: auto;
       }
-      th:nth-child(1), td:nth-child(1) { width: 25% !important; }
-      th:nth-child(2), td:nth-child(2) { width: 20% !important; }
-      th:nth-child(3), td:nth-child(3) { width: 10% !important; }
-      th:nth-child(4), td:nth-child(4) { width: 20% !important; }
+      /* Anchos para impresión */
+      th:nth-child(1), td:nth-child(1) { width: 25% !important; } /* Título */
+      th:nth-child(2), td:nth-child(2) { width: 20% !important; } /* Autor */
+      th:nth-child(3), td:nth-child(3) { width: 10% !important; } /* Cantidad */
+      th:nth-child(4), td:nth-child(4) { 
+        width: 20% !important; 
+        border-right: 1px solid black !important;
+        white-space: normal;
+      } /* ISBN */
     }
   </style>
 </head>
 <body>
   <div class="header">
     <h2 class="titulo">Librería Charles</h2>
-    <h3>Las Varillas, Córdoba - 9 de julio 346 </h3>
+    <h3>Las Varillas, Córdoba - 9 de julio 346</h3>
     <h4>Teléfonos: 03533-420183 / Móvil: 03533-682652</h4>
+    <h5>Fecha de impresión: 12/08/2025</h5>
   </div>
   ${tablaClonada.outerHTML}
 </body>
