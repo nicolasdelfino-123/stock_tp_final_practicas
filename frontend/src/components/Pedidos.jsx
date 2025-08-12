@@ -725,77 +725,6 @@ const PedidoForm = () => {
     }
   };
 
-  const handleImprimirDesdeUltimaImpresion = async () => {
-    if (!ultimaImpresion?.lastPrinted) {
-      alert("No hay registro de última impresión");
-      return;
-    }
-
-    setLoading(true);
-    try {
-      const result = await actions.obtenerPedidos();
-      if (!result.success) {
-        alert("Error al cargar pedidos");
-        return;
-      }
-
-      // 1. Verificamos si hay pedidos nuevos desde la última impresión
-      const pedidosPosteriores = result.pedidos.filter(pedido => {
-        const fechaPedido = new Date(pedido.fecha).getTime();
-        return fechaPedido > ultimaImpresion.lastPrinted;
-      });
-
-      if (pedidosPosteriores.length > 0) {
-        // Si hay pedidos nuevos, los mostramos
-        setPedidosFiltrados(pedidosPosteriores);
-        await new Promise(resolve => setTimeout(resolve, 300));
-        handleImprimirParaRicardo();
-      } else {
-        // Si no hay pedidos nuevos, preguntamos si quiere reimprimir los mismos
-        const confirmar = window.confirm(
-          `No hay nuevos pedidos desde la última impresión. ¿Desea reimprimir los mismos ${ultimaImpresion.cantidadImpresos || ''} pedidos?`
-        );
-
-        if (confirmar) {
-          // Filtramos los pedidos actuales que coincidan con los IDs guardados
-          const pedidosAReimprimir = result.pedidos.filter(pedido =>
-            ultimaImpresion.lastPrintedIds?.includes(pedido.id)
-          );
-
-          if (pedidosAReimprimir.length === 0) {
-            alert("No se encontraron los pedidos de la última impresión");
-            return;
-          }
-
-          setPedidosFiltrados(pedidosAReimprimir);
-          await new Promise(resolve => setTimeout(resolve, 300));
-          handleImprimirParaRicardo();
-        }
-      }
-
-      // Actualizamos el estado de última impresión
-      setUltimaImpresion(prev => ({
-        ...prev,
-        fecha: new Date().toLocaleString('es-AR'),
-        newPedidosCount: 0,
-        lastPrinted: new Date().getTime(),
-        // Mantenemos los mismos IDs de la última impresión
-        lastPrintedIds: prev.lastPrintedIds || [],
-        // Mantenemos la misma cantidad
-        cantidadImpresos: prev.cantidadImpresos || 0,
-        libro: prev.libro,
-        autor: prev.autor,
-        isbn: prev.isbn,
-        ultimoImpresoId: prev.ultimoImpresoId
-      }));
-
-    } catch (error) {
-      console.error("Error en impresión desde última:", error);
-      alert("Ocurrió un error al procesar la impresión");
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const handleEliminarPedido = async (id) => {
     if (window.confirm("¿Estás seguro de eliminar este pedido?")) {
@@ -1594,25 +1523,10 @@ const PedidoForm = () => {
                     Mostrar Todos
                   </strong>
                 </button>
-                <button
-                  onClick={handleImprimirDesdeUltimaImpresion}
-                  style={{
-                    backgroundColor: '#9c27b0',
-                    color: 'white',
-                    border: 'none',
-                    padding: '10px 20px',
-                    borderRadius: '5px',
-                    cursor: 'pointer'
-                  }}
-                >
-                  <strong>
 
-                    Imprimir desde última impresión
-                  </strong>
-                </button>
                 <input
                   type="text"
-                  placeholder="🔍 Cliente, libro, autor..."
+                  placeholder="🔍 Cliente, Libro, Autor o ISBN"
                   value={terminoBusqueda}
                   onChange={(e) => setTerminoBusqueda(e.target.value)}
                   style={{
@@ -1622,6 +1536,28 @@ const PedidoForm = () => {
                     width: '250px'
                   }}
                 />
+                <button
+                  onClick={() => {
+                    setTerminoBusqueda("");
+                    setFechaDesde("");
+                    setFechaHasta("");
+                    setPedidosFiltrados(todosLosPedidos);
+
+                  }}
+                  style={{
+                    backgroundColor: '#ec1814ff',
+                    color: 'white',
+                    border: 'none',
+                    padding: '10px 20px',
+                    borderRadius: '5px',
+                    cursor: 'pointer'
+                  }}
+                >
+                  <strong>
+
+                    Limpiar búsqueda
+                  </strong>
+                </button>
                 <span style={{
                   marginLeft: '10px',
                   fontWeight: 'bold',
