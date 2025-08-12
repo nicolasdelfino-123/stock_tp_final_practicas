@@ -10,6 +10,7 @@ const BajarLibro = () => {
   const [alertaCantidad, setAlertaCantidad] = useState("");
   const [stockDespuesDeBaja, setStockDespuesDeBaja] = useState(null);
   const [libroIdDespuesDeBaja, setLibroIdDespuesDeBaja] = useState(null);
+  const [stockAnterior, setStockAnterior] = useState(null);
 
 
 
@@ -220,34 +221,39 @@ const BajarLibro = () => {
   const fondoURL = "/fondo-3.jpg"
 
   useEffect(() => {
-    if (stockDespuesDeBaja === 0 && libroIdDespuesDeBaja) {
-      // Llamamos a la acción para marcar baja
-      actions.marcarBaja(libroIdDespuesDeBaja)
-        .then((bajaResponse) => {
-          if (bajaResponse && bajaResponse.fecha_baja) {
-            setAlerta(
-              <>
-                ✅ Libro marcado como dado de baja en fecha{" "}
-                <strong>{new Date(bajaResponse.fecha_baja).toLocaleString()}</strong>
-              </>
-            );
-          } else {
-            setAlerta("❌ No se pudo marcar el libro como dado de baja");
-          }
-        })
-        .catch((error) => {
-          console.error("Error al marcar libro como dado de baja:", error);
-          setAlerta("❌ Error al marcar libro como dado de baja");
-        })
-        .finally(() => {
-          // Reseteamos los estados para evitar repetir llamadas innecesarias
-          setStockDespuesDeBaja(null);
-          setLibroIdDespuesDeBaja(null);
-          // AGREGAR ESTA LÍNEA:
-          actions.getLibrosDadosBaja(); // Refrescar la lista de libros dados de baja
-        });
+    if (stockDespuesDeBaja !== null && libroIdDespuesDeBaja) {
+      if (stockAnterior === null || stockDespuesDeBaja < stockAnterior) {
+        // Aquí hacés la acción que quieras con la baja
+        actions.marcarBaja(libroIdDespuesDeBaja)
+          .then((bajaResponse) => {
+            if (bajaResponse && bajaResponse.fecha_baja) {
+              setAlerta(
+                <>
+                  ✅ Libro marcado como dado de baja en fecha{" "}
+                  <strong>{new Date(bajaResponse.fecha_baja).toLocaleString()}</strong>
+                </>
+              );
+            } else {
+              setAlerta("❌ No se pudo marcar el libro como dado de baja");
+            }
+          })
+          .catch((error) => {
+            console.error("Error al marcar libro como dado de baja:", error);
+            setAlerta("❌ Error al marcar libro como dado de baja");
+          })
+          .finally(() => {
+            setStockDespuesDeBaja(null);
+            setLibroIdDespuesDeBaja(null);
+            actions.getLibrosDadosBaja(); // Refrescar lista
+            setStockAnterior(stockDespuesDeBaja); // Actualizo el stock anterior al nuevo
+          });
+      } else {
+        // Si el stock no disminuyó, igual actualizo el stockAnterior para la próxima vez
+        setStockAnterior(stockDespuesDeBaja);
+      }
     }
   }, [stockDespuesDeBaja, libroIdDespuesDeBaja, actions]);
+
 
 
 
