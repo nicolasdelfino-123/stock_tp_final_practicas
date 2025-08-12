@@ -54,21 +54,22 @@ export const LibrosDadosBaja = () => {
                             </td>
                         </tr>
                     ) : (
-                        store.librosDadosBaja.map((libro) => (
-                            <tr key={libro.id}>
-                                <td style={tdStyle}>{libro.titulo}</td>
-                                <td style={tdStyle}>{libro.autor}</td>
-                                <td style={tdStyle}>{libro.editorial || "-"}</td>
-                                <td style={tdStyle}>{libro.isbn}</td>
-
-                                <td style={tdStyle}>
-                                    {libro.fecha_baja
-                                        ? new Date(libro.fecha_baja).toLocaleString()
-                                        : "-"}
-                                </td>
-                                <td style={tdStyle}>{libro.cantidad}</td>
-                            </tr>
-                        ))
+                        [...store.librosDadosBaja] // 🔹 Copiamos el array para no mutar el store
+                            .sort((a, b) => new Date(b.fecha_baja) - new Date(a.fecha_baja)) // 🔹 Ordenar por fecha más reciente primero
+                            .map((libro) => (
+                                <tr key={libro.id}>
+                                    <td style={tdStyle}>{libro.titulo}</td>
+                                    <td style={tdStyle}>{libro.autor}</td>
+                                    <td style={tdStyle}>{libro.editorial || "-"}</td>
+                                    <td style={tdStyle}>{libro.isbn}</td>
+                                    <td style={tdStyle}>
+                                        {libro.fecha_baja
+                                            ? new Date(libro.fecha_baja).toLocaleString()
+                                            : "-"}
+                                    </td>
+                                    <td style={tdStyle}>{libro.cantidad}</td>
+                                </tr>
+                            ))
                     )}
                 </tbody>
             </table>
