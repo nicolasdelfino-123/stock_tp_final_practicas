@@ -146,3 +146,7 @@
 .container-pedidos-cargados::-webkit-scrollbar-track {
   background: #f1f1f1;
 }
+
+.btn-baja {
+  background-color: red;
+}

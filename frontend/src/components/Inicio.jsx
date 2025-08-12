@@ -61,78 +61,94 @@ const Inicio = () => {
           flexWrap: "wrap",
         }}
       >
-        <div>
-          <div className="d-flex flex-wrap justify-content-center gap-5">
-            <button
-              onClick={() => navigate("/bajarlibro")}
-              className="btn btn-danger btn-lg d-flex align-items-center gap-2 px-4 py-4 btn-futurista"
-            >
-              <Trash2 size={45} />
-              <span>Bajar Libro</span>
-            </button>
-
-            <button
-              onClick={() => navigate("/buscarlibro")}
-              className="btn btn-primary btn-lg d-flex align-items-center gap-2 px-4 py-3 btn-futurista"
-            >
-              <Search size={45} />
-              <span>Buscar Libro</span>
-            </button>
-
-            <button
-              onClick={() => navigate("/agregarlibro")}
-              className="btn btn-success btn-lg d-flex align-items-center gap-2 px-4 py-3 btn-futurista"
-            >
-              <PlusCircle size={45} />
-              <span>Agregar Libro</span>
-            </button>
-          </div>
-
-          <div className="d-flex justify-content-center align-items-center mt-5" style={{ height: "200px" }}>
-            <button
-              onClick={() => navigate("/faltantes")}
-              className="btn btn-warning btn-lg d-flex align-items-center justify-content-center gap-2 px-4 py-3 btn-futurista m-5"
-              style={{
-                borderRadius: "50px",  // un valor alto que redondea mucho sin cortar
-                padding: "10px 30px",  // más padding horizontal para el texto
-                minWidth: "150px",
-
-              }}
-            >
-              <PackagePlus size={45} color="black" />
-              <span style={{ color: "black" }}>Faltantes</span>
-            </button>
-
-            <button
-              onClick={() => navigate("/pedidos")}
-              className="btn btn-warning btn-lg d-flex align-items-center justify-content-center gap-2 px-4 py-3 btn-futurista m-5"
-              style={{
-                borderRadius: "50px",  // un valor alto que redondea mucho sin cortar
-                padding: "10px 30px",  // más padding horizontal para el texto
-                minWidth: "150px",
-
-              }}
-            >
-              <PackagePlus size={45} color="black" />
-              <span style={{ color: "black" }}>Pedidos libros</span>
-            </button>
-
+        <div
+          className="d-flex flex-column vh-100 vw-100"
+          style={{
+            backgroundImage: `linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url(${fondoURL})`,
+            backgroundSize: "cover",
+            backgroundPosition: "center",
+          }}
+        >
+          {/* Contenedor para el botón arriba a la derecha */}
+          <div className="d-flex justify-content-end align-items-start" style={{ padding: 0, margin: 0 }}>
             <button
               onClick={() => navigate("/libros-dados-baja")}
-              className="btn btn-warning btn-lg d-flex align-items-center justify-content-center gap-2 px-4 py-3 btn-futurista m-5"
+              className="btn-baja btn-lg gap-2 px-4 py-3 btn-futurista"
               style={{
-                borderRadius: "50px",  // un valor alto que redondea mucho sin cortar
-                padding: "10px 30px",  // más padding horizontal para el texto
+                borderRadius: "50px",
+                padding: "10px 30px",
                 minWidth: "150px",
-
+                margin: 50,
               }}
             >
               <PackagePlus size={45} color="black" />
               <span style={{ color: "black" }}>Libros dados de baja</span>
             </button>
-
           </div>
 
+
+          {/* Botones del medio */}
+          <div className="row">
+            <div className="col-12 d-flex flex-wrap justify-content-center gap-5">
+              <button
+                onClick={() => navigate("/bajarlibro")}
+                className="btn btn-danger btn-lg d-flex align-items-center gap-2 px-4 py-4 btn-futurista"
+              >
+                <Trash2 size={45} />
+                <span>Bajar Libro</span>
+              </button>
+
+              <button
+                onClick={() => navigate("/buscarlibro")}
+                className="btn btn-primary btn-lg d-flex align-items-center gap-2 px-4 py-3 btn-futurista"
+              >
+                <Search size={45} />
+                <span>Buscar Libro</span>
+              </button>
+
+              <button
+                onClick={() => navigate("/agregarlibro")}
+                className="btn btn-success btn-lg d-flex align-items-center gap-2 px-4 py-3 btn-futurista"
+              >
+                <PlusCircle size={45} />
+                <span>Agregar Libro</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Botones inferiores */}
+          <div className="row mt-5">
+            <div
+              className="col-12 d-flex justify-content-center align-items-center flex-wrap"
+              style={{ minHeight: "200px" }}
+            >
+              <button
+                onClick={() => navigate("/faltantes")}
+                className="btn btn-warning btn-lg d-flex align-items-center justify-content-center gap-2 px-4 py-3 btn-futurista m-5"
+                style={{
+                  borderRadius: "50px",
+                  padding: "10px 30px",
+                  minWidth: "150px",
+                }}
+              >
+                <PackagePlus size={45} color="black" />
+                <span style={{ color: "black" }}>Faltantes</span>
+              </button>
+
+              <button
+                onClick={() => navigate("/pedidos")}
+                className="btn btn-warning btn-lg d-flex align-items-center justify-content-center gap-2 px-4 py-3 btn-futurista m-5"
+                style={{
+                  borderRadius: "50px",
+                  padding: "10px 30px",
+                  minWidth: "150px",
+                }}
+              >
+                <PackagePlus size={45} color="black" />
+                <span style={{ color: "black" }}>Pedidos libros</span>
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     </>
