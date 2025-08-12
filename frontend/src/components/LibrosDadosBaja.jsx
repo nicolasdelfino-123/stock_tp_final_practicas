@@ -35,7 +35,7 @@ export const LibrosDadosBaja = () => {
                 </button>
                 <h2 style={{ color: 'white', fontWeight: 'bold', textAlign: 'center', flex: '1', margin: '0', position: 'absolute', left: '50%', transform: 'translateX(-50%)', }}>📚 Libros dados de baja</h2>
             </div>
-            <table style={{ borderCollapse: "collapse", width: "100%" }}>
+            <table style={{ width: "100%", borderRadius: '20px' }}>
                 <thead>
                     <tr>
                         <th style={thStyle}>Título</th>
@@ -80,14 +80,16 @@ const thStyle = {
     border: "1px solid black",
     padding: "8px",
     backgroundColor: "#ead9d9ff",
-    fontWeight: "bold"
+    fontWeight: "bold",
+
 };
 
 const tdStyle = {
     border: "1px solid black",
     padding: "8px",
     backgroundColor: "#f9f9f9",
-    fontWeight: "600"
+    fontWeight: "600",
+
 };
 
 export default LibrosDadosBaja;

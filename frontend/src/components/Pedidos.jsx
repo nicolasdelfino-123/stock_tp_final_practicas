@@ -273,9 +273,9 @@ const PedidoForm = () => {
         ultimoPedidoGuardado.current = datosActuales; // <-- Guardamos para comparar después
 
         if (editandoId) {
-          alert("Pedido editado con éxito. El formulario se limpiará para crear un pedido nuevo.");
+          alert("Pedido editado con éxito.");
           editadoConExito.current = true;
-          limpiarFormulario();
+
         } else {
           alert("Pedido guardado con éxito");
           guardadoEnEstaImpresion.current = true;
@@ -366,8 +366,6 @@ const PedidoForm = () => {
       return;
     }
 
-
-
     const tabla = document.getElementById('tabla-todos-pedidos');
     const ventana = window.open('', '_blank');
     const tablaClonada = tabla.cloneNode(true);
@@ -376,15 +374,12 @@ const PedidoForm = () => {
     const encabezados = tablaClonada.querySelectorAll('th');
     const filas = tablaClonada.querySelectorAll('tr');
 
-    // Índice de la última columna
     const ultimaCol = encabezados.length - 1;
 
-    // Remover el th de la última columna
     if (encabezados[ultimaCol]) {
       encabezados[ultimaCol].remove();
     }
 
-    // Remover la celda td correspondiente en cada fila (excepto la fila de encabezados)
     filas.forEach(fila => {
       const celdas = fila.querySelectorAll('td');
       if (celdas.length > ultimaCol) {
@@ -393,7 +388,7 @@ const PedidoForm = () => {
     });
 
     ventana.document.write(`
-  <html>
+<html>
   <head>
     <title>Todos los Pedidos - Librería Charles</title>
     <style>
@@ -412,69 +407,44 @@ const PedidoForm = () => {
       table {
         border-collapse: collapse;
         width: 100%;
+        max-width: 100%;
         table-layout: fixed;
         font-size: 10px;
+        overflow-wrap: break-word;
+        word-wrap: break-word;
+        border: 1px solid black !important;
       }
       th, td {
-        border: 1px solid black;
+        border: 1px solid black !important;
         padding: 4px 6px;
         text-align: left;
         word-wrap: break-word;
         overflow-wrap: break-word;
         white-space: normal;
+        box-sizing: border-box;
+        vertical-align: top;
       }
       th {
         background-color: white;
         color: black;
         font-weight: bold;
-        border: 1px solid black;
+        border: 1px solid black !important;
+        white-space: nowrap;
       }
-
-      /* ********************************************** */
-      /* AJUSTES DE ANCHO DE COLUMNAS - MODIFICAR AQUÍ */
-      /* ********************************************** */
-      
-      /* Columna 1: Cliente - nth-child(1) */
-      th:nth-child(1), td:nth-child(1) {
-        width: 15% !important; /* Ajustar porcentaje según necesidad */
+      /* Anchos columnas */
+      th:nth-child(1), td:nth-child(1) { width: 6% !important; } /* CLIENTE */
+      th:nth-child(2), td:nth-child(2) { width: 6% !important; } /* TELÉFONO */
+      th:nth-child(3), td:nth-child(3) { width: 11% !important; } /* TÍTULO */
+      th:nth-child(4), td:nth-child(4) { width: 11% !important; } /* AUTOR */
+      th:nth-child(5), td:nth-child(5) { width: 4% !important; max-width: 50px; } /* CANTIDAD */
+      th:nth-child(6), td:nth-child(6) { width: 4% !important; max-width: 40px; } /* ISBN */
+      th:nth-child(7), td:nth-child(7) { width: 8% !important; } /* FECHA */
+      th:nth-child(8), td:nth-child(8) { width: 8% !important; white-space: normal; } /* ESTADO */
+      th:nth-child(9), td:nth-child(9) { 
+        width: 3% !important;
+        border-right: 1px solid black !important;
+        white-space: normal;
       }
-      
-      /* Columna 2: Título - nth-child(2) */
-      th:nth-child(2), td:nth-child(2) {
-        width: 20% !important; /* Ajustar porcentaje según necesidad */
-      }
-      
-      /* Columna 3: Autor - nth-child(3) */
-      th:nth-child(3), td:nth-child(3) {
-        width: 15% !important; /* Ajustar porcentaje según necesidad */
-      }
-      
-      /* Columna 4: Cantidad - nth-child(4) */
-      th:nth-child(4), td:nth-child(4) {
-        width: 4% !important;  /* Columna más estrecha */
-        max-width: 50px;
-      }
-      
-      /* Columna 5: ISBN - nth-child(5) */
-      th:nth-child(5), td:nth-child(5) {
-        width: 10% !important; /* Ajustar porcentaje según necesidad */
-      }
-      
-      /* Columna 6: Fecha - nth-child(6) */
-      th:nth-child(6), td:nth-child(6) {
-        width: 8% !important; /* Ajustar porcentaje según necesidad */
-      }
-      
-      /* Columna 7: Seña - nth-child(7) */
-      th:nth-child(7), td:nth-child(7) {
-        width: 10% !important; /* Ajustar porcentaje según necesidad */
-      }
-      
-      /* Columna 8: Comentarios - nth-child(8) */
-      th:nth-child(8), td:nth-child(8) {
-        width: 18% !important; /* Columna más ancha */
-      }
-
       tr:nth-child(even) {
         background-color: #f2f2f2;
       }
@@ -487,15 +457,23 @@ const PedidoForm = () => {
         }
         table {
           font-size: 8pt;
-          width: 100%;
+          width: 100% !important;
+          max-width: 100% !important;
+          min-width: 100% !important;
           table-layout: fixed;
           page-break-inside: auto;
+          overflow-wrap: break-word;
+          border: 1px solid black !important;
         }
         th, td {
           padding: 2px 4px;
           white-space: normal;
           color: black !important;
           border: 1px solid black !important;
+          word-wrap: break-word;
+          overflow-wrap: break-word;
+          word-break: break-all !important;
+          box-sizing: border-box !important;
         }
         th {
           background-color: white !important;
@@ -506,15 +484,19 @@ const PedidoForm = () => {
           page-break-inside: avoid;
           page-break-after: auto;
         }
-        
-        /* ********************************************** */
-        /* AJUSTES DE IMPRESIÓN (opcional) */
-        /* ********************************************** */
-        th:nth-child(4), td:nth-child(4) {
-          width: 5% !important;
-        }
-        th:nth-child(8), td:nth-child(8) {
-          width: 25% !important;
+        /* ANCHOS PARA IMPRESIÓN */
+        th:nth-child(1), td:nth-child(1) { width: 12% !important; } /* CLIENTE */
+        th:nth-child(2), td:nth-child(2) { width: 12% !important; } /* TELÉFONO */
+        th:nth-child(3), td:nth-child(3) { width: 11% !important; } /* TÍTULO */
+        th:nth-child(4), td:nth-child(4) { width: 11% !important; } /* AUTOR */
+        th:nth-child(5), td:nth-child(5) { width: 7% !important; max-width: 50px; } /* CANTIDAD */
+        th:nth-child(6), td:nth-child(6) { width: 8% !important; max-width: 40px; } /* ISBN */
+        th:nth-child(7), td:nth-child(7) { width: 9% !important; } /* FECHA */
+        th:nth-child(8), td:nth-child(8) { width: 9% !important; white-space: normal; } /* SEÑA */
+        th:nth-child(9), td:nth-child(9) { 
+          width: 21% !important; 
+          border-right: 1px solid black !important;
+          white-space: normal;
         }
       }
     </style>
@@ -522,7 +504,7 @@ const PedidoForm = () => {
   <body>
     <div class="header">
       <h2 class="titulo">Pedidos Librería Charles</h2>
-      <h5>Fecha de impresión: ${formatearFechaArgentina(new Date())}</h5>
+      <h5>Fecha de impresión: 12/08/2025</h5>
     </div>
     ${tablaClonada.outerHTML}
   </body>
@@ -530,26 +512,24 @@ const PedidoForm = () => {
   `);
     ventana.document.close();
 
-
     // Tomar el ÚLTIMO pedido de la lista filtrada
     const ultimoPedido = pedidosFiltrados[0];
     setUltimaImpresion({
       fecha: new Date().toLocaleString('es-AR'),
-      libro: pedidosFiltrados[0].titulo, // Primer pedido como referencia
+      libro: pedidosFiltrados[0].titulo,
       autor: pedidosFiltrados[0].autor,
       isbn: pedidosFiltrados[0].isbn || "N/A",
       telefonoCliente: pedidosFiltrados[0].telefonoCliente || "N/A",
       newPedidosCount: 0,
       lastPrinted: new Date().getTime(),
       ultimoImpresoId: pedidosFiltrados[0].id,
-      // Guardamos TODOS los IDs de los pedidos que se están imprimiendo
       lastPrintedIds: pedidosFiltrados.map(p => p.id),
-      // También guardamos la cantidad de pedidos impresos
       cantidadImpresos: pedidosFiltrados.length
     });
 
     ventana.print();
   };
+
 
 
   const handleImprimirParaRicardo = () => {
