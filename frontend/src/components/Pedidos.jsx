@@ -70,6 +70,7 @@ const PedidoForm = () => {
     setLoading(false);
   };
 
+
   const handleImprimir = () => {
     const contenido = imprimirRef.current.innerHTML;
     const ventana = window.open('', '_blank');
@@ -172,23 +173,30 @@ const PedidoForm = () => {
   `);
     ventana.document.close();
   };
-  const handleGuardar = async () => {
-    if (!nombreCliente || !tituloLibro || !autorLibro || !seña) {
-      alert("Por favor complete todos los campos obligatorios");
-      return;
-    }
-    if (cantidad === 0) {
-      alert("La cantidad no puede ser cero");
-      return;
-    }
 
 
-    setUltimoNombreCliente(nombreCliente);
-    setUltimoTelefono(telefonoCliente);
-    localStorage.setItem('ultimoNombreCliente', nombreCliente);
-    localStorage.setItem('ultimoTelefono', telefonoCliente);
+  const guardadoEnEstaImpresion = useRef(false);
+  const editadoConExito = useRef(false);
+  const ultimoPedidoGuardado = useRef(null); // <-- NUEVO
 
-    const pedidoData = {
+  const limpiarFormulario = () => {
+    setNombreCliente('');
+    setTituloLibro('');
+    setAutorLibro('');
+    setCantidad(0);
+    setFecha('');
+    setSenia('');
+    setComentario('');
+    setIsbn('');
+    setTelefonoCliente('');
+    setEditandoId(null);
+    guardadoEnEstaImpresion.current = false;
+    editadoConExito.current = false;
+    ultimoPedidoGuardado.current = null;  // <-- LIMPIAMOS también aquí
+  };
+
+  const verificarDatosYResetearFlags = () => {
+    const datosActuales = {
       nombreCliente,
       tituloLibro,
       autorLibro,
@@ -200,26 +208,82 @@ const PedidoForm = () => {
       telefonoCliente
     };
 
+    const sonDistintos = JSON.stringify(datosActuales) !== JSON.stringify(ultimoPedidoGuardado.current);
+    if (sonDistintos) {
+      guardadoEnEstaImpresion.current = false;
+      editadoConExito.current = false;
+    }
+  };
+
+  const handleGuardar = async () => {
+    const datosActuales = {
+      nombreCliente,
+      tituloLibro,
+      autorLibro,
+      cantidad,
+      fecha,
+      seña,
+      comentario,
+      isbn,
+      telefonoCliente
+    };
+
+    // Si los datos actuales son distintos al último pedido guardado,
+    // reseteamos los flags para permitir guardar otra vez
+    const sonDistintos = JSON.stringify(datosActuales) !== JSON.stringify(ultimoPedidoGuardado.current);
+    if (sonDistintos) {
+      guardadoEnEstaImpresion.current = false;
+      editadoConExito.current = false;
+    }
+
+    if (!editandoId && guardadoEnEstaImpresion.current) {
+      alert("Este pedido ya fue guardado");
+      return;
+    }
+    if (editandoId && editadoConExito.current) {
+      alert("Este pedido ya fue actualizado. Para crear uno nuevo, comienza un pedido desde cero.");
+      return;
+    }
+
+    if (!nombreCliente || !tituloLibro || !autorLibro || !seña || !telefonoCliente) {
+      alert("Por favor complete todos los campos obligatorios");
+      return;
+    }
+    if (cantidad === 0) {
+      alert("La cantidad no puede ser cero");
+      return;
+    }
+
+    setUltimoNombreCliente(nombreCliente);
+    setUltimoTelefono(telefonoCliente);
+    localStorage.setItem('ultimoNombreCliente', nombreCliente);
+    localStorage.setItem('ultimoTelefono', telefonoCliente);
+
     setLoading(true);
 
     try {
       let result;
       if (editandoId) {
-        result = await actions.actualizarPedido(editandoId, pedidoData);
+        result = await actions.actualizarPedido(editandoId, datosActuales);
       } else {
-        result = await actions.crearPedido(pedidoData);
-
+        result = await actions.crearPedido(datosActuales);
       }
 
       if (result.success) {
-        alert(`Pedido ${editandoId ? 'actualizado' : 'guardado'} con éxito`);
-        if (!editandoId) { // Solo si es un pedido nuevo
+        ultimoPedidoGuardado.current = datosActuales; // <-- Guardamos para comparar después
+
+        if (editandoId) {
+          alert("Pedido editado con éxito. El formulario se limpiará para crear un pedido nuevo.");
+          editadoConExito.current = true;
+          limpiarFormulario();
+        } else {
+          alert("Pedido guardado con éxito");
+          guardadoEnEstaImpresion.current = true;
           setUltimaImpresion(prev => ({
             ...prev,
             newPedidosCount: (prev?.newPedidosCount || 0) + 1
           }));
         }
-        setEditandoId(null);
         await cargarPedidos();
       } else {
         alert(`Error: ${result.error}`);
@@ -228,8 +292,44 @@ const PedidoForm = () => {
       console.error("Error al guardar el pedido:", error);
       alert("Error al conectar con el servidor");
     }
+
     setLoading(false);
   };
+
+  const handleImprimirClick = async () => {
+    verificarDatosYResetearFlags();  // <--- esta es la mejora clave acá
+
+    if (!editandoId) {
+      if (!guardadoEnEstaImpresion.current) {
+        const confirmar = window.confirm("Antes debes guardar el pedido. ¿Quieres guardarlo?");
+        if (!confirmar) return;
+
+        await handleGuardar();
+
+        // Luego de guardar nuevo pedido, si no se guardó bien no imprimir:
+        if (!guardadoEnEstaImpresion.current) return;
+      } else {
+        alert("Este pedido ya fue guardado");
+        // Si ya guardado, puede imprimir sin problemas
+      }
+    } else {
+      // Si estamos editando, permitir imprimir sin bloqueos
+    }
+
+    handleImprimir();
+  };
+
+  // Cuando cargas pedido para editar, resetear flags para que pueda guardar:
+  useEffect(() => {
+    if (editandoId) {
+      guardadoEnEstaImpresion.current = false;
+      editadoConExito.current = false;
+    }
+  }, [editandoId]);
+
+
+
+
 
   const handleLimpiarFormulario = () => {
     setNombreCliente("");
@@ -265,6 +365,8 @@ const PedidoForm = () => {
       alert("No hay pedidos para imprimir");
       return;
     }
+
+
 
     const tabla = document.getElementById('tabla-todos-pedidos');
     const ventana = window.open('', '_blank');
@@ -1174,7 +1276,8 @@ const PedidoForm = () => {
               {loading ? "Guardando..." : editandoId ? "Actualizar Pedido" : "Guardar Pedido"}
             </button>
             <button
-              onClick={handleImprimir}
+              ref={ele => inputRef.current[10] = ele}
+              onClick={handleImprimirClick}
               style={{
                 backgroundColor: '#0c62beff',
                 color: 'white',
