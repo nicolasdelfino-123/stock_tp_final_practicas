@@ -15,24 +15,26 @@ export const LibrosDadosBaja = () => {
 
     return (
         <div style={{ padding: "20px" }}>
-            <button
-                onClick={() => navigate("/")}
-                style={{
-                    backgroundColor: "#fcf00cff",
-                    color: "#333",
-                    border: "none",
-                    borderRadius: "6px",
-                    padding: "11px 12px",
-                    cursor: "pointer",
-                    fontWeight: "600",
-                    marginRight: "10px",
-                }}
-                onMouseEnter={(e) => (e.target.style.backgroundColor = "#e4f00aff")}
-                onMouseLeave={(e) => (e.target.style.backgroundColor = "#fcf00cff")}
-            >
-                <span style={{ fontSize: "16px" }}>⬅ Volver al inicio</span>
-            </button>
-            <h2 style={{ color: 'white', textAlign: 'center', fontWeight: 'bold' }}>📚 Libros dados de baja</h2>
+            <div style={{ display: "flex", marginBottom: "20px", alignItems: "center", position: 'relative' }}>
+                <button
+                    onClick={() => navigate("/")}
+                    style={{
+                        backgroundColor: "#fcf00cff",
+                        color: "#333",
+                        border: "none",
+                        borderRadius: "6px",
+                        padding: "11px 12px",
+                        cursor: "pointer",
+                        fontWeight: "600",
+                        marginRight: "10px",
+                    }}
+                    onMouseEnter={(e) => (e.target.style.backgroundColor = "#e4f00aff")}
+                    onMouseLeave={(e) => (e.target.style.backgroundColor = "#fcf00cff")}
+                >
+                    <span style={{ fontSize: "16px" }}>⬅ Volver al inicio</span>
+                </button>
+                <h2 style={{ color: 'white', fontWeight: 'bold', textAlign: 'center', flex: '1', margin: '0', position: 'absolute', left: '50%', transform: 'translateX(-50%)', }}>📚 Libros dados de baja</h2>
+            </div>
             <table style={{ borderCollapse: "collapse", width: "100%" }}>
                 <thead>
                     <tr>

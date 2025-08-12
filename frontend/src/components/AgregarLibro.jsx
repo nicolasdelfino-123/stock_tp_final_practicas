@@ -21,6 +21,7 @@ const AgregarLibro = () => {
   const { store, actions } = useAppContext();
   const navigate = useNavigate();
 
+
   // Estado para los datos del formulario
   const [formData, setFormData] = useState({
     isbn: "",
@@ -60,13 +61,14 @@ const AgregarLibro = () => {
     e.target.style.border = "3px solid #1b4d1b";
 
     // Limpiar el dataset cuando se hace focus en el input ISBN
-    if (e.target.name === "isbn" && e.target.dataset.lastSearched) {
+    // Limpiar el dataset cuando se hace focus en el input ISBN y resetear datos cargados
+    // Limpiar el dataset cuando se hace focus en el input ISBN
+    if (e.target.name === "isbn") {
       delete e.target.dataset.lastSearched;
-    }
-
-    // Resetear datosCargados solo cuando se hace focus en ISBN y hay datos cargados
-    if (e.target.name === "isbn" && datosCargados) {
-      setDatosCargados(false);
+      // Resetear datosCargados solo cuando se hace focus en ISBN
+      if (datosCargados) {
+        setDatosCargados(false);
+      }
     }
   };
 
@@ -134,9 +136,9 @@ const AgregarLibro = () => {
       switch (fieldName) {
         case "isbn":
           // Para ISBN, verificar si tiene contenido y si debe hacer búsqueda
-          const isbnValue = formData.isbn.trim();
+          const isbnValue = formData.isbn.trim(); // Aplicar trim aquí también
 
-          // CAMBIO 2: Simplificar la condición - solo buscar si hay ISBN, no es generado automáticamente, NO se han cargado datos aún
+          // Solo buscar si hay ISBN válido después del trim, no es generado automáticamente, NO se han cargado datos aún
           if (isbnValue && !sinIsbn && !datosCargados) {
             // Solo buscar si no se ha buscado este valor específico
             if (e.target.dataset.lastSearched !== isbnValue) {
@@ -179,8 +181,11 @@ const AgregarLibro = () => {
   // Función modificada para manejar el blur del ISBN
   const handleIsbnBlur = (e) => {
     handlerBlur(e);
-    // Solo hacer autocomplete si no hay datos cargados y no es sin ISBN
-    if (formData.isbn && !sinIsbn && !datosCargados) {
+    // Aplicar trim al ISBN antes de verificar
+    const isbnTrimmed = formData.isbn.trim();
+
+    // Solo hacer autocomplete si hay ISBN válido después del trim, no es sin ISBN y no hay datos cargados
+    if (isbnTrimmed && !sinIsbn && !datosCargados) {
       handleAutocomplete();
     }
   };
@@ -245,13 +250,15 @@ const AgregarLibro = () => {
     });
 
     // Si cambiamos manualmente el ISBN, reiniciamos el estado
+    // Si cambiamos manualmente el ISBN, reiniciamos el estado
     if (name === "isbn") {
       setOrigen("");
       setDatosCargados(false);
       limpiarDatosLibro(value);
       // Limpiar el marcador de última búsqueda cuando cambia el ISBN
-      if (e.target.dataset.lastSearched) {
-        delete e.target.dataset.lastSearched;
+      const isbnInput = isbnInputRef.current;
+      if (isbnInput) {
+        delete isbnInput.dataset.lastSearched;
       }
     }
 
@@ -363,9 +370,9 @@ const AgregarLibro = () => {
    * Busca y autocompleta los datos del libro basado en el ISBN
    */
   const handleAutocomplete = async () => {
-    const { isbn } = formData;
+    const isbn = formData.isbn.trim(); // Aplicar trim aquí
 
-    if (!isbn) return;
+    if (!isbn) return; // Verificar después del trim
 
     setIsLoading(true);
     setOrigen("");
@@ -377,6 +384,7 @@ const AgregarLibro = () => {
       if (libro) {
         setFormData({
           ...formData,
+          isbn: isbn, // Usar el ISBN con trim aplicado
           titulo: libro.titulo || "",
           autor: libro.autor || "",
           editorial: libro.editorial || "",
@@ -405,7 +413,7 @@ const AgregarLibro = () => {
         actions.setMensaje("✅ No se encontró información para este ISBN. Puede ingresar los datos manualmente.");
         setOrigen("");
         setDatosCargados(false);
-        limpiarDatosLibro(isbn);
+        limpiarDatosLibro(isbn); // Usar ISBN con trim
 
         // Enfocar título cuando no se encuentran datos
         setTimeout(() => {
@@ -420,7 +428,6 @@ const AgregarLibro = () => {
       setIsLoading(false);
     }
   };
-
   /**
    * Limpia completamente el formulario
    */
@@ -469,7 +476,7 @@ const AgregarLibro = () => {
       // Primero verificamos si el libro existe en NUESTRA base de datos
       let libroExistente = null;
       try {
-        const resultadoBusqueda = await actions.buscarLibroPorISBN(formData.isbn);
+        const resultadoBusqueda = await actions.buscarLibroPorISBN(formData.isbn.trim());
         // Solo consideramos que existe si viene de nuestra BD local
         if (resultadoBusqueda && resultadoBusqueda.fuente === "Base de datos local") {
           libroExistente = resultadoBusqueda;
