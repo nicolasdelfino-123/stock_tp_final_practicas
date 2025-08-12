@@ -9,6 +9,8 @@ export const AppProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [token, setToken] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [librosDadosBaja, setLibrosDadosBaja] = useState([]);
+
   const API_BASE = process.env.REACT_APP_API_BASE || "http://localhost:5000";
 
   // Inicializar datos desde localStorage al cargar la aplicación
@@ -467,6 +469,56 @@ export const AppProvider = ({ children }) => {
         }
       },
 
+      // En tu store.js o flux.js
+      marcarBaja: async (libroId) => {
+        try {
+          console.log("marcarBaja llamada con libroId:", libroId);
+          const resp = await fetch(`${API_BASE}/libros/${libroId}/marcar-baja`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" }
+          });
+
+          console.log(`Respuesta marcarBaja status: ${resp.status}`);
+
+          if (!resp.ok) {
+            const errorText = await resp.text();
+            console.error("Error al marcar baja - cuerpo de error:", errorText);
+            throw new Error("Error al marcar baja");
+          }
+
+          const data = await resp.json();
+          console.log("Libro marcado como baja (data recibida):", data);
+          return data;
+        } catch (error) {
+          console.error("Error en marcarBaja:", error);
+        }
+      },
+
+      getLibrosDadosBaja: async () => {
+        try {
+          const resp = await fetch(`${API_BASE}/libros/dados-baja`);
+
+          console.log(`Respuesta getLibrosDadosBaja status: ${resp.status}`);
+
+          if (!resp.ok) {
+            const errorText = await resp.text();
+            console.error("Error al obtener libros dados de baja - cuerpo de error:", errorText);
+            throw new Error("Error al obtener libros dados de baja");
+          }
+
+          const data = await resp.json();
+          console.log("Libros dados de baja recibidos:", data);
+          setLibrosDadosBaja(data); // Quita el spread que podría estar causando problemas
+          return data; // Añade return
+        } catch (error) {
+          console.error("Error en getLibrosDadosBaja:", error);
+        }
+      },
+
+
+
+
+
 
       buscarLibroPorISBN: async (isbn) => {
         if (!isbn) return null;
@@ -533,6 +585,7 @@ export const AppProvider = ({ children }) => {
     user,
     token,
     isLoading,
+    librosDadosBaja,
   };
 
   return (

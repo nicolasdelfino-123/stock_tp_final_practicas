@@ -117,6 +117,20 @@ const Inicio = () => {
               <span style={{ color: "black" }}>Pedidos libros</span>
             </button>
 
+            <button
+              onClick={() => navigate("/libros-dados-baja")}
+              className="btn btn-warning btn-lg d-flex align-items-center justify-content-center gap-2 px-4 py-3 btn-futurista m-5"
+              style={{
+                borderRadius: "50px",  // un valor alto que redondea mucho sin cortar
+                padding: "10px 30px",  // más padding horizontal para el texto
+                minWidth: "150px",
+
+              }}
+            >
+              <PackagePlus size={45} color="black" />
+              <span style={{ color: "black" }}>Libros dados de baja</span>
+            </button>
+
           </div>
 
         </div>

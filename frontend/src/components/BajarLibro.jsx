@@ -8,6 +8,9 @@ const BajarLibro = () => {
   const { actions } = useAppContext();
   const [alerta, setAlerta] = useState(""); // NUEVO estado para alerta
   const [alertaCantidad, setAlertaCantidad] = useState("");
+  const [stockDespuesDeBaja, setStockDespuesDeBaja] = useState(null);
+  const [libroIdDespuesDeBaja, setLibroIdDespuesDeBaja] = useState(null);
+
 
 
   const [formData, setFormData] = useState({
@@ -55,6 +58,7 @@ const BajarLibro = () => {
       document.body.style.overflow = "auto";
     };
   }, [alerta, alertaCantidad]);
+
 
 
 
@@ -158,6 +162,12 @@ const BajarLibro = () => {
           cantidad: "",
         }));
 
+        // Aquí agregamos el set de estado para disparar el efecto abajo
+        setStockDespuesDeBaja(nuevoStock);
+        setLibroIdDespuesDeBaja(formData.id);
+
+
+
         const mensaje = (
           <>
             ✅ Stock actualizado correctamente. Se dio de baja la cantidad{" "}
@@ -209,6 +219,35 @@ const BajarLibro = () => {
 
   const fondoURL = "/fondo-3.jpg"
 
+  useEffect(() => {
+    if (stockDespuesDeBaja === 0 && libroIdDespuesDeBaja) {
+      // Llamamos a la acción para marcar baja
+      actions.marcarBaja(libroIdDespuesDeBaja)
+        .then((bajaResponse) => {
+          if (bajaResponse && bajaResponse.fecha_baja) {
+            setAlerta(
+              <>
+                ✅ Libro marcado como dado de baja en fecha{" "}
+                <strong>{new Date(bajaResponse.fecha_baja).toLocaleString()}</strong>
+              </>
+            );
+          } else {
+            setAlerta("❌ No se pudo marcar el libro como dado de baja");
+          }
+        })
+        .catch((error) => {
+          console.error("Error al marcar libro como dado de baja:", error);
+          setAlerta("❌ Error al marcar libro como dado de baja");
+        })
+        .finally(() => {
+          // Reseteamos los estados para evitar repetir llamadas innecesarias
+          setStockDespuesDeBaja(null);
+          setLibroIdDespuesDeBaja(null);
+          // AGREGAR ESTA LÍNEA:
+          actions.getLibrosDadosBaja(); // Refrescar la lista de libros dados de baja
+        });
+    }
+  }, [stockDespuesDeBaja, libroIdDespuesDeBaja, actions]);
 
 
 

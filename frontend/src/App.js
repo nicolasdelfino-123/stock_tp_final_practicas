@@ -12,88 +12,89 @@ import "bootstrap/dist/css/bootstrap.min.css";
 import "@fortawesome/fontawesome-free/css/all.min.css";
 import Faltantes from "./components/Faltantes";
 import Pedidos from "./components/Pedidos";
+import LibrosDadosBaja from "./components/LibrosDadosBaja";
 
 // Componente para proteger rutas
 const ProtectedRoute = ({ children }) => {
   const { store, actions } = useAppContext();
-  
+
   if (store.isLoading) {
     return (
-      <div style={{ 
-        display: 'flex', 
-        justifyContent: 'center', 
-        alignItems: 'center', 
-        height: '100vh' 
+      <div style={{
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        height: '100vh'
       }}>
         <div>Cargando...</div>
       </div>
     );
   }
-  
+
   const isAuthenticated = actions.isAuthenticated();
-  
+
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
   }
-  
+
   return children;
 };
 
 // Componente para redireccionar si ya está logueado
 const PublicRoute = ({ children }) => {
   const { store, actions } = useAppContext();
-  
+
   if (store.isLoading) {
     return (
-      <div style={{ 
-        display: 'flex', 
-        justifyContent: 'center', 
-        alignItems: 'center', 
-        height: '100vh' 
+      <div style={{
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        height: '100vh'
       }}>
         <div>Cargando...</div>
       </div>
     );
   }
-  
+
   const isAuthenticated = actions.isAuthenticated();
-  
+
   if (isAuthenticated) {
     return <Navigate to="/" replace />;
   }
-  
+
   return children;
 };
 
 function AppContent() {
   const { store, actions } = useAppContext();
-  
+
   if (store.isLoading) {
     return (
-      <div style={{ 
-        display: 'flex', 
-        justifyContent: 'center', 
-        alignItems: 'center', 
-        height: '100vh' 
+      <div style={{
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        height: '100vh'
       }}>
         <div>Cargando aplicación...</div>
       </div>
     );
   }
-  
+
   return (
     <Router>
       <Routes>
         {/* Ruta pública - si ya está logueado, redirige a home */}
-        <Route 
-          path="/login" 
+        <Route
+          path="/login"
           element={
             <PublicRoute>
               <Login />
             </PublicRoute>
-          } 
+          }
         />
-        
+
         {/* Rutas protegidas */}
         <Route
           path="/"
@@ -127,12 +128,20 @@ function AppContent() {
             </ProtectedRoute>
           }
         />
-
         <Route
           path="/faltantes"
           element={
             <ProtectedRoute>
               <Faltantes />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/libros-dados-baja"
+          element={
+            <ProtectedRoute>
+              <LibrosDadosBaja />
             </ProtectedRoute>
           }
         />
@@ -144,13 +153,13 @@ function AppContent() {
             </ProtectedRoute>
           }
         />
-        
+
         {/* Redireccionar rutas desconocidas */}
         <Route
           path="*"
           element={
-            actions.isAuthenticated() ? 
-              <Navigate to="/" replace /> : 
+            actions.isAuthenticated() ?
+              <Navigate to="/" replace /> :
               <Navigate to="/login" replace />
           }
         />

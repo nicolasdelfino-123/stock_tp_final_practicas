@@ -1,5 +1,6 @@
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 from sqlalchemy import Integer, String, Float, DateTime, func, Boolean
+from datetime import datetime
 
 
 
@@ -18,6 +19,9 @@ class Libro(Base):
     stock: Mapped[int] = mapped_column(Integer, default=0)
     precio: Mapped[float] = mapped_column(Float)
     ubicacion: Mapped[str] = mapped_column(String(40), nullable=False)
+    fecha_alta: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
+    fecha_baja: Mapped[datetime] = mapped_column(DateTime, nullable=True)
+  
 
     def __repr__(self):
         return f"<Libro {self.titulo}>"

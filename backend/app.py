@@ -267,6 +267,72 @@ def bajar_libro(libro_id):
         session.rollback()
         app.logger.error(f"Error al actualizar el stock: {str(e)}")
         return jsonify({'error': 'Error al bajar el stock', 'mensaje': str(e)}), 500
+    
+
+
+
+
+
+
+@app.route('/libros/<int:libro_id>/marcar-baja', methods=['PUT'])
+def marcar_baja(libro_id):
+    session = app.session
+    libro = session.query(Libro).get(libro_id)
+
+    if libro is None:
+        return jsonify({'error': 'Libro no encontrado'}), 404
+
+    try:
+        fecha_actual = datetime.now()
+        libro.fecha_baja = fecha_actual
+        session.merge(libro)
+        session.commit()
+        session.refresh(libro)
+        return jsonify({
+            'mensaje': 'Libro marcado como dado de baja',
+            'fecha_baja': libro.fecha_baja.isoformat(),
+            'libro': {
+                'id': libro.id,
+                'titulo': libro.titulo,
+                'fecha_baja': libro.fecha_baja.isoformat()
+            }
+        })
+    except Exception as e:
+        session.rollback()
+        return jsonify({'error': 'Error al marcar como baja', 'mensaje': str(e)}), 500
+
+
+@app.route('/libros/dados-baja', methods=['GET'])
+def listar_dados_baja():
+    session = app.session
+    try:
+        libros = session.query(Libro).filter(Libro.fecha_baja.isnot(None)).all()
+        print(f"📚 Encontrados {len(libros)} libros dados de baja")
+        for libro in libros:
+            print(f"- ID: {libro.id}, Título: {libro.titulo}, Fecha baja: {libro.fecha_baja}")
+        return jsonify([
+            {
+                'id': libro.id,
+                'titulo': libro.titulo,
+                'autor': libro.autor,
+                'editorial': libro.editorial,
+                'isbn': libro.isbn,
+                'stock': libro.stock,
+                'precio': libro.precio,
+                'cantidad': libro.stock,  # Añadido para mostrar cantidad actual
+                'ubicacion': libro.ubicacion,
+                'fecha_baja': libro.fecha_baja.isoformat() if libro.fecha_baja else None
+            }
+            for libro in libros
+        ])
+    except Exception as e:
+        print(f"❌ Error al obtener libros dados de baja: {e}")
+        return jsonify({'error': 'Error al obtener libros dados de baja', 'mensaje': str(e)}), 500
+
+
+
+
+
 
 @app.route('/generar-isbn', methods=['GET'])
 def generar_isbn():
