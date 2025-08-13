@@ -114,7 +114,7 @@ export default function Caja() {
         <div style={styles.wrap}>
             {/* Título */}
             <div style={styles.header}>
-                <h2 style={{ margin: 0 }}>📒 Caja del día</h2>
+                <h2 style={{ margin: 0, color: "white", marginTop: "-19px" }}>📒 <strong>Caja del día</strong></h2>
                 <small style={{ opacity: 0.7 }}>Atajos: f=Flor, y=Yani, r=Ricardo, n=Nico</small>
             </div>
 
@@ -379,9 +379,9 @@ export default function Caja() {
 
 const styles = {
     wrap: {
-        width: "calc(100vw - 10cm)", // deja ~5cm por lado en pantallas grandes
+        width: "calc(100vw - 1cm)", // deja ~5cm por lado en pantallas grandes
         maxWidth: 1600,
-        margin: "22px auto",
+        margin: "0px auto",
         padding: 66,
         fontFamily: "system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, Helvetica, Arial, sans-serif",
     },
