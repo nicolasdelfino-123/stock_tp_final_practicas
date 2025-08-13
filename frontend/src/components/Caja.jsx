@@ -113,10 +113,7 @@ export default function Caja() {
     return (
         <div style={styles.wrap}>
             {/* Título */}
-            <div style={styles.header}>
-                <h2 style={{ margin: 0, color: "white", marginTop: "-19px" }}>📒 <strong>Caja del día</strong></h2>
-                <small style={{ opacity: 0.7 }}>Atajos: f=Flor, y=Yani, r=Ricardo, n=Nico</small>
-            </div>
+
 
             {/* Inicio de caja (importe por billetes) */}
             <section style={styles.card}>
@@ -407,7 +404,7 @@ const styles = {
         borderRadius: 20,
         border: "1px solid #cbd5e1",
         outline: "none",
-        background: "#fff",
+        background: "#97c8d7ff",
     },
     countBox: {
         background: "#f8fafc",
