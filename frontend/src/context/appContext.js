@@ -389,6 +389,8 @@ export const AppProvider = ({ children }) => {
               seña: pedidoData.seña || 0,
               comentario: pedidoData.comentario || "",
               isbn: pedidoData.isbn || "",
+              estado: pedidoData.estado || "",
+              motivo: pedidoData.motivo || ""
             }),
           });
 
@@ -405,9 +407,11 @@ export const AppProvider = ({ children }) => {
         }
       },
 
-      obtenerPedidos: async () => {
+      obtenerPedidos: async (incluirOcultos = false) => {
         try {
-          const res = await fetch(`${API_BASE}/api/pedidos`);
+          const url = `${API_BASE}/api/pedidos?include_ocultos=${incluirOcultos ? 1 : 0}`;
+          const res = await fetch(url);
+
           if (res.ok) {
             const data = await res.json();
             console.log("Datos recibidos del backend:", data);
@@ -419,6 +423,7 @@ export const AppProvider = ({ children }) => {
           return { success: false, error: error.message };
         }
       },
+
 
       eliminarPedido: async (id) => {
         try {
@@ -445,15 +450,18 @@ export const AppProvider = ({ children }) => {
               "Content-Type": "application/json"
             },
             body: JSON.stringify({
-              cliente_nombre: pedidoActualizado.nombreCliente, // Map to backend's expected key
-              titulo: pedidoActualizado.tituloLibro,          // Map to backend's expected key
-              telefonoCliente: pedidoActualizado.telefonoCliente || "", // Map to backend's expected key
-              autor: pedidoActualizado.autorLibro,           // Map to backend's expected key
+              cliente_nombre: pedidoActualizado.cliente_nombre,
+              titulo: pedidoActualizado.titulo,
+              telefonoCliente: pedidoActualizado.telefonoCliente || "",
+              autor: pedidoActualizado.autor,
               cantidad: pedidoActualizado.cantidad,
               fecha: pedidoActualizado.fecha,
-              seña: pedidoActualizado.seña,
-              comentario: pedidoActualizado.comentario,
-              isbn: pedidoActualizado.isbn
+              seña: pedidoActualizado.seña || 0,
+              comentario: pedidoActualizado.comentario || "",
+              isbn: pedidoActualizado.isbn || "",
+              estado: pedidoActualizado.estado || "",
+              motivo: pedidoActualizado.motivo || "",
+              oculto: typeof pedidoActualizado.oculto === "boolean" ? pedidoActualizado.oculto : undefined
             })
           });
 
@@ -468,6 +476,30 @@ export const AppProvider = ({ children }) => {
           return { success: false, error: error.message };
         }
       },
+
+
+
+      ocultarPedidos: async (ids) => {
+        try {
+          const res = await fetch(`${API_BASE}/api/pedidos/ocultar`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ ids })
+          });
+
+          if (res.ok) {
+            return { success: true };
+          } else {
+            const errorData = await res.json();
+            return { success: false, error: errorData.error || "Error al ocultar pedidos" };
+          }
+        } catch (error) {
+          return { success: false, error: error.message };
+        }
+      },
+
+
+
 
       // En tu store.js o flux.js
       marcarBaja: async (libroId) => {

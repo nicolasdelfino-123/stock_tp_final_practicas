@@ -14,9 +14,14 @@ import jwt
 import time
 from flask import send_from_directory
 import os
+from sqlalchemy import or_
 from flask import abort
 from datetime import datetime, timedelta
 from sqlalchemy.exc import SQLAlchemyError
+from flask_migrate import Migrate
+from flask_sqlalchemy import SQLAlchemy
+
+
 
 
 
@@ -25,14 +30,21 @@ def create_app():
     app = Flask(__name__, static_folder="../frontend/build", static_url_path="/")
     CORS(app)
     app.config.from_object(ProductionConfig)
-    
 
-    
+    # --- Soporte para migraciones sin tocar tu ORM actual ---
+    # Config para Flask-SQLAlchemy (solo para que Flask-Migrate funcione)
+    app.config['SQLALCHEMY_DATABASE_URI'] = app.config["SQLALCHEMY_DATABASE_URI"]
+    app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
+    # Creamos un "db" solo para migraciones, usando la MISMA metadata de tus modelos
+    db = SQLAlchemy(metadata=Base.metadata)
+    db.init_app(app)
+
+    # Inicializamos Flask-Migrate apuntando a esa metadata
+    migrate = Migrate(app, db, compare_type=True)
+    # --------------------------------------------------------
+
     engine = create_engine(app.config["SQLALCHEMY_DATABASE_URI"], echo=True)
-    
-    # Especifica el esquema que quieres usar
-    #Base.metadata.schema = 'nico'  # o cualquier otro esquema que tengas permiso
-    
     Base.metadata.create_all(engine)
 
     Session = sessionmaker(autocommit=False, autoflush=False, bind=engine)
@@ -41,6 +53,7 @@ def create_app():
     admin.add_view(ModelView(Libro, app.session))
 
     return app
+
 
 app = create_app()
 
@@ -529,7 +542,14 @@ def get_faltantes_eliminados():
 def get_pedidos():
     session = app.session
     try:
-        pedidos = session.query(Pedido).order_by(Pedido.id.desc()).all()
+        show_ocultos = request.args.get('include_ocultos') in ('1', 'true', 'True')
+        if show_ocultos:
+            pedidos = session.query(Pedido).filter(Pedido.oculto == True).order_by(Pedido.id.desc()).all()
+        else:
+            pedidos = session.query(Pedido).filter(
+                or_(Pedido.oculto == False, Pedido.oculto == None)
+            ).order_by(Pedido.id.desc()).all()
+
         return jsonify([{
             'id': p.id,
             'cliente_nombre': p.cliente_nombre,
@@ -540,7 +560,10 @@ def get_pedidos():
             'telefonoCliente': p.telefono,
             'comentario': p.comentario,
             'cantidad': p.cantidad,
-            'isbn': p.isbn
+            'isbn': p.isbn,
+            'estado': p.estado,
+            'motivo': p.motivo,
+            'oculto': p.oculto
         } for p in pedidos])
     except SQLAlchemyError as e:
         session.rollback()
@@ -567,7 +590,9 @@ def crear_pedido():
             fecha=data.get('fecha'), 
             comentario=data.get('comentario', ''),
             cantidad=int(data.get('cantidad', 1)),
-            isbn=data.get('isbn', '')
+            isbn=data.get('isbn', ''),
+            estado=data.get('estado', None),
+            motivo=data.get('motivo', None)
         )
         session.add(nuevo_pedido)
         session.commit()
@@ -613,6 +638,10 @@ def actualizar_pedido(pedido_id):
         pedido.comentario = data.get('comentario', pedido.comentario)
         pedido.cantidad = int(data.get('cantidad', pedido.cantidad))
         pedido.isbn = data.get('isbn', pedido.isbn)
+        pedido.estado = data.get('estado', pedido.estado)
+        pedido.motivo = data.get('motivo', pedido.motivo)
+
+        pedido.oculto = data.get('oculto', pedido.oculto)
 
         session.commit()
         return jsonify({'mensaje': 'Pedido actualizado con éxito'})
@@ -642,6 +671,30 @@ def eliminar_pedido(pedido_id):
         return jsonify({'error': 'Error al eliminar el pedido', 'mensaje': str(e)}), 500
     finally:
         session.close()
+
+
+@app.route('/api/pedidos/ocultar', methods=['PUT'])
+def ocultar_pedidos():
+    session = app.session
+    data = request.json
+    ids = data.get('ids', [])
+
+    if not ids:
+        return jsonify({'error': 'No se enviaron IDs'}), 400
+
+    try:
+        session.query(Pedido).filter(Pedido.id.in_(ids)).update(
+            {Pedido.oculto: True},
+            synchronize_session=False
+        )
+        session.commit()
+        return jsonify({'mensaje': 'Pedidos ocultados con éxito'})
+    except Exception as e:
+        session.rollback()
+        return jsonify({'error': str(e)}), 500
+    finally:
+        session.close()
+
 
 
 def run():

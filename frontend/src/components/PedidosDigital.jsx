@@ -1,22 +1,23 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAppContext } from "../context/appContext";
-
 
 const MOTIVOS_VIENE = [
     "SBS",
     "Cúspide",
     "Casassa",
+    "Leas",
+    "El Emporio",
+    "Estari",
     "Otra librería"
 ];
 
-
 const MOTIVOS_NO_VIENE = [
     "Falta de stock",
-    "Discontinuado",
-    "Demorado en editorial",
-    "Precio cambiado",
-    "Error de ISBN",
+    "Descatalogado",
+    "Demora unos días",
+    "Edición agotada",
+    "Edición en reimpresión",
     "Otros"
 ];
 
@@ -35,21 +36,26 @@ export default function PedidosDigital() {
     const [terminoBusqueda, setTerminoBusqueda] = useState("");
     const [fechaDesde, setFechaDesde] = useState("");
     const [fechaHasta, setFechaHasta] = useState("");
-    // Filtro visual por estado
     const [filtroEstado, setFiltroEstado] = useState("TODOS"); // "TODOS" | "VIENE" | "NO_VIENE"
 
+    // NUEVO: tras "Resetear", en la vista TODOS ocultamos los que están en VIENE
+    const [excluirVienen, setExcluirVienen] = useState(false);
 
-    // Estado local para marcar VIENE / NO VIENE y motivo si NO VIENE
-    // statusMap[id] = { estado: "VIENE" | "NO_VIENE", motivoViene?: string, motivoNoViene?: string }
-    const [statusMap, setStatusMap] = useState({});
-
-    // Cargar pedidos al montar
+    // Cargar pedidos al montar (sin "mostrarOcultos")
     useEffect(() => {
         (async () => {
             setLoading(true);
-            const res = await actions.obtenerPedidos();
-            if (res.success) setPedidos(res.pedidos || []);
-            else alert(res.error || "Error al cargar pedidos");
+            const res = await actions.obtenerPedidos(); // <— sin parámetro
+            if (res.success) {
+                setPedidos((res.pedidos || []).map(p => ({
+                    ...p,
+                    estado: p.estado || "",
+                    motivo: p.motivo || ""
+                })));
+
+            } else {
+                alert(res.error || "Error al cargar pedidos");
+            }
             setLoading(false);
         })();
     }, [actions]);
@@ -66,7 +72,7 @@ export default function PedidosDigital() {
         );
     };
 
-    // Filtro por fecha (si el backend te da DateTime con zona, igual funciona)
+    // Filtro por fechas
     const filtrarPorFechas = (arr) => {
         if (!fechaDesde && !fechaHasta) return arr;
 
@@ -89,51 +95,91 @@ export default function PedidosDigital() {
     };
 
     const pedidosFiltrados = useMemo(() => {
-        const base = filtrarPorBusqueda(filtrarPorFechas(pedidos));
-        if (filtroEstado === "TODOS") return base;
-        return base.filter(p => (statusMap[p.id]?.estado || "") === filtroEstado);
-    }, [pedidos, terminoBusqueda, fechaDesde, fechaHasta, filtroEstado, statusMap]);
+        let base = filtrarPorBusqueda(filtrarPorFechas(pedidos));
 
+        // Botones "Todos / Vienen / No vienen"
+        if (filtroEstado === "VIENE") return base.filter(p => (p.estado || "") === "VIENE");
+        if (filtroEstado === "NO_VIENE") return base.filter(p => (p.estado || "") === "NO_VIENE");
 
-    const setEstado = (id, nuevoEstado) => {
-        setStatusMap((prev) => {
-            const next = { ...prev, [id]: { ...(prev[id] || {}), estado: nuevoEstado } };
-            if (nuevoEstado === "VIENE") delete next[id]?.motivo; // limpiar motivo si pasó a VIENE
-            return next;
+        // Vista "TODOS"
+        // Si excluirVienen está activo (tras "Resetear"), ocultamos los que ya están en VIENE
+        if (excluirVienen) {
+            return base.filter(p => (p.estado || "") !== "VIENE");
+        }
+        return base;
+    }, [pedidos, terminoBusqueda, fechaDesde, fechaHasta, filtroEstado, excluirVienen]);
+
+    const setEstado = async (id, nuevoEstado) => {
+        sessionStorage.setItem("pd_preservarEstados", "1");
+
+        const pedidoActual = pedidos.find(p => p.id === id);
+        const motivo = pedidoActual?.motivo || "";
+
+        if (nuevoEstado === "VIENE") {
+            // Solo mostrar el select, sin persistir aún
+            setPedidos(prev => prev.map(p =>
+                p.id === id ? { ...p, estado: "VIENE", motivo: "" } : p
+            ));
+            return; // el guardado real será al elegir el motivo
+        }
+
+        setPedidos(prev => prev.map(p =>
+            p.id === id ? { ...p, estado: nuevoEstado, motivo } : p
+        ));
+
+        await actions.actualizarPedido(id, {
+            ...pedidoActual,
+            estado: nuevoEstado,
+            motivo
+        });
+
+    };
+
+    const setMotivoViene = async (id, motivo) => {
+        sessionStorage.setItem("pd_preservarEstados", "1");
+
+        const pedidoActual = pedidos.find(p => p.id === id);
+
+        setPedidos(prev => prev.map(p =>
+            p.id === id ? { ...p, estado: "VIENE", motivo } : p
+        ));
+
+        await actions.actualizarPedido(id, {
+            ...pedidoActual,
+            estado: "VIENE",
+            motivo
         });
     };
 
-    const setMotivoViene = (id, motivo) => {
-        setStatusMap(prev => ({
-            ...prev,
-            [id]: { ...(prev[id] || {}), motivoViene: motivo, estado: "VIENE" }
-        }));
+    const setMotivoNoViene = async (id, motivo) => {
+        sessionStorage.setItem("pd_preservarEstados", "1");
+
+        const pedidoActual = pedidos.find(p => p.id === id);
+
+        setPedidos(prev => prev.map(p =>
+            p.id === id ? { ...p, estado: "NO_VIENE", motivo } : p
+        ));
+
+        await actions.actualizarPedido(id, {
+            ...pedidoActual,
+            estado: "NO_VIENE",
+            motivo
+        });
     };
 
-    const setMotivoNoViene = (id, motivo) => {
-        setStatusMap(prev => ({
-            ...prev,
-            [id]: { ...(prev[id] || {}), motivoNoViene: motivo, estado: "NO_VIENE" }
-        }));
-    };
+    const getPedidoById = (id) => pedidos.find(p => p.id === id);
+    const getEstado = (id) => getPedidoById(id)?.estado || "";
+    const getMotivo = (id) => getPedidoById(id)?.motivo || "";
 
-    const getEstado = (id) => statusMap[id]?.estado || "";
-    // Obtiene el motivo según estado actual
-    const getMotivo = (id) => {
-        const st = statusMap[id] || {};
-        if (st.estado === "VIENE") return st.motivoViene || "";
-        if (st.estado === "NO_VIENE") return st.motivoNoViene || "";
-        return "";
-    };
-
-    // Conjuntos para imprimir
+    // Conjuntos para imprimir (se apoyan en la vista filtrada actual)
     const pedidosVienen = useMemo(
-        () => pedidosFiltrados.filter((p) => getEstado(p.id) === "VIENE"),
-        [pedidosFiltrados, statusMap]
+        () => pedidosFiltrados.filter(p => (p.estado || "") === "VIENE"),
+        [pedidosFiltrados]
     );
+
     const pedidosNoVienen = useMemo(
-        () => pedidosFiltrados.filter((p) => getEstado(p.id) === "NO_VIENE"),
-        [pedidosFiltrados, statusMap]
+        () => pedidosFiltrados.filter(p => (p.estado || "") === "NO_VIENE"),
+        [pedidosFiltrados]
     );
 
     const imprimirLista = (lista, titulo) => {
@@ -216,7 +262,7 @@ export default function PedidosDigital() {
                 <button
                     type="button"
                     className="btn"
-                    onClick={() => navigate("/")}
+                    onClick={() => navigate("/pedidos")}
                     style={{
                         borderRadius: "8px",
                         padding: "10px 20px",
@@ -253,18 +299,21 @@ export default function PedidosDigital() {
                 boxShadow: "0 4px 8px rgba(0,0,0,0.1)"
             }}>
                 {/* Filtros */}
-                <div style={{ display: "flex", gap: "10px", flexWrap: "wrap", marginBottom: "12px" }}>
+                <div style={{ display: "flex", gap: "10px", flexWrap: "wrap", marginBottom: "12px", alignItems: "flex-end" }}>
                     <input
                         type="text"
                         placeholder="🔍 Cliente, Libro, Autor o ISBN"
                         value={terminoBusqueda}
                         onChange={(e) => setTerminoBusqueda(e.target.value)}
                         style={{
-                            padding: "8px 12px",
+                            padding: "12px 12px",
                             borderRadius: "6px",
                             border: "2px solid #95a5a6",
                             minWidth: "260px",
-                            fontWeight: 700
+                            fontWeight: 700,
+                            lineHeight: "normal",
+                            height: "44px",
+                            boxSizing: "border-box"
                         }}
                     />
                     <div>
@@ -301,11 +350,12 @@ export default function PedidosDigital() {
                     >
                         Limpiar filtros
                     </button>
+
                     <div style={{ display: "flex", gap: "6px", alignItems: "center" }}>
                         <button
-                            onClick={() => setFiltroEstado("TODOS")}
+                            onClick={() => { setFiltroEstado("TODOS"); setExcluirVienen(false); }}
                             style={{
-                                backgroundColor: filtroEstado === "TODOS" ? "#198754" : "#e9ecef",
+                                backgroundColor: filtroEstado === "TODOS" ? "#0d6efd" : "#e9ecef",
                                 color: filtroEstado === "TODOS" ? "white" : "black",
                                 border: "none",
                                 padding: "8px 12px",
@@ -317,9 +367,9 @@ export default function PedidosDigital() {
                             Todos
                         </button>
                         <button
-                            onClick={() => setFiltroEstado("VIENE")}
+                            onClick={() => { setFiltroEstado("VIENE"); setExcluirVienen(false); }}
                             style={{
-                                backgroundColor: filtroEstado === "VIENE" ? "#0d6efd" : "#e9ecef",
+                                backgroundColor: filtroEstado === "VIENE" ? "#198754" : "#e9ecef",
                                 color: filtroEstado === "VIENE" ? "white" : "black",
                                 border: "none",
                                 padding: "8px 12px",
@@ -331,7 +381,7 @@ export default function PedidosDigital() {
                             Vienen
                         </button>
                         <button
-                            onClick={() => setFiltroEstado("NO_VIENE")}
+                            onClick={() => { setFiltroEstado("NO_VIENE"); setExcluirVienen(false); }}
                             style={{
                                 backgroundColor: filtroEstado === "NO_VIENE" ? "#dc3545" : "#e9ecef",
                                 color: filtroEstado === "NO_VIENE" ? "white" : "black",
@@ -344,8 +394,63 @@ export default function PedidosDigital() {
                         >
                             No vienen
                         </button>
-                    </div>
 
+                        {/* Botón Resetear: deja en TODOS PERO excluyendo los que están en VIENE */}
+                        <button
+                            onClick={async () => {
+                                // 1) Persistir limpieza en backend para los que NO son VIENE (NO_VIENE o vacíos)
+                                const aResetear = pedidos.filter(p => (p.estado || "") !== "VIENE");
+                                if (aResetear.length) {
+                                    await Promise.all(
+                                        aResetear.map(p =>
+                                            actions.actualizarPedido(p.id, { ...p, estado: "", motivo: "" })
+                                        )
+                                    );
+                                }
+
+                                // 2) Limpiar en memoria (sin tocar los VIENE)
+                                setPedidos(prev => prev.map(p =>
+                                    (p.estado || "") === "VIENE" ? p : { ...p, estado: "", motivo: "" }
+                                ));
+
+                                // 3) Vista general excluyendo los VIENE (no aparecen para no pedirlos de nuevo)
+                                setFiltroEstado("TODOS");
+                                setExcluirVienen(true);
+                            }}
+
+                            style={{
+                                backgroundColor: "#ff5722",
+                                color: "white",
+                                border: "none",
+                                padding: "10px 20px",
+                                borderRadius: "6px",
+                                cursor: "pointer",
+                                fontWeight: "bold",
+                                marginBottom: "12px"
+                            }}
+                        >
+                            🔄 Comenzar / Resetear para nuevo pedido
+                        </button>
+
+                        {/* SOLO en vista TODOS: botón para "pasar" a la vista Vienen */}
+                        {filtroEstado === "TODOS" && (
+                            <button
+                                onClick={() => { setFiltroEstado("VIENE"); setExcluirVienen(false); }}
+                                style={{
+                                    backgroundColor: "#17a2b8",
+                                    color: "white",
+                                    border: "none",
+                                    padding: "10px 20px",
+                                    borderRadius: "6px",
+                                    cursor: "pointer",
+                                    fontWeight: "bold",
+                                    marginBottom: "12px"
+                                }}
+                            >
+                                Ver los que VIENEN
+                            </button>
+                        )}
+                    </div>
                 </div>
 
                 {/* Acciones de impresión */}
@@ -378,14 +483,14 @@ export default function PedidosDigital() {
                     >
                         Imprimir los que NO VIENEN
                     </button>
+
                     <span style={{ alignSelf: "center", fontWeight: "bold", color: "#333" }}>
-                        Total en vista: {pedidosFiltrados.length} — Marcados VIENEN: {pedidosVienen.length} — NO VIENEN: {pedidosNoVienen.length}
+                        Total en vista: {pedidosFiltrados.length} — Marcados VIENEN: {pedidosVienen.length} — NO VIENEN: {pedidosNoVienen.length} - SIN MARCAR: {pedidosFiltrados.filter(p => !p.estado).length}
                     </span>
                 </div>
 
                 {/* Tabla */}
                 <div style={{ overflowX: "auto", overflowY: "auto", maxHeight: "70vh" }}>
-
                     <table
                         style={{
                             width: "100%",
@@ -525,8 +630,6 @@ const thStyle = {
     backgroundColor: "#0655a8ff",
     color: "white",
 };
-
-
 
 const thStyleCenter = { ...thStyle, textAlign: "center" };
 const tdStyle = {

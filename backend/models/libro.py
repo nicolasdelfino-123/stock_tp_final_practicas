@@ -52,7 +52,12 @@ class Pedido(Base):
     autor: Mapped[str] = mapped_column(String(800), nullable=False)
     comentario: Mapped[str] = mapped_column(String(1000), nullable=True)
     cantidad: Mapped[int] = mapped_column(Integer, nullable=False)
-    isbn: Mapped[str] = mapped_column(String(60), unique=True, nullable=False)
+    isbn: Mapped[str] = mapped_column(String(60), nullable=True)
+    estado: Mapped[str] = mapped_column(String(20), nullable=True)  # "VIENE" o "NO_VIENE"
+    motivo: Mapped[str] = mapped_column(String(250), nullable=True) # Librería o motivo de no venir
+    oculto: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default="false")
+
+
 
     def __repr__(self):
         return f"<Pedido {self.titulo} para {self.cliente_nombre}>"

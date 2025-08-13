@@ -897,7 +897,9 @@ const PedidoForm = () => {
               Volver al Inicio
             </button>
             <div style={{ textAlign: 'center', flexGrow: 1 }}>
-              <h2 style={{ color: 'white', marginTop: '10px', fontSize: "50px", fontWeight: "700px", textShadow: '4px 4px 22px rgba(0,0,0,0.9)' }}><strong>Formulario de Pedido</strong></h2>
+              <h2 style={{ color: 'white', marginTop: '10px', fontSize: "50px", fontWeight: "700px", textShadow: '4px 4px 22px rgba(0,0,0,0.9)' }}>
+                <strong>Formulario de Pedido</strong>
+              </h2>
             </div>
           </div>
 
