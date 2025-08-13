@@ -223,7 +223,7 @@ export default function Caja() {
                 <div style={styles.cardHeader}>Entradas</div>
                 <div style={{ ...styles.controlsRow, gridTemplateColumns: "2fr 1.6fr 1fr auto" }}>
                     <input
-                        style={styles.input}
+                        style={{ ...styles.input, border: '2px solid black' }}
                         placeholder="f2000 / y1500 / r1000 / n1200"
                         value={entradaRapida}
                         onChange={(e) => setEntradaRapida(e.target.value)}
@@ -382,7 +382,7 @@ const styles = {
         width: "calc(100vw - 10cm)", // deja ~5cm por lado en pantallas grandes
         maxWidth: 1600,
         margin: "22px auto",
-        padding: 16,
+        padding: 66,
         fontFamily: "system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, Helvetica, Arial, sans-serif",
     },
     header: {
@@ -404,7 +404,7 @@ const styles = {
     input: {
         width: "100%",
         padding: "10px 12px",
-        borderRadius: 10,
+        borderRadius: 20,
         border: "1px solid #cbd5e1",
         outline: "none",
         background: "#fff",
