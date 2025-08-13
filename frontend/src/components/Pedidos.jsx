@@ -1461,6 +1461,21 @@ const PedidoForm = () => {
                   <strong>Filtrar por Fecha</strong>
 
                 </button>
+                <button
+                  onClick={() => navigate("/pedidos-digital")}
+                  style={{
+                    backgroundColor: '#7952b3',
+                    color: 'white',
+                    border: 'none',
+                    padding: '10px 20px',
+                    borderRadius: '5px',
+                    cursor: 'pointer',
+                    height: '40px',
+                    alignSelf: 'flex-end'
+                  }}
+                >
+                  <strong>Pedidos Ricardo (Digital)</strong>
+                </button>
 
               </div>
 

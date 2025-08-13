@@ -13,6 +13,7 @@ import "@fortawesome/fontawesome-free/css/all.min.css";
 import Faltantes from "./components/Faltantes";
 import Pedidos from "./components/Pedidos";
 import LibrosDadosBaja from "./components/LibrosDadosBaja";
+import PedidosDigital from "./components/PedidosDigital";
 
 // Componente para proteger rutas
 const ProtectedRoute = ({ children }) => {
@@ -150,6 +151,14 @@ function AppContent() {
           element={
             <ProtectedRoute>
               <Pedidos />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/pedidos-digital"
+          element={
+            <ProtectedRoute>
+              <PedidosDigital />
             </ProtectedRoute>
           }
         />

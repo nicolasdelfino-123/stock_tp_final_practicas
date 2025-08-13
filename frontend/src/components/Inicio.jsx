@@ -75,7 +75,7 @@ const Inicio = () => {
               onClick={() => navigate("/libros-dados-baja")}
               className="btn-baja btn-lg gap-2 px-4 py-3 btn-futurista"
               style={{
-                borderRadius: "50px",
+                borderRadius: "10px",
                 padding: "10px 30px",
                 minWidth: "150px",
                 margin: 50,
