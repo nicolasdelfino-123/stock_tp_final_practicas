@@ -84,19 +84,7 @@ const Inicio = () => {
               <PackageOpen size={45} color="black" />
               <span style={{ color: "white", marginLeft: "13px", fontSize: '19px' }}>Libros dados de baja</span>
             </button>
-            <button
-              onClick={() => navigate("/caja")}
-              className="btn-baja btn-lg gap-2 px-4 py-3 btn-futurista"
-              style={{
-                borderRadius: "10px",
-                padding: "10px 30px",
-                minWidth: "150px",
-                margin: 50,
-              }}
-            >
-              <PackageOpen size={45} color="black" />
-              <span style={{ color: "white", marginLeft: "13px", fontSize: '19px' }}>Caja</span>
-            </button>
+
           </div>
 
 
@@ -162,8 +150,23 @@ const Inicio = () => {
               </button>
             </div>
           </div>
+          <div className="d-flex justify-content-center" style={{ marginTop: '-50px' }}>
+            <button
+              onClick={() => navigate("/caja")}
+              className="btn btn-success btn-lg gap-2 px-4 py-3 btn-futurista"
+              style={{
+                borderRadius: "10px",
+                padding: "10px 30px",
+                minWidth: "150px",
+                margin: 50,
+              }}
+            >
+              <PackageOpen size={45} color="black" />
+              <span style={{ color: "white", marginLeft: "13px", fontSize: '19px' }}>Caja</span>
+            </button>
+          </div>
         </div>
-      </div>
+      </div >
     </>
   );
 };
