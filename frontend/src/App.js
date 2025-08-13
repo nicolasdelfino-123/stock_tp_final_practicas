@@ -14,6 +14,7 @@ import Faltantes from "./components/Faltantes";
 import Pedidos from "./components/Pedidos";
 import LibrosDadosBaja from "./components/LibrosDadosBaja";
 import PedidosDigital from "./components/PedidosDigital";
+import Caja from "./components/Caja";
 
 // Componente para proteger rutas
 const ProtectedRoute = ({ children }) => {
@@ -159,6 +160,15 @@ function AppContent() {
           element={
             <ProtectedRoute>
               <PedidosDigital />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/caja"
+          element={
+            <ProtectedRoute>
+              <Caja />
             </ProtectedRoute>
           }
         />
