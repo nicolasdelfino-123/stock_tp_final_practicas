@@ -148,5 +148,13 @@
 }
 
 .btn-baja {
-  background-color: red;
+  background-color: #ec2821e6;
+}
+
+.btn-faltantes-color {
+  background-color: #e4751a;
+}
+
+.btn-pedidos {
+  background-color: #805AD5;
 }

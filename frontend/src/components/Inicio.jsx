@@ -1,6 +1,6 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import { Trash2, Search, PlusCircle, PackagePlus } from "lucide-react";
+import { Trash2, Search, PlusCircle, PackageOpen, BookOpenCheck, TriangleAlert } from "lucide-react";
 
 const Inicio = () => {
   const navigate = useNavigate();
@@ -81,8 +81,8 @@ const Inicio = () => {
                 margin: 50,
               }}
             >
-              <PackagePlus size={45} color="black" />
-              <span style={{ color: "black" }}>Libros dados de baja</span>
+              <PackageOpen size={45} color="black" />
+              <span style={{ color: "white", marginLeft: "13px", fontSize: '19px' }}>Libros dados de baja</span>
             </button>
           </div>
 
@@ -124,28 +124,28 @@ const Inicio = () => {
             >
               <button
                 onClick={() => navigate("/faltantes")}
-                className="btn btn-warning btn-lg d-flex align-items-center justify-content-center gap-2 px-4 py-3 btn-futurista m-5"
+                className="btn-faltantes-color btn-lg d-flex align-items-center justify-content-center gap-2 px-4 py-3 btn-futurista m-5"
                 style={{
-                  borderRadius: "50px",
+                  borderRadius: "40px",
                   padding: "10px 30px",
                   minWidth: "150px",
                 }}
               >
-                <PackagePlus size={45} color="black" />
-                <span style={{ color: "black" }}>Faltantes</span>
+                <TriangleAlert size={45} color="black" />
+                <span style={{ color: "white", fontSize: '25px' }}>Faltantes Stock</span>
               </button>
 
               <button
                 onClick={() => navigate("/pedidos")}
-                className="btn btn-warning btn-lg d-flex align-items-center justify-content-center gap-2 px-4 py-3 btn-futurista m-5"
+                className="btn-pedidos btn-lg d-flex align-items-center justify-content-center gap-2 px-4 py-3 btn-futurista m-5"
                 style={{
                   borderRadius: "50px",
                   padding: "10px 30px",
                   minWidth: "150px",
                 }}
               >
-                <PackagePlus size={45} color="black" />
-                <span style={{ color: "black" }}>Pedidos libros</span>
+                <BookOpenCheck size={45} color="black" />
+                <span style={{ color: "white", fontSize: '25px' }}>Pedidos libros</span>
               </button>
             </div>
           </div>
