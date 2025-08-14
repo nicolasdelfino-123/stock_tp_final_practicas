@@ -40,8 +40,6 @@ export default function PedidosDigital() {
 
     // NUEVO: tras "Resetear", en la vista TODOS ocultamos los que están en VIENE
     const [excluirVienen, setExcluirVienen] = useState(false);
-    const [vieneSesion, setVieneSesion] = useState(() => new Set());
-
 
     // Cargar pedidos al montar (sin "mostrarOcultos")
     useEffect(() => {
@@ -109,15 +107,11 @@ export default function PedidosDigital() {
         if (filtroEstado === "VIENE") return base.filter(p => (p.estado || "") === "VIENE");
         if (filtroEstado === "NO_VIENE") return base.filter(p => (p.estado || "") === "NO_VIENE");
 
-        if (filtroEstado === "TODOS") {
-            // Siempre ocultar VIENE viejos en "TODOS".
-            // Mostrar solo los VIENE marcados en ESTA sesión (vieneSesion).
-            return base.filter(p =>
-                (p.estado || "") !== "VIENE" || vieneSesion.has(p.id)
-            );
+        if (filtroEstado === "TODOS" && excluirVienen) {
+            return base.filter(p => (p.estado || "") !== "VIENE"); // ⬅️ solo se esconden en TODOS
         }
         return base;
-    }, [pedidos, terminoBusqueda, fechaDesde, fechaHasta, filtroEstado, excluirVienen, vieneSesion]);
+    }, [pedidos, terminoBusqueda, fechaDesde, fechaHasta, filtroEstado, excluirVienen]);
 
     // Cambia el estado de un pedido y (según el caso) lo persiste en el backend.
     // - Si nuevoEstado === "VIENE": solo actualiza el estado en memoria y limpia el motivo,
@@ -138,11 +132,6 @@ export default function PedidosDigital() {
             setExcluirVienen(false); // ⬅️ Evita que se oculte al marcar VIENE hasta que resetees
             // Actualiza SOLO el estado en el frontend (optimistic update),
             // y vacía el motivo para forzar que el usuario lo seleccione luego.
-            setVieneSesion(prev => {
-                const next = new Set(prev);
-                next.add(id);         // ⬅️ este VIENE es de esta sesión
-                return next;
-            });
             setPedidos(prev => prev.map(p =>
                 p.id === id ? { ...p, estado: "VIENE", motivo: "" } : p
             ));
@@ -460,7 +449,6 @@ export default function PedidosDigital() {
                                 // Paso 3) Ajusta la vista: vuelve a "TODOS" y excluye VIENE.
                                 setFiltroEstado("TODOS");
                                 setExcluirVienen(true);
-                                setVieneSesion(new Set()); // ⬅️ arrancamos una sesión nueva
                             }}
 
 
