@@ -93,7 +93,13 @@ export default function PedidosDigital() {
             return true;
         });
     };
-
+    // 📌 pedidosFiltrados:
+    // Calcula y memoriza la lista final de pedidos según:
+    // 1. Filtrado por fechas y por texto de búsqueda.
+    // 2. Estado seleccionado en los botones ("VIENE", "NO_VIENE" o "TODOS").
+    // 3. Si está activado "excluirVienen", quita los pedidos con estado "VIENE".
+    // Devuelve el arreglo resultante ya filtrado, evitando recalcularlo
+    // innecesariamente gracias a useMemo.
     const pedidosFiltrados = useMemo(() => {
         let base = filtrarPorBusqueda(filtrarPorFechas(pedidos));
 
@@ -101,38 +107,51 @@ export default function PedidosDigital() {
         if (filtroEstado === "VIENE") return base.filter(p => (p.estado || "") === "VIENE");
         if (filtroEstado === "NO_VIENE") return base.filter(p => (p.estado || "") === "NO_VIENE");
 
-        // Vista "TODOS"
-        // Si excluirVienen está activo (tras "Resetear"), ocultamos los que ya están en VIENE
-        if (excluirVienen) {
-            return base.filter(p => (p.estado || "") !== "VIENE");
+        if (filtroEstado === "TODOS" && excluirVienen) {
+            return base.filter(p => (p.estado || "") !== "VIENE"); // ⬅️ solo se esconden en TODOS
         }
         return base;
     }, [pedidos, terminoBusqueda, fechaDesde, fechaHasta, filtroEstado, excluirVienen]);
 
+    // Cambia el estado de un pedido y (según el caso) lo persiste en el backend.
+    // - Si nuevoEstado === "VIENE": solo actualiza el estado en memoria y limpia el motivo,
+    //   pero NO guarda todavía: espera a que el usuario elija un motivo.
+    // - Para cualquier otro estado: actualiza en memoria y luego persiste inmediatamente.
     const setEstado = async (id, nuevoEstado) => {
+        // Marca en sessionStorage que debemos preservar estados (banderita usada en otra parte de la app).
         sessionStorage.setItem("pd_preservarEstados", "1");
 
+        // Busca el pedido actual en el array 'pedidos' por id.
         const pedidoActual = pedidos.find(p => p.id === id);
+
+        // Toma el motivo ya existente (si lo hubiera); si no hay, usa cadena vacía.
         const motivo = pedidoActual?.motivo || "";
 
+        // Caso especial: cuando el nuevo estado es "VIENE".
         if (nuevoEstado === "VIENE") {
-            // Solo mostrar el select, sin persistir aún
+            setExcluirVienen(false); // ⬅️ Evita que se oculte al marcar VIENE hasta que resetees
+            // Actualiza SOLO el estado en el frontend (optimistic update),
+            // y vacía el motivo para forzar que el usuario lo seleccione luego.
             setPedidos(prev => prev.map(p =>
                 p.id === id ? { ...p, estado: "VIENE", motivo: "" } : p
             ));
-            return; // el guardado real será al elegir el motivo
+
+            // Importante: no persiste todavía; se guardará cuando elijan el motivo.
+            return;
         }
 
+        // Para otros estados: actualiza el estado y conserva el motivo que tenía el pedido.
         setPedidos(prev => prev.map(p =>
             p.id === id ? { ...p, estado: nuevoEstado, motivo } : p
         ));
 
+        // Persiste el cambio en el backend llamando a la acción correspondiente.
+        // Se manda el pedido original extendido con el nuevo estado y motivo.
         await actions.actualizarPedido(id, {
             ...pedidoActual,
             estado: nuevoEstado,
             motivo
         });
-
     };
 
     const setMotivoViene = async (id, motivo) => {
@@ -337,23 +356,23 @@ export default function PedidosDigital() {
                     <button
                         onClick={() => { setFechaDesde(""); setFechaHasta(""); setTerminoBusqueda(""); }}
                         style={{
-                            backgroundColor: "#ffc107",
-                            color: "black",
-                            border: "none",
-                            padding: "10px 20px",
-                            borderRadius: "6px",
-                            cursor: "pointer",
-                            height: "42px",
-                            alignSelf: "end",
-                            fontWeight: "bold"
+                            backgroundColor: '#ec1814ff',
+                            color: 'white',
+                            border: 'none',
+                            padding: '10px 20px',
+                            borderRadius: '5px',
+                            cursor: 'pointer'
                         }}
                     >
-                        Limpiar filtros
+                        <strong>
+
+                            Limpiar búsqueda
+                        </strong>
                     </button>
 
                     <div style={{ display: "flex", gap: "6px", alignItems: "center" }}>
                         <button
-                            onClick={() => { setFiltroEstado("TODOS"); setExcluirVienen(false); }}
+                            onClick={() => { setFiltroEstado("TODOS"); setExcluirVienen(true); }}
                             style={{
                                 backgroundColor: filtroEstado === "TODOS" ? "#0d6efd" : "#e9ecef",
                                 color: filtroEstado === "TODOS" ? "white" : "black",
@@ -398,8 +417,15 @@ export default function PedidosDigital() {
                         {/* Botón Resetear: deja en TODOS PERO excluyendo los que están en VIENE */}
                         <button
                             onClick={async () => {
-                                // 1) Persistir limpieza en backend para los que NO son VIENE (NO_VIENE o vacíos)
+                                // Paso 1) Reseteo en BACKEND de todos los pedidos que NO son "VIENE".
                                 const aResetear = pedidos.filter(p => (p.estado || "") !== "VIENE");
+                                await Promise.all(
+                                    pedidos
+                                        .filter(p => (p.estado || "") === "VIENE")
+                                        .map(p => actions.actualizarPedido(p.id, p)) // ⬅️ Guarda en backend que siguen siendo VIENE
+                                );
+
+
                                 if (aResetear.length) {
                                     await Promise.all(
                                         aResetear.map(p =>
@@ -408,15 +434,23 @@ export default function PedidosDigital() {
                                     );
                                 }
 
-                                // 2) Limpiar en memoria (sin tocar los VIENE)
-                                setPedidos(prev => prev.map(p =>
-                                    (p.estado || "") === "VIENE" ? p : { ...p, estado: "", motivo: "" }
-                                ));
+                                // Paso 2) Reseteo en MEMORIA (estado local) y QUITAMOS los que son "VIENE" de la tabla actual
+                                setPedidos(prev =>
+                                    prev
+                                        .map(p =>
+                                            (p.estado || "") === "VIENE"
+                                                ? p // se mantiene igual en memoria
+                                                : { ...p, estado: "", motivo: "" } // limpia los que no son VIENE
+                                        )
 
-                                // 3) Vista general excluyendo los VIENE (no aparecen para no pedirlos de nuevo)
+                                );
+
+                                // Paso 3) Ajusta la vista: vuelve a "TODOS" y excluye VIENE.
                                 setFiltroEstado("TODOS");
                                 setExcluirVienen(true);
                             }}
+
+
 
                             style={{
                                 backgroundColor: "#ff5722",
@@ -591,7 +625,7 @@ export default function PedidosDigital() {
 
                                             <td style={{ ...tdStyle, whiteSpace: "nowrap" }}>
                                                 <div style={{ display: "flex", gap: 6 }}>
-                                                    <button
+                                                    <button className="btn-viene-tabla-principal"
                                                         onClick={() => setEstado(p.id, "VIENE")}
                                                         style={btnOk}
                                                     >
