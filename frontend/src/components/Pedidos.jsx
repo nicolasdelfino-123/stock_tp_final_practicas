@@ -855,13 +855,15 @@ const PedidoForm = () => {
 
 
   const handleCheckboxChange = (e) => {
-    if (e.target.checked && ultimoNombreCliente) {
-      setNombreCliente(ultimoNombreCliente);
-      setTelefonoCliente(ultimoTelefono);  // Limpiamos el teléfono si se usa el nombre del último cliente
-    } else {
-      setNombreCliente("");
-      setTelefonoCliente("");
-    }
+    // ✔ Solo completa si el campo está vacío y NO borra al destildar
+    const handleCheckboxChange = (e) => {
+      if (e.target.checked) {
+        if (!nombreCliente && ultimoNombreCliente) setNombreCliente(ultimoNombreCliente);
+        if (!telefonoCliente && ultimoTelefono) setTelefonoCliente(ultimoTelefono);
+      }
+      // al destildar NO tocamos los campos
+    };
+
   };
   return (
     <div style={{
@@ -948,8 +950,7 @@ const PedidoForm = () => {
                 {/* Teléfono */}
                 <div className="col-12 col-md-4" style={{ padding: 0 }}>
                   <label
-                    value={telefonoCliente}
-                    onChange={handleCheckboxChange}
+
                     style={{
                       fontWeight: 'bold',
                       color: 'black',

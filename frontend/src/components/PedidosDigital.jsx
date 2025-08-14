@@ -373,7 +373,7 @@ export default function PedidosDigital() {
 
                     <div style={{ display: "flex", gap: "6px", alignItems: "center" }}>
                         <button
-                            onClick={() => { setFiltroEstado("TODOS"); setExcluirVienen(true); }}
+                            onClick={() => { setFiltroEstado("TODOS"); setExcluirVienen(false); }}
                             style={{
                                 backgroundColor: filtroEstado === "TODOS" ? "#0d6efd" : "#e9ecef",
                                 color: filtroEstado === "TODOS" ? "white" : "black",
