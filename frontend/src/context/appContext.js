@@ -450,10 +450,10 @@ export const AppProvider = ({ children }) => {
               "Content-Type": "application/json"
             },
             body: JSON.stringify({
-              cliente_nombre: pedidoActualizado.cliente_nombre,
-              titulo: pedidoActualizado.titulo,
+              cliente_nombre: pedidoActualizado.nombreCliente,
+              titulo: pedidoActualizado.tituloLibro,
               telefonoCliente: pedidoActualizado.telefonoCliente || "",
-              autor: pedidoActualizado.autor,
+              autor: pedidoActualizado.autorLibro,
               cantidad: pedidoActualizado.cantidad,
               fecha: pedidoActualizado.fecha,
               seña: pedidoActualizado.seña || 0,

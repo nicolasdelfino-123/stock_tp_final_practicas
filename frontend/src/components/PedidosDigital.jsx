@@ -40,6 +40,8 @@ export default function PedidosDigital() {
 
     // NUEVO: tras "Resetear", en la vista TODOS ocultamos los que están en VIENE
     const [excluirVienen, setExcluirVienen] = useState(false);
+    // Añadir al inicio del componente, junto a los otros estados
+    const [pedidosMarcadosRecien, setPedidosMarcadosRecien] = useState(new Set());
 
     // Cargar pedidos al montar (sin "mostrarOcultos")
     useEffect(() => {
@@ -108,10 +110,18 @@ export default function PedidosDigital() {
         if (filtroEstado === "NO_VIENE") return base.filter(p => (p.estado || "") === "NO_VIENE");
 
         if (filtroEstado === "TODOS" && excluirVienen) {
-            return base.filter(p => (p.estado || "") !== "VIENE"); // ⬅️ solo se esconden en TODOS
+            return base.filter(p => {
+                // Si fue marcado en este ciclo (sin importar su estado o motivo), SIEMPRE mostrarlo
+                if (pedidosMarcadosRecien.has(p.id)) {
+                    return true;
+                }
+                // Ocultar TODOS los pedidos con estado "VIENE"
+                return (p.estado || "") !== "VIENE";
+            });
         }
+        // Si no hay filtro de estado, devuelve todos los pedidos filtrados por texto y fechas.
         return base;
-    }, [pedidos, terminoBusqueda, fechaDesde, fechaHasta, filtroEstado, excluirVienen]);
+    }, [pedidos, terminoBusqueda, fechaDesde, fechaHasta, filtroEstado, excluirVienen,]);
 
     // Cambia el estado de un pedido y (según el caso) lo persiste en el backend.
     // - Si nuevoEstado === "VIENE": solo actualiza el estado en memoria y limpia el motivo,
@@ -129,14 +139,12 @@ export default function PedidosDigital() {
 
         // Caso especial: cuando el nuevo estado es "VIENE".
         if (nuevoEstado === "VIENE") {
-            setExcluirVienen(false); // ⬅️ Evita que se oculte al marcar VIENE hasta que resetees
-            // Actualiza SOLO el estado en el frontend (optimistic update),
-            // y vacía el motivo para forzar que el usuario lo seleccione luego.
+            // Añadir a pedidos recientes INMEDIATAMENTE al marcar como VIENE
+            setPedidosMarcadosRecien(prev => new Set(prev).add(id));
+
             setPedidos(prev => prev.map(p =>
                 p.id === id ? { ...p, estado: "VIENE", motivo: "" } : p
             ));
-
-            // Importante: no persiste todavía; se guardará cuando elijan el motivo.
             return;
         }
 
@@ -167,7 +175,10 @@ export default function PedidosDigital() {
             ...pedidoActual,
             estado: "VIENE",
             motivo
+
         });
+        setPedidosMarcadosRecien(prev => new Set(prev).add(id)); // Añadir a pedidos recientes
+        // Resto del código igual...
     };
 
     const setMotivoNoViene = async (id, motivo) => {
@@ -373,7 +384,8 @@ export default function PedidosDigital() {
 
                     <div style={{ display: "flex", gap: "6px", alignItems: "center" }}>
                         <button
-                            onClick={() => { setFiltroEstado("TODOS"); setExcluirVienen(false); }}
+                            onClick={() => { setFiltroEstado("TODOS"); setExcluirVienen(true) }}
+
                             style={{
                                 backgroundColor: filtroEstado === "TODOS" ? "#0d6efd" : "#e9ecef",
                                 color: filtroEstado === "TODOS" ? "white" : "black",
@@ -446,7 +458,10 @@ export default function PedidosDigital() {
 
                                 );
 
-                                // Paso 3) Ajusta la vista: vuelve a "TODOS" y excluye VIENE.
+                                // Limpiar pedidos marcados recientemente
+                                setPedidosMarcadosRecien(new Set());
+
+                                // Paso 3) Ajusta la vista (código existente)
                                 setFiltroEstado("TODOS");
                                 setExcluirVienen(true);
                             }}
