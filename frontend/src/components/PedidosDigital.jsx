@@ -206,6 +206,9 @@ export default function PedidosDigital() {
         () => pedidosFiltrados.filter(p => (p.estado || "") === "VIENE"),
         [pedidosFiltrados]
     );
+    const pedidosVienenTodos = useMemo(() =>
+        pedidos.filter(p => (p.estado || "") === "VIENE"),
+        [pedidos]);
 
     const pedidosNoVienen = useMemo(
         () => pedidosFiltrados.filter(p => (p.estado || "") === "NO_VIENE"),
@@ -280,6 +283,7 @@ export default function PedidosDigital() {
 
     const fondoURL = "/fondo-3.jpg";
 
+    const totalVienen = pedidos.filter(p => p.estado === "VIENE").length;
     return (
         <div style={{
             minHeight: "100vh",
@@ -293,6 +297,7 @@ export default function PedidosDigital() {
 
                     type="button"
                     className="btn"
+
                     onClick={() => navigate("/pedidos-cargados")}
                     style={{
                         borderRadius: "8px",
@@ -302,7 +307,9 @@ export default function PedidosDigital() {
                         backgroundColor: "#fcf00cff",
                         fontWeight: "bold",
                         height: "44px",
-                        marginRight: "10px"
+                        marginRight: "10px",
+
+
                     }}
                     onMouseEnter={(e) => (e.target.style.backgroundColor = "#e4f00aff")}
                     onMouseLeave={(e) => (e.target.style.backgroundColor = "#fcf00cff")}
@@ -316,7 +323,8 @@ export default function PedidosDigital() {
                         marginTop: "10px",
                         fontSize: "40px",
                         fontWeight: "700",
-                        textShadow: "4px 4px 22px rgba(0,0,0,0.9)"
+                        textShadow: "4px 4px 22px rgba(0,0,0,0.9)",
+
                     }}>
                         <strong>Pedidos Digital – Ricardo</strong>
                     </h2>
@@ -428,85 +436,68 @@ export default function PedidosDigital() {
                         </button>
 
                         {/* Botón Resetear: deja en TODOS PERO excluyendo los que están en VIENE */}
-                        <button
-                            onClick={async () => {
-                                // Paso 1) Reseteo en BACKEND de todos los pedidos que NO son "VIENE".
-                                const aResetear = pedidos.filter(p => (p.estado || "") !== "VIENE");
-                                await Promise.all(
-                                    pedidos
-                                        .filter(p => (p.estado || "") === "VIENE")
-                                        .map(p => actions.actualizarPedido(p.id, p)) // ⬅️ Guarda en backend que siguen siendo VIENE
-                                );
-
-
-                                if (aResetear.length) {
-                                    await Promise.all(
-                                        aResetear.map(p =>
-                                            actions.actualizarPedido(p.id, { ...p, estado: "", motivo: "" })
-                                        )
-                                    );
-                                }
-
-                                // Paso 2) Reseteo en MEMORIA (estado local) y QUITAMOS los que son "VIENE" de la tabla actual
-                                setPedidos(prev =>
-                                    prev
-                                        .map(p =>
-                                            (p.estado || "") === "VIENE"
-                                                ? p // se mantiene igual en memoria
-                                                : { ...p, estado: "", motivo: "" } // limpia los que no son VIENE
-                                        )
-
-                                );
-
-                                // Limpiar pedidos marcados recientemente
-                                setPedidosMarcadosRecien(new Set());
-
-                                // Paso 3) Ajusta la vista (código existente)
-                                setFiltroEstado("TODOS");
-                                setExcluirVienen(true);
-                            }}
-
-
-
-                            style={{
-                                backgroundColor: "#ff5722",
-                                color: "white",
-                                border: "none",
-                                padding: "10px 20px",
-                                borderRadius: "6px",
-                                cursor: "pointer",
-                                fontWeight: "bold",
-                                marginBottom: "12px"
-                            }}
-                        >
-                            🔄 Comenzar / Resetear para nuevo pedido
-                        </button>
-
-                        {/* SOLO en vista TODOS: botón para "pasar" a la vista Vienen */}
-                        {filtroEstado === "TODOS" && (
+                        <div className="boton-reset-div">
                             <button
-                                onClick={() => { setFiltroEstado("VIENE"); setExcluirVienen(false); }}
+                                onClick={async () => {
+                                    // Paso 1) Reseteo en BACKEND de todos los pedidos que NO son "VIENE".
+                                    const aResetear = pedidos.filter(p => (p.estado || "") !== "VIENE");
+                                    for (const p of pedidos.filter(p => (p.estado || "") === "VIENE")) {
+                                        await actions.actualizarPedido(p.id, p);
+                                    }
+
+
+
+                                    if (aResetear.length) {
+                                        for (const p of aResetear) {
+                                            await actions.actualizarPedido(p.id, { ...p, estado: "", motivo: "" });
+                                        }
+                                    }
+
+                                    // Paso 2) Reseteo en MEMORIA (estado local) y QUITAMOS los que son "VIENE" de la tabla actual
+                                    setPedidos(prev =>
+                                        prev
+                                            .map(p =>
+                                                (p.estado || "") === "VIENE"
+                                                    ? p // se mantiene igual en memoria
+                                                    : { ...p, estado: "", motivo: "" } // limpia los que no son VIENE
+                                            )
+
+                                    );
+
+                                    // Limpiar pedidos marcados recientemente
+                                    setPedidosMarcadosRecien(new Set());
+
+                                    // Paso 3) Ajusta la vista (código existente)
+                                    setFiltroEstado("TODOS");
+                                    setExcluirVienen(true);
+                                }}
+
+
+
                                 style={{
-                                    backgroundColor: "#17a2b8",
+                                    backgroundColor: "#f06610ff",
                                     color: "white",
                                     border: "none",
                                     padding: "10px 20px",
                                     borderRadius: "6px",
                                     cursor: "pointer",
                                     fontWeight: "bold",
-                                    marginBottom: "12px"
+                                    marginBottom: "1px",
+                                    marginLeft: "100px",
+                                    marginTop: "0px",
                                 }}
                             >
-                                Ver los que VIENEN
+                                🔄 Resetear para nuevo pedido
                             </button>
-                        )}
+
+                        </div>
                     </div>
                 </div>
 
                 {/* Acciones de impresión */}
                 <div style={{ display: "flex", gap: "10px", flexWrap: "wrap", marginBottom: "16px" }}>
                     <button
-                        onClick={() => imprimirLista(pedidosVienen, "Pedidos que VIENEN")}
+                        onClick={() => imprimirLista(pedidosVienenTodos, "Pedidos que VIENEN")}
                         style={{
                             backgroundColor: "#0c62beff",
                             color: "white",
@@ -535,7 +526,7 @@ export default function PedidosDigital() {
                     </button>
 
                     <span style={{ alignSelf: "center", fontWeight: "bold", color: "#333" }}>
-                        Total en vista: {pedidosFiltrados.length} — Marcados VIENEN: {pedidosVienen.length} — NO VIENEN: {pedidosNoVienen.length} - SIN MARCAR: {pedidosFiltrados.filter(p => !p.estado).length}
+                        Total en vista: {pedidosFiltrados.length} — VIENEN: {totalVienen} — NO VIENEN: {pedidosNoVienen.length} - SIN MARCAR: {pedidosFiltrados.filter(p => !p.estado).length}
                     </span>
                 </div>
 
@@ -662,8 +653,8 @@ export default function PedidosDigital() {
                         </tbody>
                     </table>
                 </div>
-            </div>
-        </div>
+            </div >
+        </div >
     );
 }
 

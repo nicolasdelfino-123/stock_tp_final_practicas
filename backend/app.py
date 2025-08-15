@@ -640,7 +640,7 @@ def actualizar_pedido(pedido_id):
         pedido.isbn = data.get('isbn', pedido.isbn)
         pedido.estado = data.get('estado', pedido.estado)
         pedido.motivo = data.get('motivo', pedido.motivo)
-
+        pedido.fecha = data.get('fecha', pedido.fecha)
         pedido.oculto = data.get('oculto', pedido.oculto)
 
         session.commit()
