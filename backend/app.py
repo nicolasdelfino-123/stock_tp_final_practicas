@@ -1,8 +1,8 @@
 from flask import Flask, jsonify, request
-from sqlalchemy import create_engine, or_, func
+from sqlalchemy import create_engine, or_, func, desc
 from sqlalchemy.orm import sessionmaker
 from config import ProductionConfig  # usamos configuración segura desde .env
-from models.libro import Base, Libro, Faltante, Pedido  
+from models.libro import Base, Libro, Faltante, Pedido, LibroBaja 
 from unidecode import unidecode
 from flask_cors import CORS
 from flask_admin import Admin
@@ -10,13 +10,12 @@ from flask_admin.contrib.sqla import ModelView
 from sqlalchemy import func
 from models.libro import Base
 import jwt 
-
 import time
 from flask import send_from_directory
 import os
 from sqlalchemy import or_
 from flask import abort
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from sqlalchemy.exc import SQLAlchemyError
 from flask_migrate import Migrate
 from flask_sqlalchemy import SQLAlchemy
@@ -287,62 +286,139 @@ def bajar_libro(libro_id):
 
 
 
+# Nuevo endpoint para bajar stock (separado del marcar baja)
+@app.route('/libros/<int:libro_id>/bajar-stock', methods=['PUT'])
+def bajar_stock_libro(libro_id):
+    session = app.session
+    libro = session.query(Libro).get(libro_id)
+    
+    if libro is None:
+        return jsonify({'error': 'Libro no encontrado'}), 404
+    
+    try:
+        payload = request.get_json()
+        cantidad = int(payload.get('cantidad', 0))
+        
+        if cantidad <= 0:
+            return jsonify({'error': 'La cantidad debe ser mayor que 0'}), 400
+            
+        if cantidad > libro.stock:
+            return jsonify({'error': f'No hay suficiente stock. Stock actual: {libro.stock}'}), 400
+        
+        # Solo bajar el stock, NO marcar como baja todavía
+        libro.stock -= cantidad
+        session.commit()
+        session.refresh(libro)
+        
+        return jsonify({
+            'mensaje': 'Stock actualizado',
+            'stock': libro.stock,
+            'ubicacion': libro.ubicacion
+        })
+        
+    except Exception as e:
+        session.rollback()
+        return jsonify({'error': 'Error al actualizar stock', 'mensaje': str(e)}), 500
+
 @app.route('/libros/<int:libro_id>/marcar-baja', methods=['PUT'])
 def marcar_baja(libro_id):
     session = app.session
     libro = session.query(Libro).get(libro_id)
-
+    
     if libro is None:
         return jsonify({'error': 'Libro no encontrado'}), 404
-
+    
     try:
-        fecha_actual = datetime.now()
-        libro.fecha_baja = fecha_actual
-        session.merge(libro)
+        # Usar timezone local de Argentina
+        from datetime import timezone, timedelta
+        tz_argentina = timezone(timedelta(hours=-3))  # UTC-3 para Argentina
+        ahora_argentina = datetime.now(tz_argentina)
+        
+        # Obtener cantidad del payload enviado desde el frontend
+        payload = request.get_json(silent=True) or {}
+        cantidad_baja = int(payload.get('cantidad', 1))
+        
+        # Calcular cantidad basada en diferencia de stock si es posible
+        # (esto es una aproximación, idealmente deberías pasar la cantidad)
+        
+        # Registrar movimiento con snapshot
+        mov = LibroBaja(
+            libro_id=libro.id,
+            fecha_baja=ahora_argentina.replace(tzinfo=None),  # Guardar sin timezone info
+            cantidad_bajada=cantidad_baja,
+            stock_resultante=libro.stock,
+            titulo=libro.titulo,
+            autor=libro.autor,
+            editorial=libro.editorial,
+            isbn=libro.isbn,
+            precio=libro.precio,
+            ubicacion=libro.ubicacion
+        )
+        session.add(mov)
+        
+        # Solo marcar fecha_baja en el libro si stock llegó a 0
+        if libro.stock == 0:
+            libro.fecha_baja = ahora_argentina.replace(tzinfo=None)
+        
         session.commit()
+        session.refresh(mov)
         session.refresh(libro)
+        
         return jsonify({
-            'mensaje': 'Libro marcado como dado de baja',
-            'fecha_baja': libro.fecha_baja.isoformat(),
+            'mensaje': 'Baja registrada',
+            'fecha_baja': mov.fecha_baja.isoformat(),
+            'cantidad_bajada': mov.cantidad_bajada,
+            'stock_resultante': mov.stock_resultante,
             'libro': {
                 'id': libro.id,
                 'titulo': libro.titulo,
-                'fecha_baja': libro.fecha_baja.isoformat()
+                'stock': libro.stock,
+                'fecha_baja': libro.fecha_baja.isoformat() if libro.fecha_baja else None
+            },
+            'movimiento': {
+                'id': mov.id,
+                'fecha_baja': mov.fecha_baja.isoformat(),
+                'cantidad_bajada': mov.cantidad_bajada,
+                'stock_resultante': mov.stock_resultante
             }
         })
+        
     except Exception as e:
         session.rollback()
-        return jsonify({'error': 'Error al marcar como baja', 'mensaje': str(e)}), 500
-
+        return jsonify({'error': 'Error al marcar baja', 'mensaje': str(e)}), 500
 
 @app.route('/libros/dados-baja', methods=['GET'])
 def listar_dados_baja():
     session = app.session
     try:
-        libros = session.query(Libro).filter(Libro.fecha_baja.isnot(None)).all()
-        print(f"📚 Encontrados {len(libros)} libros dados de baja")
-        for libro in libros:
-            print(f"- ID: {libro.id}, Título: {libro.titulo}, Fecha baja: {libro.fecha_baja}")
-        return jsonify([
+        bajas = (
+            session.query(LibroBaja)
+            .order_by(desc(LibroBaja.fecha_baja))
+            .all()
+        )
+        print(f"📚 Encontrados {len(bajas)} movimientos de baja")
+        
+        data = [
             {
-                'id': libro.id,
-                'titulo': libro.titulo,
-                'autor': libro.autor,
-                'editorial': libro.editorial,
-                'isbn': libro.isbn,
-                'stock': libro.stock,
-                'precio': libro.precio,
-                'cantidad': libro.stock,  # Añadido para mostrar cantidad actual
-                'ubicacion': libro.ubicacion,
-                'fecha_baja': libro.fecha_baja.isoformat() if libro.fecha_baja else None
+                'id': b.id,                              # id del movimiento
+                'titulo': b.titulo,
+                'autor': b.autor,
+                'editorial': b.editorial,
+                'isbn': b.isbn,
+                'precio': b.precio,
+                'ubicacion': b.ubicacion,
+                'fecha_baja': b.fecha_baja.isoformat(),
+                'cantidad': b.stock_resultante,          # tu columna "Cantidad Actual"
+                'stock': b.stock_resultante,              # por compatibilidad si lo usás
+                'cantidad_bajada': b.cantidad_bajada      # Esta es la cantidad que se bajó
             }
-            for libro in libros
-        ])
+            for b in bajas
+        ]
+        return jsonify(data)
+        
     except Exception as e:
         print(f"❌ Error al obtener libros dados de baja: {e}")
         return jsonify({'error': 'Error al obtener libros dados de baja', 'mensaje': str(e)}), 500
-
-
 
 
 

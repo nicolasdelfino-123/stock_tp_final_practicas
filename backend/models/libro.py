@@ -1,6 +1,7 @@
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
-from sqlalchemy import Integer, String, Float, DateTime, func, Boolean
+from sqlalchemy import Integer, String, Float, DateTime, func, Boolean, ForeignKey
 from datetime import datetime
+
 
 
 
@@ -63,4 +64,36 @@ class Pedido(Base):
         return f"<Pedido {self.titulo} para {self.cliente_nombre}>"
 
 
-   
+from sqlalchemy import ForeignKey
+from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy import Integer, String, Float, DateTime
+from datetime import datetime
+
+class LibroBaja(Base):
+    __tablename__ = "libros_bajas"
+    __table_args__ = {'schema': 'stock_charles_schema'}
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+
+    # Referencia al libro
+    libro_id: Mapped[int] = mapped_column(
+        Integer,
+        ForeignKey("stock_charles_schema.libros.id"),
+        nullable=False,
+        index=True
+    )
+
+    # Cuándo se realizó la baja
+    fecha_baja: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False, index=True)
+
+    # Movimiento
+    cantidad_bajada: Mapped[int] = mapped_column(Integer, default=1, nullable=False)
+    stock_resultante: Mapped[int] = mapped_column(Integer, nullable=False)
+
+    # ---------- SNAPSHOT DEL LIBRO EN EL MOMENTO DE LA BAJA ----------
+    titulo: Mapped[str]     = mapped_column(String(250), nullable=False)
+    autor: Mapped[str]      = mapped_column(String(250), nullable=False)
+    editorial: Mapped[str]  = mapped_column(String(100), nullable=True)
+    isbn: Mapped[str]       = mapped_column(String(20),  nullable=False)
+    precio: Mapped[float]   = mapped_column(Float,       nullable=True)
+    ubicacion: Mapped[str]  = mapped_column(String(40),  nullable=False)
