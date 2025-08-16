@@ -25,17 +25,15 @@ export const LibrosDadosBaja = () => {
             </div>
 
             <table style={tableStyle}>
-                <thead>
-                    <tr>
-                        <th style={thStyle}>Título</th>
-                        <th style={thStyle}>Autor</th>
-                        <th style={thStyle}>Editorial</th>
-                        <th style={thStyle}>ISBN</th>
-                        <th style={thStyle}>Fecha de Baja</th>
-                        <th style={thStyle}>Cantidad Bajada</th>   {/* 👈 agregado */}
-                        <th style={thStyle}>Cantidad Actual</th>
-                    </tr>
-                </thead>
+                <colgroup>
+                    <col style={{ width: "22%" }} /> {/* Título */}
+                    <col style={{ width: "14%" }} /> {/* Autor */}
+                    <col style={{ width: "14%" }} /> {/* Editorial */}
+                    <col style={{ width: "12%" }} /> {/* ISBN */}
+                    <col style={{ width: "18%" }} /> {/* Fecha de Baja */}
+                    <col style={{ width: "10%" }} /> {/* Cantidad Bajada */}
+                    <col style={{ width: "10%" }} /> {/* Cantidad Actual */}
+                </colgroup>
                 <tbody>
                     {store.librosDadosBaja.length === 0 ? (
                         <tr>
@@ -110,10 +108,12 @@ const titleStyle = {
     userSelect: "none",
     color: "#f0db4f",
     textShadow: "0 0 8px #f0db4f",
+    tableLayout: "fixed",
 };
 
 const tableStyle = {
     width: "100%",
+    tableLayout: "fixed",     // 👈 respeta los anchos del <colgroup>
     borderCollapse: "separate",
     borderSpacing: 0,
     borderRadius: "12px",
@@ -122,6 +122,7 @@ const tableStyle = {
     boxShadow: "0 0 5px rgba(0,0,0,0.3)",
     border: "1px solid #444",
 };
+
 
 const thStyle = {
     padding: "12px 16px",
@@ -132,9 +133,12 @@ const thStyle = {
     borderBottom: "2px solid #444",
     userSelect: "none",
     borderRight: "1px solid #444",
-    // Redondeo sólo en las esquinas de la tabla (th primera y última)
     borderTopLeftRadius: "12px",
+    whiteSpace: "normal",        // 👈 permite múltiples líneas
+    overflowWrap: "anywhere",    // 👈 corta donde sea necesario
+    wordBreak: "break-word",     // 👈 fuerza corte en palabras largas
 };
+
 
 const tdStyle = {
     padding: "12px 16px",
@@ -142,7 +146,11 @@ const tdStyle = {
     fontWeight: "500",
     color: "#ddd",
     borderRight: "1px solid #333",
+    whiteSpace: "normal",        // 👈 permite salto de línea
+    overflowWrap: "anywhere",    // 👈 evita desborde
+    wordBreak: "break-word",     // 👈 corta palabras largas
 };
+
 
 // Ajustes para las esquinas en th y td para que el redondeo se vea limpio
 thStyle.borderTopLeftRadius = "12px";
