@@ -11,6 +11,7 @@ const BajarLibro = () => {
   const [stockDespuesDeBaja, setStockDespuesDeBaja] = useState(null);
   const [libroIdDespuesDeBaja, setLibroIdDespuesDeBaja] = useState(null);
   const [stockAnterior, setStockAnterior] = useState(null);
+  const [cantidadBajada, setCantidadBajada] = useState(null); // NUEVO estado para cantidad bajada
 
 
 
@@ -166,6 +167,7 @@ const BajarLibro = () => {
         // Aquí agregamos el set de estado para disparar el efecto abajo
         setStockDespuesDeBaja(nuevoStock);
         setLibroIdDespuesDeBaja(formData.id);
+        setCantidadBajada(cantidad); // <--- NUEVO
 
 
 
@@ -220,11 +222,14 @@ const BajarLibro = () => {
 
   const fondoURL = "/fondo-3.jpg"
 
+  // Solo este useEffect necesita cambio mínimo en BajarLibro.jsx
+  // Busca esta parte en tu componente y reemplázala:
+
   useEffect(() => {
     if (stockDespuesDeBaja !== null && libroIdDespuesDeBaja) {
       if (stockAnterior === null || stockDespuesDeBaja < stockAnterior) {
         // Aquí hacés la acción que quieras con la baja
-        actions.marcarBaja(libroIdDespuesDeBaja)
+        actions.marcarBaja(libroIdDespuesDeBaja, cantidadBajada)  // ⬅️ Ya no pasamos cantidadBajada
           .then((bajaResponse) => {
             if (bajaResponse && bajaResponse.fecha_baja) {
               setAlerta(
@@ -252,8 +257,7 @@ const BajarLibro = () => {
         setStockAnterior(stockDespuesDeBaja);
       }
     }
-  }, [stockDespuesDeBaja, libroIdDespuesDeBaja, actions]);
-
+  }, [stockDespuesDeBaja, libroIdDespuesDeBaja, cantidadBajada, actions]);
 
 
 

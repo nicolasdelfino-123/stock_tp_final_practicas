@@ -355,40 +355,46 @@ export default function PedidosDigital() {
                             boxSizing: "border-box"
                         }}
                     />
-                    <div>
-                        <label style={{ display: "block", fontWeight: "bold", marginBottom: 4 }}>Desde</label>
-                        <input
-                            type="date"
-                            value={fechaDesde}
-                            onChange={(e) => setFechaDesde(e.target.value)}
-                            style={{ padding: "8px", borderRadius: "6px", border: "2px solid #95a5a6" }}
-                        />
-                    </div>
-                    <div>
-                        <label style={{ display: "block", fontWeight: "bold", marginBottom: 4 }}>Hasta</label>
-                        <input
-                            type="date"
-                            value={fechaHasta}
-                            onChange={(e) => setFechaHasta(e.target.value)}
-                            style={{ padding: "8px", borderRadius: "6px", border: "2px solid #95a5a6" }}
-                        />
-                    </div>
-                    <button
-                        onClick={() => { setFechaDesde(""); setFechaHasta(""); setTerminoBusqueda(""); }}
-                        style={{
-                            backgroundColor: '#ec1814ff',
-                            color: 'white',
-                            border: 'none',
-                            padding: '10px 20px',
-                            borderRadius: '5px',
-                            cursor: 'pointer'
-                        }}
-                    >
-                        <strong>
+                    <div className="d-flex flex-wrap gap-3" style={{ flexGrow: 1, minWidth: "300px" }}>
+                        <div>
+                            <label style={{ display: "block", fontWeight: "bold", marginBottom: 4 }}>Desde</label>
+                            <input
+                                type="date"
+                                value={fechaDesde}
+                                onChange={(e) => setFechaDesde(e.target.value)}
+                                style={{ padding: "8px", borderRadius: "6px", border: "2px solid #95a5a6" }}
+                            />
+                        </div>
+                        <div>
+                            <label style={{ display: "block", fontWeight: "bold", marginBottom: 4 }}>Hasta</label>
+                            <input
+                                type="date"
+                                value={fechaHasta}
+                                onChange={(e) => setFechaHasta(e.target.value)}
+                                style={{ padding: "8px", borderRadius: "6px", border: "2px solid #95a5a6" }}
+                            />
+                        </div>
+                        <div className="d-flex align-items-center justify-content-center">
+                            <button
+                                onClick={() => { setFechaDesde(""); setFechaHasta(""); setTerminoBusqueda(""); }}
+                                style={{
+                                    backgroundColor: '#ec1814ff',
+                                    color: 'white',
+                                    border: 'none',
+                                    padding: '10px 20px',
+                                    borderRadius: '5px',
+                                    cursor: 'pointer',
+                                    marginTop: "25px",
 
-                            Limpiar búsqueda
-                        </strong>
-                    </button>
+                                }}
+                            >
+                                <strong>
+
+                                    Limpiar búsqueda
+                                </strong>
+                            </button>
+                        </div>
+                    </div>
 
                     <div style={{ display: "flex", gap: "6px", alignItems: "center" }}>
                         <button
@@ -436,7 +442,7 @@ export default function PedidosDigital() {
                         </button>
 
                         {/* Botón Resetear: deja en TODOS PERO excluyendo los que están en VIENE */}
-                        <div className="boton-reset-div">
+                        <div className="boton-reset-div d-flex">
                             <button
                                 onClick={async () => {
                                     // Paso 1) Reseteo en BACKEND de todos los pedidos que NO son "VIENE".
@@ -485,6 +491,7 @@ export default function PedidosDigital() {
                                     marginBottom: "1px",
                                     marginLeft: "100px",
                                     marginTop: "0px",
+                                    display: "flex-end"
                                 }}
                             >
                                 🔄 Resetear para nuevo pedido

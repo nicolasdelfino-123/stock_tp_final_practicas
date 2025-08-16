@@ -32,13 +32,14 @@ export const LibrosDadosBaja = () => {
                         <th style={thStyle}>Editorial</th>
                         <th style={thStyle}>ISBN</th>
                         <th style={thStyle}>Fecha de Baja</th>
+                        <th style={thStyle}>Cantidad Bajada</th>   {/* 👈 agregado */}
                         <th style={thStyle}>Cantidad Actual</th>
                     </tr>
                 </thead>
                 <tbody>
                     {store.librosDadosBaja.length === 0 ? (
                         <tr>
-                            <td colSpan="6" style={emptyStyle}>
+                            <td colSpan="7" style={emptyStyle}>
                                 No hay libros dados de baja
                             </td>
                         </tr>
@@ -56,6 +57,7 @@ export const LibrosDadosBaja = () => {
                                             ? new Date(libro.fecha_baja).toLocaleString()
                                             : "-"}
                                     </td>
+                                    <td style={tdStyle}>{libro.cantidad_bajada}</td>   {/* 👈 agregado */}
                                     <td style={tdStyle}>{libro.cantidad}</td>
                                 </tr>
                             ))

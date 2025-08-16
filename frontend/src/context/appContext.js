@@ -10,6 +10,7 @@ export const AppProvider = ({ children }) => {
   const [token, setToken] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [librosDadosBaja, setLibrosDadosBaja] = useState([]);
+  const [ultimaCantidadBajada, setUltimaCantidadBajada] = useState(null);
 
   const API_BASE = process.env.REACT_APP_API_BASE || "http://localhost:5000";
 
@@ -500,14 +501,56 @@ export const AppProvider = ({ children }) => {
 
 
 
+      // Reemplaza estas funciones en tu flux.js existente:
 
-      // En tu store.js o flux.js
-      marcarBaja: async (libroId) => {
+      // Función corregida para bajar stock (mantiene tu endpoint actual)
+      bajarStockLibro: async (id, cantidad) => {
         try {
-          console.log("marcarBaja llamada con libroId:", libroId);
+          console.log(`Bajando stock del libro ${id}, cantidad: ${cantidad}`);
+          const response = await fetch(`${API_BASE}/bajar-libro/${id}`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ cantidad: parseInt(cantidad, 10) }),
+          });
+
+          const data = await response.json();
+
+          if (response.ok) {
+            // Guardar la cantidad bajada para usar después
+            setUltimaCantidadBajada(cantidad);
+            await actions.fetchLibros();
+            return {
+              success: true,
+              ubicacion: data.ubicacion || "",
+            };
+          } else {
+            return {
+              success: false,
+              error: data.error || "Error al bajar el stock",
+            };
+          }
+        } catch (error) {
+          console.error("Error en la solicitud:", error);
+          return { success: false, error: error.message };
+        }
+      },
+
+      // Reemplaza SOLO esta función en flux.js
+      marcarBaja: async (libroId, cantidadForzada) => {
+        try {
+          console.log("marcarBaja llamada con libroId:", libroId, "cantidadForzada:", cantidadForzada);
+
+          // 1) Prioriza la cantidad que viene del componente (evita closure stale).
+          // 2) Si no viene, usa la última guardada en el estado.
+          // 3) Último recurso: 1.
+          const cantidadAEnviar = Number.isFinite(Number(cantidadForzada)) && Number(cantidadForzada) > 0
+            ? Number(cantidadForzada)
+            : (ultimaCantidadBajada ?? 1);
+
           const resp = await fetch(`${API_BASE}/libros/${libroId}/marcar-baja`, {
             method: "PUT",
-            headers: { "Content-Type": "application/json" }
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ cantidad: cantidadAEnviar })
           });
 
           console.log(`Respuesta marcarBaja status: ${resp.status}`);
@@ -520,12 +563,20 @@ export const AppProvider = ({ children }) => {
 
           const data = await resp.json();
           console.log("Libro marcado como baja (data recibida):", data);
-          return data;
+          const fechaBaja = data.fecha_baja || data?.movimiento?.fecha_baja || data?.libro?.fecha_baja || null;
+
+          // Limpio la cantidad guardada tras usarla
+          setUltimaCantidadBajada(null);
+
+          return { ...data, fecha_baja: fechaBaja };
         } catch (error) {
           console.error("Error en marcarBaja:", error);
+          throw error;
         }
       },
 
+
+      // Función getLibrosDadosBaja sin cambios (ya estaba bien)
       getLibrosDadosBaja: async () => {
         try {
           const resp = await fetch(`${API_BASE}/libros/dados-baja`);
@@ -540,14 +591,16 @@ export const AppProvider = ({ children }) => {
 
           const data = await resp.json();
           console.log("Libros dados de baja recibidos:", data);
-          setLibrosDadosBaja(data); // Quita el spread que podría estar causando problemas
-          return data; // Añade return
+          setLibrosDadosBaja(data);
+          return data;
         } catch (error) {
           console.error("Error en getLibrosDadosBaja:", error);
+          throw error;
         }
       },
 
-
+      // IMPORTANTE: También necesitas agregar este estado al inicio de tu AppProvider:
+      // const [ultimaCantidadBajada, setUltimaCantidadBajada] = useState(null);
 
 
 
