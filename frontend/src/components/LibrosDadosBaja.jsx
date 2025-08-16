@@ -34,6 +34,17 @@ export const LibrosDadosBaja = () => {
                     <col style={{ width: "10%" }} /> {/* Cantidad Bajada */}
                     <col style={{ width: "10%" }} /> {/* Cantidad Actual */}
                 </colgroup>
+                <thead>
+                    <tr>
+                        <th style={thStyle}>Título</th>
+                        <th style={thStyle}>Autor</th>
+                        <th style={thStyle}>Editorial</th>
+                        <th style={thStyle}>ISBN</th>
+                        <th style={thStyle}>Fecha de Baja</th>
+                        <th style={thStyle}>Cantidad Bajada</th>
+                        <th style={thStyle}>Cantidad Actual</th>
+                    </tr>
+                </thead>
                 <tbody>
                     {store.librosDadosBaja.length === 0 ? (
                         <tr>
