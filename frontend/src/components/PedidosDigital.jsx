@@ -180,51 +180,59 @@ export default function PedidosDigital() {
         // Si el nuevo estado es "VIENE", lo marca como tal y limpia el motivo
         if (nuevoEstado === "VIENE") {
             setPedidosMarcadosRecien(prev => new Set(prev).add(id));
+            //INICIANDO CAMBIOSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS
+            const ahoraISO = new Date().toISOString();
 
             setPedidos(prev => prev.map(p =>
-                p.id === id ? { ...p, estado: "VIENE", motivo: "" } : p
+                p.id === id ? { ...p, estado: "VIENE", motivo: "", fecha_viene: ahoraISO } : p
             ));
 
-            // 👇 Guardar inmediatamente en backend aunque no tenga motivo
             await actions.actualizarPedido(id, {
                 ...pedidoActual,
                 estado: "VIENE",
-                motivo: ""  // sin proveedor todavía
+                motivo: "",
+                fecha_viene: ahoraISO
             });
+
 
             return;
         }
 
 
         // Para otros estados: actualiza el estado y conserva el motivo que tenía el pedido.
+        const patch = (nuevoEstado === "NO_VIENE")
+            ? { estado: "NO_VIENE", motivo, fecha_viene: "" }
+            : { estado: nuevoEstado, motivo };
+
         setPedidos(prev => prev.map(p =>
-            p.id === id ? { ...p, estado: nuevoEstado, motivo } : p
+            p.id === id ? { ...p, ...patch } : p
         ));
 
-        // Persiste el cambio en el backend llamando a la acción correspondiente.
-        // Se manda el pedido original extendido con el nuevo estado y motivo.
         await actions.actualizarPedido(id, {
             ...pedidoActual,
-            estado: nuevoEstado,
-            motivo
+            ...patch
         });
+
     };
 
     const setMotivoViene = async (id, motivo) => {
         sessionStorage.setItem("pd_preservarEstados", "1");
 
         const pedidoActual = pedidos.find(p => p.id === id);
+        const fechaV = pedidoActual?.fecha_viene || new Date().toISOString();
 
         setPedidos(prev => prev.map(p =>
-            p.id === id ? { ...p, estado: "VIENE", motivo } : p
+            p.id === id ? { ...p, estado: "VIENE", motivo, fecha_viene: fechaV } : p
         ));
 
         await actions.actualizarPedido(id, {
             ...pedidoActual,
             estado: "VIENE",
-            motivo
-
+            motivo,
+            fecha_viene: fechaV
         });
+
+
         setPedidosMarcadosRecien(prev => new Set(prev).add(id)); // Añadir a pedidos recientes
         // Resto del código igual...
     };

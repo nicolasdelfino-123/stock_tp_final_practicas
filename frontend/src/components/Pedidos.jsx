@@ -571,8 +571,10 @@ const PedidoForm = () => {
     const encabezados = tablaClonada.querySelectorAll('th');
     const celdas = tablaClonada.querySelectorAll('td');
 
-    const columnasAEliminar = [0, 1, 6, 7, 8, 9]; // Seña, Comentarios, Acciones
-    const cantidadColumnas = 10;
+    // Ahora la tabla tiene 11 columnas (se añadió "Fecha viene" en la posición 7)
+    const columnasAEliminar = [0, 1, 6, 7, 8, 9, 10]; // quitamos todo menos Título(2), Autor(3), Cant.(4), ISBN(5)
+    const cantidadColumnas = 11;
+
 
     columnasAEliminar.forEach(index => {
       if (encabezados[index]) encabezados[index].remove();
@@ -1636,9 +1638,11 @@ const PedidoForm = () => {
                       <th style={{ padding: '12px', border: '1px solid #ddd' }}>Cantidad</th>
                       <th style={{ padding: '12px', border: '1px solid #ddd' }}>ISBN</th>
                       <th style={{ padding: '12px', border: '1px solid #ddd' }}>Fecha</th>
+                      <th style={{ padding: '12px', border: '1px solid #ddd' }}>Fecha viene</th> {/* ⬅️ NUEVO */}
                       <th style={{ padding: '12px', border: '1px solid #ddd' }}>Seña</th>
                       <th style={{ padding: '12px', border: '1px solid #ddd' }}>Comentarios</th>
                       <th style={{ padding: '12px', border: '1px solid #ddd' }}>Acciones</th>
+
                     </tr>
                   </thead>
                   <tbody>
@@ -1693,6 +1697,10 @@ const PedidoForm = () => {
                           <td style={{ padding: '12px', border: '1px solid #adacac', color: 'black', fontWeight: 'bold' }}>
                             {formatearFechaArgentina(pedido.fecha)}
                           </td>
+                          <td style={{ padding: '12px', border: '1px solid #adacac', color: 'black', fontWeight: 'bold' }}>
+                            {pedido.fecha_viene ? formatearFechaArgentina(pedido.fecha_viene) : '-'}
+                          </td>
+
                           <td style={{ padding: '12px', border: '1px solid #adacac', color: 'black', fontWeight: 'bold' }}>
                             ${pedido.seña || 0}
                           </td>
