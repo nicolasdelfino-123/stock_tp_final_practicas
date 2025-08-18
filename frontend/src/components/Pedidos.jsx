@@ -434,6 +434,9 @@ const PedidoForm = () => {
         celdas[ultimaCol].remove();
       }
     });
+    const fechaImpresion = new Date().toLocaleDateString('es-AR');
+    const visibles = filtrarPorBusqueda(pedidosFiltrados);
+    const totalLibros = visibles.length;
 
     ventana.document.write(`
 <html lang="es">
@@ -574,7 +577,7 @@ const PedidoForm = () => {
   <body>
     <div class="header">
       <h2 class="titulo">Pedidos Librería Charles</h2>
-      <h5>Fecha de impresión: 12/08/2025</h5>
+      <h5>Fecha de impresión: ${fechaImpresion} &nbsp;|&nbsp; Cantidad de libros en página: ${totalLibros}</h5>
     </div>
     ${tablaClonada.outerHTML}
   </body>
