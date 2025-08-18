@@ -21,7 +21,7 @@ const PedidoForm = () => {
   const [editandoId, setEditandoId] = useState(null);
   const [fechaDesde, setFechaDesde] = useState("");
   const [fechaHasta, setFechaHasta] = useState("");
-  const [ultimaImpresion, setUltimaImpresion] = useState(null);
+
   const imprimirRef = useRef();
   const [telefonoCliente, setTelefonoCliente] = useState("");
   const [ultimoNombreCliente, setUltimoNombreCliente] = useState(localStorage.getItem('ultimoNombreCliente') || "");
@@ -318,10 +318,7 @@ const PedidoForm = () => {
         } else {
           alert("Pedido guardado con éxito");
           guardadoEnEstaImpresion.current = true;
-          setUltimaImpresion(prev => ({
-            ...prev,
-            newPedidosCount: (prev?.newPedidosCount || 0) + 1
-          }));
+
         }
         await cargarPedidos();
       } else {
@@ -586,20 +583,7 @@ const PedidoForm = () => {
   `);
     ventana.document.close();
 
-    // Tomar el ÚLTIMO pedido de la lista filtrada
-    const ultimoPedido = pedidosFiltrados[0];
-    setUltimaImpresion({
-      fecha: new Date().toLocaleString('es-AR'),
-      libro: pedidosFiltrados[0].titulo,
-      autor: pedidosFiltrados[0].autor,
-      isbn: pedidosFiltrados[0].isbn || "N/A",
-      telefonoCliente: pedidosFiltrados[0].telefonoCliente || "N/A",
-      newPedidosCount: 0,
-      lastPrinted: new Date().getTime(),
-      ultimoImpresoId: pedidosFiltrados[0].id,
-      lastPrintedIds: pedidosFiltrados.map(p => p.id),
-      cantidadImpresos: pedidosFiltrados.length
-    });
+
 
     ventana.print();
   };
@@ -785,22 +769,7 @@ const PedidoForm = () => {
 
 
 
-    // Tomar el ÚLTIMO pedido de la lista filtrada
-    const ultimoPedido = pedidosFiltrados[0];
-    setUltimaImpresion({
-      fecha: new Date().toLocaleString('es-AR'),
-      libro: pedidosFiltrados[0].titulo, // Primer pedido como referencia
-      autor: pedidosFiltrados[0].autor,
-      isbn: pedidosFiltrados[0].isbn || "N/A",
-      newPedidosCount: 0,
-      telefonoLibro: pedidosFiltrados[0].telefonoLibro || "N/A",
-      lastPrinted: new Date().getTime(),
-      ultimoImpresoId: pedidosFiltrados[0].id,
-      // Guardamos TODOS los IDs de los pedidos que se están imprimiendo
-      lastPrintedIds: pedidosFiltrados.map(p => p.id),
-      // También guardamos la cantidad de pedidos impresos
-      cantidadImpresos: pedidosFiltrados.length
-    });
+
 
     ventana.print();
   };
@@ -1504,23 +1473,7 @@ const PedidoForm = () => {
               }}>
                 <div>
                   <h3><strong>Pedidos Cargados</strong></h3>
-                  {ultimaImpresion && (
-                    <div style={{
-                      backgroundColor: '#e8f5e9',
-                      padding: '10px',
-                      borderRadius: '5px',
-                      marginTop: '10px',
-                      border: '1px solid #c8e6c9'
-                    }}>
-                      <p style={{ margin: '0', color: '#2e7d32' }}>
-                        <strong>Última impresión:</strong> {ultimaImpresion.fecha} -
-                        <strong> Libro:</strong> {
-                          todosLosPedidos.find(p => p.id === ultimaImpresion.ultimoImpresoId)?.titulo || ultimaImpresion.libro
-                        } -
-                        <strong> Pedidos nuevos:</strong> {ultimaImpresion.newPedidosCount || 0}
-                      </p>
-                    </div>
-                  )}
+
                 </div>
                 <button
                   ref={inputModalRef}
