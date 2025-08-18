@@ -24,7 +24,7 @@ const PedidoForm = () => {
   const [ultimaImpresion, setUltimaImpresion] = useState(null);
   const imprimirRef = useRef();
   const [telefonoCliente, setTelefonoCliente] = useState("");
-  const [ultimoNombreCliente, setUltimoNombreCliente] = useState("");
+  const [ultimoNombreCliente, setUltimoNombreCliente] = useState(localStorage.getItem('ultimoNombreCliente') || "");
   const [ultimoTelefono, setUltimoTelefono] = useState(localStorage.getItem('ultimoTelefono') || "");
   const inputRef = useRef([]);
   const inputModalRef = useRef(null);
@@ -32,6 +32,21 @@ const PedidoForm = () => {
   const navType = useNavigationType();  // "PUSH", "POP" o "REPLACE"
   const firstRunRef = useRef(true);
 
+  useEffect(() => {
+    if (nombreCliente?.trim()) {
+      const v = nombreCliente.trim();
+      localStorage.setItem('ultimoNombreCliente', v);
+      setUltimoNombreCliente(v);
+    }
+  }, [nombreCliente]);
+
+  useEffect(() => {
+    if (telefonoCliente?.trim()) {
+      const v = telefonoCliente.trim();
+      localStorage.setItem('ultimoTelefono', v);
+      setUltimoTelefono(v);
+    }
+  }, [telefonoCliente]);
 
 
 
@@ -397,6 +412,12 @@ const PedidoForm = () => {
     const ventana = window.open('', '_blank');
     const tablaClonada = tabla.cloneNode(true);
 
+    // ⬇️ ACÁ PEGÁS ESTO
+    const thCant = tablaClonada.querySelector('thead tr th:nth-child(5)');
+    if (thCant) thCant.textContent = 'Cant.';
+
+    const thComentario = tablaClonada.querySelector('thead tr th:nth-child(10)');
+    if (thComentario) thComentario.textContent = 'Coment.';
     // Eliminar la última columna (acciones) de encabezados y filas
     const encabezados = tablaClonada.querySelectorAll('th');
     const filas = tablaClonada.querySelectorAll('tr');
@@ -415,10 +436,11 @@ const PedidoForm = () => {
     });
 
     ventana.document.write(`
-<html>
+<html lang="es">
   <head>
     <title>Todos los Pedidos - Librería Charles</title>
     <style>
+      /* —— Base —— */
       body {
         font-family: Arial, sans-serif;
         margin: 10px;
@@ -437,51 +459,61 @@ const PedidoForm = () => {
         max-width: 100%;
         table-layout: fixed;
         font-size: 10px;
-        overflow-wrap: break-word;
-        word-wrap: break-word;
         border: 1px solid black !important;
       }
       th, td {
         border: 1px solid black !important;
         padding: 4px 6px;
         text-align: left;
-        word-wrap: break-word;
-        overflow-wrap: break-word;
-        white-space: normal;
+        white-space: normal;            /* permite saltos de línea */
         box-sizing: border-box;
         vertical-align: top;
+
+        /* —— CORTES DE PALABRA CORRECTOS —— */
+        hyphens: auto;                  /* activa guionado automático */
+        -webkit-hyphens: auto;
+        -ms-hyphens: auto;
+        overflow-wrap: anywhere;        /* rompe palabras largas si hace falta */
+        word-break: normal;             /* evita cortar en cualquier carácter */
       }
       th {
         background-color: white;
         color: black;
         font-weight: bold;
         border: 1px solid black !important;
-        white-space: nowrap;
+        white-space: normal;            /* permite que "Fecha Pedido" pase a 2 líneas */
       }
-      /* Anchos columnas */
-      th:nth-child(1), td:nth-child(1) { width: 6% !important; } /* CLIENTE */
-      th:nth-child(2), td:nth-child(2) { width: 6% !important; } /* TELÉFONO */
-      th:nth-child(3), td:nth-child(3) { width: 11% !important; } /* TÍTULO */
-      th:nth-child(4), td:nth-child(4) { width: 11% !important; } /* AUTOR */
-      th:nth-child(5), td:nth-child(5) { width: 4% !important; max-width: 50px; } /* CANTIDAD */
-      th:nth-child(6), td:nth-child(6) { width: 4% !important; max-width: 40px; } /* ISBN */
-      th:nth-child(7), td:nth-child(7) { width: 8% !important; } /* FECHA */
-      th:nth-child(8), td:nth-child(8) { width: 8% !important; white-space: normal; } /* ESTADO */
-      th:nth-child(9), td:nth-child(9) { 
-        width: 3% !important;
-        border-right: 1px solid black !important;
-        white-space: normal;
-      }
-      tr:nth-child(even) {
-        background-color: #f2f2f2;
-      }
-      tr:hover {
-        background-color: #e8f4fd;
-      }
+
+      /* —— ANCHOS COLUMNAS EN PANTALLA (10 columnas, SIN “Acciones”) —— 
+         1: CLIENTE
+         2: TELÉFONO
+         3: TÍTULO
+         4: AUTOR
+         5: CANTIDAD   ⬅️ AUMENTAR % AQUÍ para agrandarla en PANTALLA
+         6: ISBN
+         7: FECHA
+         8: FECHA PEDIDO
+         9: SEÑA
+        10: COMENTARIOS
+      */
+      th:nth-child(1),  td:nth-child(1)  { width: 12% !important; } /* 1: CLIENTE */
+      th:nth-child(2),  td:nth-child(2)  { width: 12% !important; } /* 2: TELÉFONO */
+      th:nth-child(3),  td:nth-child(3)  { width: 14% !important; } /* 3: TÍTULO */
+      th:nth-child(4),  td:nth-child(4)  { width: 14% !important; } /* 4: AUTOR */
+      th:nth-child(5),  td:nth-child(5)  { width: 6%  !important; } /* 5: CANTIDAD (↑ subir este %) */
+      th:nth-child(6),  td:nth-child(6)  { width: 8%  !important; } /* 6: ISBN */
+      th:nth-child(7),  td:nth-child(7)  { width: 8%  !important; } /* 7: FECHA */
+      th:nth-child(8),  td:nth-child(8)  { width: 8%  !important; } /* 8: FECHA PEDIDO */
+      th:nth-child(9),  td:nth-child(9)  { width: 6%  !important; } /* 9: SEÑA */
+      th:nth-child(10), td:nth-child(10) { width: 12% !important; } /* 10: COMENTARIOS */
+
+      /* —— Estética filas —— */
+      tr:nth-child(even) { background-color: #f2f2f2; }
+      tr:hover { background-color: #e8f4fd; }
+
+      /* —— MODO IMPRESIÓN —— */
       @media print {
-        body {
-          margin: 0.5cm;
-        }
+        body { margin: 0.5cm; }
         table {
           font-size: 8pt;
           width: 100% !important;
@@ -489,7 +521,6 @@ const PedidoForm = () => {
           min-width: 100% !important;
           table-layout: fixed;
           page-break-inside: auto;
-          overflow-wrap: break-word;
           border: 1px solid black !important;
         }
         th, td {
@@ -497,10 +528,13 @@ const PedidoForm = () => {
           white-space: normal;
           color: black !important;
           border: 1px solid black !important;
-          word-wrap: break-word;
-          overflow-wrap: break-word;
-          word-break: break-all !important;
-          box-sizing: border-box !important;
+
+          /* —— mantener cortes correctos también en impresión —— */
+          hyphens: auto;
+          -webkit-hyphens: auto;
+          -ms-hyphens: auto;
+          overflow-wrap: anywhere;
+          word-break: normal !important;   /* reemplaza el break-all anterior */
         }
         th {
           background-color: white !important;
@@ -511,20 +545,29 @@ const PedidoForm = () => {
           page-break-inside: avoid;
           page-break-after: auto;
         }
-        /* ANCHOS PARA IMPRESIÓN */
-        th:nth-child(1), td:nth-child(1) { width: 12% !important; } /* CLIENTE */
-        th:nth-child(2), td:nth-child(2) { width: 12% !important; } /* TELÉFONO */
-        th:nth-child(3), td:nth-child(3) { width: 11% !important; } /* TÍTULO */
-        th:nth-child(4), td:nth-child(4) { width: 11% !important; } /* AUTOR */
-        th:nth-child(5), td:nth-child(5) { width: 7% !important; max-width: 50px; } /* CANTIDAD */
-        th:nth-child(6), td:nth-child(6) { width: 8% !important; max-width: 40px; } /* ISBN */
-        th:nth-child(7), td:nth-child(7) { width: 8% !important; } /* FECHA */
-        th:nth-child(8), td:nth-child(8) { width: 9% !important; white-space: normal; } /* SEÑA */
-        th:nth-child(9), td:nth-child(9) { 
-          width: 20% !important; 
-          border-right: 1px solid black !important;
-          white-space: normal;
-        }
+
+        /* —— ANCHOS COLUMNAS EN IMPRESIÓN (10 columnas, SIN “Acciones”) —— 
+           1: CLIENTE
+           2: TELÉFONO
+           3: TÍTULO
+           4: AUTOR
+           5: CANT.     ⬅️ AUMENTAR % AQUÍ para agrandarla en IMPRESIÓN
+           6: ISBN
+           7: FECHA
+           8: FECHA PEDIDO
+           9: SEÑA
+          10: COMENTARIOS
+        */
+        th:nth-child(1),  td:nth-child(1)  { width: 12% !important; } /* 1: CLIENTE */
+        th:nth-child(2),  td:nth-child(2)  { width: 12% !important; } /* 2: TELÉFONO */
+        th:nth-child(3),  td:nth-child(3)  { width: 13% !important; } /* 3: TÍTULO */
+        th:nth-child(4),  td:nth-child(4)  { width: 12% !important; } /* 4: AUTOR */
+        th:nth-child(5),  td:nth-child(5)  { width: 8%  !important; } /* 5: CANT. (↑ subir este %) */
+        th:nth-child(6),  td:nth-child(6)  { width: 8%  !important; } /* 6: ISBN */
+        th:nth-child(7),  td:nth-child(7)  { width: 8%  !important; } /* 7: FECHA */
+        th:nth-child(8),  td:nth-child(8)  { width: 8%  !important; } /* 8: FECHA PEDIDO */
+        th:nth-child(9),  td:nth-child(9)  { width: 9%  !important; } /* 9: SEÑA */
+        th:nth-child(10), td:nth-child(10) { width: 10% !important; } /* 10: COMENTARIOS */
       }
     </style>
   </head>
@@ -536,6 +579,7 @@ const PedidoForm = () => {
     ${tablaClonada.outerHTML}
   </body>
 </html>
+
   `);
     ventana.document.close();
 
@@ -882,18 +926,25 @@ const PedidoForm = () => {
   const fondoURL = "/fondo-3.jpg"
 
 
-
   const handleCheckboxChange = (e) => {
-    // ✔ Solo completa si el campo está vacío y NO borra al destildar
-    const handleCheckboxChange = (e) => {
-      if (e.target.checked) {
-        if (!nombreCliente && ultimoNombreCliente) setNombreCliente(ultimoNombreCliente);
-        if (!telefonoCliente && ultimoTelefono) setTelefonoCliente(ultimoTelefono);
-      }
-      // al destildar NO tocamos los campos
-    };
+    const checked = e.target.checked;
 
+    if (checked) {
+      const ultNombre =
+        localStorage.getItem('ultimoNombreCliente') || ultimoNombreCliente || "";
+      const ultTel =
+        localStorage.getItem('ultimoTelefono') || ultimoTelefono || "";
+
+      setNombreCliente(ultNombre);
+      setTelefonoCliente(ultTel);
+    } else {
+      // al destildar, limpiar los inputs (no borra lo guardado en localStorage)
+      setNombreCliente("");
+      setTelefonoCliente("");
+    }
   };
+
+
   return (
     <div style={{
       minHeight: '100vh',
@@ -1508,6 +1559,27 @@ const PedidoForm = () => {
                 >
                   <strong>Pedidos Ricardo (Digital)</strong>
                 </button>
+                <button
+                  onClick={() => {
+                    const vienen = todosLosPedidos.filter(p => p.estado === "VIENE");
+                    setPedidosFiltrados(vienen);
+                    setTerminoBusqueda("");
+                    setFechaDesde("");
+                    setFechaHasta("");
+                  }}
+                  style={{
+                    backgroundColor: '#28a745', // verde
+                    color: 'white',
+                    border: 'none',
+                    padding: '9px 20px',
+                    borderRadius: '5px',
+                    cursor: 'pointer',
+                    marginBottom: '-31px',
+                  }}
+                >
+                  <strong>Ver los que VIENEN</strong>
+                </button>
+
 
               </div>
 
@@ -1638,7 +1710,7 @@ const PedidoForm = () => {
                       <th style={{ padding: '12px', border: '1px solid #ddd' }}>Cantidad</th>
                       <th style={{ padding: '12px', border: '1px solid #ddd' }}>ISBN</th>
                       <th style={{ padding: '12px', border: '1px solid #ddd' }}>Fecha</th>
-                      <th style={{ padding: '12px', border: '1px solid #ddd' }}>Fecha viene</th> {/* ⬅️ NUEVO */}
+                      <th style={{ padding: '12px', border: '1px solid #ddd' }}>Fecha Pedido</th> {/* ⬅️ NUEVO */}
                       <th style={{ padding: '12px', border: '1px solid #ddd' }}>Seña</th>
                       <th style={{ padding: '12px', border: '1px solid #ddd' }}>Comentarios</th>
                       <th style={{ padding: '12px', border: '1px solid #ddd' }}>Acciones</th>
@@ -1649,7 +1721,7 @@ const PedidoForm = () => {
                     {filtrarPorBusqueda(pedidosFiltrados).length > 0 ? (
                       filtrarPorBusqueda(pedidosFiltrados).map((pedido, idx) => (
                         <tr key={pedido.id || idx} style={{
-                          backgroundColor: idx % 2 === 0 ? '#f8f9fa' : 'white'
+                          backgroundColor: pedido.estado === "VIENE" ? '#80e06cff' : 'white'
                         }}>
                           <td style={{
                             padding: '12px', border: '1px solid #adacac', width: '100px',
@@ -1698,8 +1770,9 @@ const PedidoForm = () => {
                             {formatearFechaArgentina(pedido.fecha)}
                           </td>
                           <td style={{ padding: '12px', border: '1px solid #adacac', color: 'black', fontWeight: 'bold' }}>
-                            {pedido.fecha_viene ? formatearFechaArgentina(pedido.fecha_viene) : '-'}
+                            {pedido.estado === 'VIENE' && pedido.fecha_viene ? formatearFechaArgentina(pedido.fecha_viene) : '-'}
                           </td>
+
 
                           <td style={{ padding: '12px', border: '1px solid #adacac', color: 'black', fontWeight: 'bold' }}>
                             ${pedido.seña || 0}

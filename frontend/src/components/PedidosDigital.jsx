@@ -259,10 +259,11 @@ export default function PedidosDigital() {
 
     // Conjuntos para imprimir (se apoyan en la vista filtrada actual)
     // Vienen filtrados por fechas y búsqueda
-    const pedidosVienen = useMemo(
-        () => pedidosFiltrados.filter(p => (p.estado || "") === "VIENE"),
-        [pedidosFiltrados]
-    );
+    const pedidosVienen = useMemo(() => {
+        const base = filtrarPorBusqueda(filtrarPorFechas(pedidos));
+        return base.filter(p => (p.estado || "") === "VIENE");
+    }, [pedidos, terminoBusqueda, fechaDesde, fechaHasta]);
+
     const pedidosVienenTodos = useMemo(() =>
         pedidos.filter(p => (p.estado || "") === "VIENE"),
         [pedidos]);
@@ -666,7 +667,7 @@ export default function PedidosDigital() {
                             imprimirLista(pedidosVienen, "Pedidos que VIENEN");
                         }}
                         style={{
-                            backgroundColor: "#0c62beff",
+                            backgroundColor: "#198754",
                             color: "white",
                             border: "none",
                             padding: "10px 20px",
