@@ -596,30 +596,25 @@ export default function PedidosDigital() {
 
                                     if (aResetear.length) {
                                         for (const p of aResetear) {
-                                            const mantenerMotivo = (p.estado || "") === "NO_VIENE" && p.motivo;
+                                            // ✅ Conservar cualquier motivo existente, sin importar el estado previo
+                                            const conservarMotivo = !!p.motivo;
                                             await actions.actualizarPedido(
                                                 p.id,
-                                                { ...p, estado: "", motivo: mantenerMotivo ? p.motivo : "" }
+                                                { ...p, estado: "", motivo: conservarMotivo ? p.motivo : "" }
                                             );
                                         }
                                     }
+
 
                                     // Paso 2) Reseteo en MEMORIA (estado local) y QUITAMOS los que son "VIENE" de la tabla actual
                                     setPedidos(prev =>
                                         prev.map(p => {
                                             if ((p.estado || "") === "VIENE") return p; // intactos
-
-                                            // ✅ Si era NO_VIENE y tenía motivo, lo conservamos
-                                            const conservarMotivo = p.motivo !== ""; // conservar cualquier motivo que exista
-
-
-                                            return {
-                                                ...p,
-                                                estado: "",                             // resetear estado siempre
-                                                motivo: conservarMotivo ? p.motivo : "" // conservar solo si era NO_VIENE
-                                            };
+                                            // ✅ Conservar el motivo si existe, aunque el estado quede vacío
+                                            return { ...p, estado: "", motivo: p.motivo || "" };
                                         })
                                     );
+
 
 
                                     // Limpiar pedidos marcados recientemente
@@ -763,7 +758,9 @@ export default function PedidosDigital() {
                                                 {estado === "VIENE" ? "VIENE" : estado === "NO_VIENE" ? "NO VIENE" : "-"}
                                             </td>
                                             <td style={tdStyle}>
-                                                {/* Si no eligió estado todavía, el select está deshabilitado */}
+                                                {/* Cuando estado está vacío: 
+      - si NO hay motivo → mostrar select deshabilitado
+      - si hay motivo     → mostrar motivo en rojo */}
                                                 {getEstado(p.id) === "" && !getMotivo(p.id) && (
                                                     <select
                                                         disabled
@@ -779,8 +776,15 @@ export default function PedidosDigital() {
                                                         <option value="">— Seleccione VIENE o NO VIENE —</option>
                                                     </select>
                                                 )}
+
                                                 {getEstado(p.id) === "" && getMotivo(p.id) && (
-                                                    <div style={{ color: "#dc3545", fontWeight: "bold", fontSize: "14px" }}>
+                                                    <div style={{
+                                                        color: "#dc3545",
+                                                        fontWeight: "bold",
+                                                        fontSize: "14px",
+                                                        whiteSpace: "pre-wrap",
+                                                        wordBreak: "break-word"
+                                                    }}>
                                                         {getMotivo(p.id)}
                                                     </div>
                                                 )}
@@ -821,6 +825,7 @@ export default function PedidosDigital() {
                                                     </select>
                                                 )}
                                             </td>
+
 
                                             <td style={{ ...tdStyle, whiteSpace: "nowrap" }}>
                                                 <div style={{ display: "flex", gap: 6 }}>
