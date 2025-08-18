@@ -160,7 +160,7 @@ export default function PedidosDigital() {
         }
         // Si no hay filtro de estado, devuelve todos los pedidos filtrados por texto y fechas.
         return base;
-    }, [pedidos, terminoBusqueda, fechaDesde, fechaHasta, filtroEstado, excluirVienen,]);
+    }, [pedidos, terminoBusqueda, fechaDesde, fechaHasta, filtroEstado, excluirVienen, pedidosMarcadosRecien]);
 
     // Cambia el estado de un pedido y (según el caso) lo persiste en el backend.
     // - Si nuevoEstado === "VIENE": solo actualiza el estado en memoria y limpia el motivo,
@@ -176,16 +176,25 @@ export default function PedidosDigital() {
         // Toma el motivo ya existente (si lo hubiera); si no hay, usa cadena vacía.
         const motivo = pedidoActual?.motivo || "";
 
-        // Caso especial: cuando el nuevo estado es "VIENE".
+        // Esta funcion actualiza el estado del pedido en memoria.
+        // Si el nuevo estado es "VIENE", lo marca como tal y limpia el motivo
         if (nuevoEstado === "VIENE") {
-            // Añadir a pedidos recientes INMEDIATAMENTE al marcar como VIENE
             setPedidosMarcadosRecien(prev => new Set(prev).add(id));
 
             setPedidos(prev => prev.map(p =>
                 p.id === id ? { ...p, estado: "VIENE", motivo: "" } : p
             ));
+
+            // 👇 Guardar inmediatamente en backend aunque no tenga motivo
+            await actions.actualizarPedido(id, {
+                ...pedidoActual,
+                estado: "VIENE",
+                motivo: ""  // sin proveedor todavía
+            });
+
             return;
         }
+
 
         // Para otros estados: actualiza el estado y conserva el motivo que tenía el pedido.
         setPedidos(prev => prev.map(p =>
@@ -241,6 +250,7 @@ export default function PedidosDigital() {
     const getMotivo = (id) => getPedidoById(id)?.motivo || "";
 
     // Conjuntos para imprimir (se apoyan en la vista filtrada actual)
+    // Vienen filtrados por fechas y búsqueda
     const pedidosVienen = useMemo(
         () => pedidosFiltrados.filter(p => (p.estado || "") === "VIENE"),
         [pedidosFiltrados]
@@ -249,6 +259,7 @@ export default function PedidosDigital() {
         pedidos.filter(p => (p.estado || "") === "VIENE"),
         [pedidos]);
 
+    // No vienen filtrados por fechas y búsqueda
     const pedidosNoVienen = useMemo(
         () => pedidosFiltrados.filter(p => (p.estado || "") === "NO_VIENE"),
         [pedidosFiltrados]
@@ -317,6 +328,91 @@ export default function PedidosDigital() {
 </body>
 </html>
     `);
+        vent.document.close();
+    };
+
+
+    // Imprime como "Para Ricardo" usando la vista TODOS (excluyendo VIENE)
+    const imprimirParaRicardoDesdeDigital = () => {
+        // Base: aplica texto + fechas como en la tabla
+        const base = filtrarPorBusqueda(filtrarPorFechas(pedidos));
+        // Queremos lo que queda en "Todos" excluyendo VIENE (la vista post-reset)
+        const lista = base.filter(p => (p.estado || "") !== "VIENE");
+
+        if (!lista.length) {
+            alert("No hay pedidos para imprimir.");
+            return;
+        }
+
+        const rows = lista.map(p => `
+    <tr>
+      <td>${p.titulo || "-"}</td>
+      <td>${p.autor || "-"}</td>
+      <td style="text-align:center">${p.cantidad || 1}</td>
+      <td>${p.isbn || "-"}</td>
+    </tr>
+  `).join("");
+
+        const vent = window.open("", "_blank");
+        vent.document.write(`
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Pedidos Ricardo Delfino - Librería Charles</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 10px; }
+    .header { text-align: center; margin-bottom: 15px; }
+    .titulo { color: #2c3e50; margin: 10px 0; }
+    table {
+      border-collapse: collapse; width: 100%; table-layout: fixed;
+      font-size: 10px; border: 1px solid black !important;
+    }
+    th, td {
+      border: 1px solid black !important; padding: 4px 6px; text-align: left;
+      word-wrap: break-word; overflow-wrap: break-word; white-space: normal;
+      box-sizing: border-box; vertical-align: top;
+    }
+    th { background-color: white; color: black; font-weight: bold; white-space: nowrap; }
+    tr:nth-child(even) { background-color: #f2f2f2; }
+    tr:hover { background-color: #e8f4fd; }
+    @media print {
+      body { margin: 0.5cm; }
+      table { font-size: 8pt; width: 100% !important; min-width: 100% !important; }
+      th, td {
+        padding: 2px 4px; color: black !important; border: 1px solid black !important;
+        word-break: break-all !important;
+      }
+      th { background-color: white !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      tr { page-break-inside: avoid; page-break-after: auto; }
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h2 class="titulo">Librería Charles</h2>
+    <h3>Las Varillas, Córdoba - 9 de julio 346</h3>
+    <h4>Teléfonos: 03533-420183 / Móvil: 03533-682652</h4>
+    <h5>Fecha de impresión: ${new Date().toLocaleDateString('es-AR')}</h5>
+  </div>
+  <table>
+    <thead>
+      <tr>
+        <th>Título</th>
+        <th>Autor</th>
+        <th>Cant.</th>
+        <th>ISBN</th>
+      </tr>
+    </thead>
+    <tbody>
+      ${rows}
+    </tbody>
+  </table>
+  <script>
+    setTimeout(() => { window.print(); window.close(); }, 300);
+  </script>
+</body>
+</html>
+  `);
         vent.document.close();
     };
 
@@ -484,6 +580,12 @@ export default function PedidosDigital() {
                         <div className="boton-reset-div d-flex">
                             <button
                                 onClick={async () => {
+
+                                    // 🚦 Bloqueo visual si hay filtros activos
+                                    if ((terminoBusqueda && terminoBusqueda.trim() !== "") || fechaDesde || fechaHasta) {
+                                        alert("Primero debe hacer clic en 'Limpiar búsqueda' para quitar filtros de texto y fecha. Luego podrá 'Resetear para nuevo pedido'.");
+                                        return; // no sigue con el reseteo
+                                    }
                                     // Paso 1) Reseteo en BACKEND de todos los pedidos que NO son "VIENE".
                                     const aResetear = pedidos.filter(p => (p.estado || "") !== "VIENE");
                                     for (const p of pedidos.filter(p => (p.estado || "") === "VIENE")) {
@@ -494,20 +596,31 @@ export default function PedidosDigital() {
 
                                     if (aResetear.length) {
                                         for (const p of aResetear) {
-                                            await actions.actualizarPedido(p.id, { ...p, estado: "", motivo: "" });
+                                            const mantenerMotivo = (p.estado || "") === "NO_VIENE" && p.motivo;
+                                            await actions.actualizarPedido(
+                                                p.id,
+                                                { ...p, estado: "", motivo: mantenerMotivo ? p.motivo : "" }
+                                            );
                                         }
                                     }
 
                                     // Paso 2) Reseteo en MEMORIA (estado local) y QUITAMOS los que son "VIENE" de la tabla actual
                                     setPedidos(prev =>
-                                        prev
-                                            .map(p =>
-                                                (p.estado || "") === "VIENE"
-                                                    ? p // se mantiene igual en memoria
-                                                    : { ...p, estado: "", motivo: "" } // limpia los que no son VIENE
-                                            )
+                                        prev.map(p => {
+                                            if ((p.estado || "") === "VIENE") return p; // intactos
 
+                                            // ✅ Si era NO_VIENE y tenía motivo, lo conservamos
+                                            const conservarMotivo = p.motivo !== ""; // conservar cualquier motivo que exista
+
+
+                                            return {
+                                                ...p,
+                                                estado: "",                             // resetear estado siempre
+                                                motivo: conservarMotivo ? p.motivo : "" // conservar solo si era NO_VIENE
+                                            };
+                                        })
                                     );
+
 
                                     // Limpiar pedidos marcados recientemente
                                     setPedidosMarcadosRecien(new Set());
@@ -515,7 +628,9 @@ export default function PedidosDigital() {
                                     // Paso 3) Ajusta la vista (código existente)
                                     setFiltroEstado("TODOS");
                                     setExcluirVienen(true);
-                                }}
+                                    alert("Comenzará un NUEVO PEDIDO, los pedidos que VIENEN se excluyeron de la lista para no volverlos a pedir");
+                                }
+                                }
 
 
 
@@ -543,7 +658,10 @@ export default function PedidosDigital() {
                 {/* Acciones de impresión */}
                 <div style={{ display: "flex", gap: "10px", flexWrap: "wrap", marginBottom: "16px" }}>
                     <button
-                        onClick={() => imprimirLista(pedidosVienenTodos, "Pedidos que VIENEN")}
+                        onClick={() => {
+                            alert("📋 Se va a imprimir la lista de pedidos que VIENEN");
+                            imprimirLista(pedidosVienen, "Pedidos que VIENEN");
+                        }}
                         style={{
                             backgroundColor: "#0c62beff",
                             color: "white",
@@ -569,6 +687,14 @@ export default function PedidosDigital() {
                         }}
                     >
                         Imprimir los que NO VIENEN
+                    </button>
+
+                    {/* NUEVO BOTÓN */}
+                    <button
+                        onClick={imprimirParaRicardoDesdeDigital}
+                        style={{ backgroundColor: "#7952b3", color: "white", border: "none", padding: "10px 20px", borderRadius: "6px", cursor: "pointer", fontWeight: "bold" }}
+                    >
+                        Imprimir/Guardar Librerías
                     </button>
 
                     <span style={{ alignSelf: "center", fontWeight: "bold", color: "#333" }}>
@@ -613,7 +739,14 @@ export default function PedidosDigital() {
                                 pedidosFiltrados.map((p, idx) => {
                                     const estado = getEstado(p.id);
                                     return (
-                                        <tr key={p.id || idx} style={{ background: idx % 2 === 0 ? "#f8f9fa" : "white" }}>
+                                        <tr key={p.id || idx} style={{
+                                            backgroundColor:
+                                                getEstado(p.id) === "VIENE"
+                                                    ? "#93d5a2ff" // verde clarito
+                                                    : getEstado(p.id) === "NO_VIENE"
+                                                        ? "#e8949bff" // rojo clarito
+                                                        : "#ffffff" // por defecto sin color
+                                        }}>
                                             <td style={tdStyle}>{p.cliente_nombre || "-"}</td>
                                             <td style={tdStyle}>{p.titulo || "-"}</td>
                                             <td style={tdStyle}>{p.autor || "-"}</td>
@@ -631,7 +764,7 @@ export default function PedidosDigital() {
                                             </td>
                                             <td style={tdStyle}>
                                                 {/* Si no eligió estado todavía, el select está deshabilitado */}
-                                                {getEstado(p.id) === "" && (
+                                                {getEstado(p.id) === "" && !getMotivo(p.id) && (
                                                     <select
                                                         disabled
                                                         value=""
@@ -645,6 +778,11 @@ export default function PedidosDigital() {
                                                     >
                                                         <option value="">— Seleccione VIENE o NO VIENE —</option>
                                                     </select>
+                                                )}
+                                                {getEstado(p.id) === "" && getMotivo(p.id) && (
+                                                    <div style={{ color: "#dc3545", fontWeight: "bold", fontSize: "14px" }}>
+                                                        {getMotivo(p.id)}
+                                                    </div>
                                                 )}
 
                                                 {/* Si marcó VIENE, mostrar opciones de librerías */}
