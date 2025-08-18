@@ -1,5 +1,5 @@
 import React, { useRef, useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useNavigationType } from "react-router-dom";
 import { useAppContext } from "../context/appContext";
 
 const PedidoForm = () => {
@@ -29,15 +29,32 @@ const PedidoForm = () => {
   const inputRef = useRef([]);
   const inputModalRef = useRef(null);
   const modalRef = useRef(null);
+  const navType = useNavigationType();  // "PUSH", "POP" o "REPLACE"
+  const firstRunRef = useRef(true);
 
 
 
-  // 🔑 al montar, revisa si estaba abierto
+
+  // 🔑 Controlar apertura del modal según cómo llegamos a esta pantalla
   useEffect(() => {
-    if (modalPedidosAbierto) {
-      setShowPedidos(true);
+    if (firstRunRef.current) {
+      firstRunRef.current = false;
+
+      if (navType === "POP") {
+        // Volviste con atrás (-1): respetamos el flag global
+        setShowPedidos(!!modalPedidosAbierto);
+      } else {
+        // Llegaste "desde cero" (PUSH/REPLACE): forzar cerrado
+        setShowPedidos(false);
+        setModalPedidosAbierto(false);
+      }
+      return;
     }
-  }, [modalPedidosAbierto]);
+
+    // En cambios posteriores del flag, sincronizamos normalmente
+    setShowPedidos(!!modalPedidosAbierto);
+  }, [modalPedidosAbierto, navType, setModalPedidosAbierto]);
+
 
   const formatearFechaArgentina = (fecha) => {
     const date = new Date(fecha);
