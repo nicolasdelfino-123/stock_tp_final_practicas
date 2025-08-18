@@ -4,7 +4,7 @@ import { useAppContext } from "../context/appContext";
 
 const PedidoForm = () => {
   const navigate = useNavigate();
-  const { actions } = useAppContext();
+  const { actions, modalPedidosAbierto, setModalPedidosAbierto } = useAppContext();
   const [nombreCliente, setNombreCliente] = useState("");
   const [tituloLibro, setTituloLibro] = useState("");
   const [autorLibro, setAutorLibro] = useState("");
@@ -31,6 +31,13 @@ const PedidoForm = () => {
   const modalRef = useRef(null);
 
 
+
+  // 🔑 al montar, revisa si estaba abierto
+  useEffect(() => {
+    if (modalPedidosAbierto) {
+      setShowPedidos(true);
+    }
+  }, [modalPedidosAbierto]);
 
   const formatearFechaArgentina = (fecha) => {
     const date = new Date(fecha);
@@ -346,11 +353,14 @@ const PedidoForm = () => {
 
   const handleVerPedidos = () => {
     setShowPedidos(true);
+    setModalPedidosAbierto(true);
   };
 
   const handleCerrarPedidos = () => {
     setShowPedidos(false);
-  }
+    setModalPedidosAbierto(false);
+  };
+
 
   useEffect(() => {
     if (inputModalRef.current) {

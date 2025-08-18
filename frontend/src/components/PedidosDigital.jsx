@@ -22,6 +22,7 @@ const MOTIVOS_NO_VIENE = [
 ];
 
 function formatearFechaArgentina(fecha) {
+    if (!fecha) return "";   // 👈 si viene null, undefined o "", devuelve vacío
     const d = new Date(fecha);
     if (Number.isNaN(d.getTime())) return "";
     return d.toLocaleDateString("es-AR", { day: "2-digit", month: "2-digit", year: "numeric" });
@@ -74,7 +75,17 @@ export default function PedidosDigital() {
         );
     };
 
-    // Filtro por fechas
+    // esta funcion filtra los pedidos por fecha.
+    // Si no hay fechas, devuelve el arreglo original.
+    // Si hay fechas, convierte las cadenas a objetos Date y filtra los pedidos
+    // que caen dentro del rango especificado.
+    // Si la fecha es inválida, se ignora ese pedido.
+    // Si la fecha "hasta" está definida, se ajusta para incluir todo el día
+    // (hasta las 23:59:59.999).
+    // Si la fecha "desde" está definida, se filtran los pedidos que son mayores
+    // o iguales a esa fecha.
+    // Si la fecha "hasta" está definida, se filtran los pedidos que son menores
+    // o iguales a esa fecha.
     const filtrarPorFechas = (arr) => {
         if (!fechaDesde && !fechaHasta) return arr;
 
@@ -88,13 +99,41 @@ export default function PedidosDigital() {
         if (hasta) hasta.setHours(23, 59, 59, 999);
 
         return arr.filter((p) => {
-            const fp = new Date(p.fecha);
+            // 👇 Si estoy en pestaña "VIENE", uso fecha_viene; si no, uso fecha
+            const baseDate = filtroEstado === "VIENE" ? p.fecha_viene : p.fecha;
+            if (!baseDate) return false;
+
+            const fp = new Date(baseDate);
             if (Number.isNaN(fp.getTime())) return false;
             if (desde && fp < desde) return false;
             if (hasta && fp > hasta) return false;
             return true;
         });
     };
+    // cuando cambia fechaDesde
+    const handleFechaDesdeChange = (e) => {
+        const nuevaDesde = e.target.value;
+        setFechaDesde(nuevaDesde);
+
+        // si la hasta ya existe y es menor que la desde, la igualo
+        if (fechaHasta && nuevaDesde > fechaHasta) {
+            setFechaHasta(nuevaDesde);
+        }
+    };
+
+    // cuando cambia fechaHasta
+    const handleFechaHastaChange = (e) => {
+        const nuevaHasta = e.target.value;
+        setFechaHasta(nuevaHasta);
+
+        // si la desde ya existe y es mayor que la hasta, la igualo
+        if (fechaDesde && nuevaHasta < fechaDesde) {
+            setFechaDesde(nuevaHasta);
+        }
+    };
+
+
+
     // 📌 pedidosFiltrados:
     // Calcula y memoriza la lista final de pedidos según:
     // 1. Filtrado por fechas y por texto de búsqueda.
@@ -297,8 +336,7 @@ export default function PedidosDigital() {
 
                     type="button"
                     className="btn"
-
-                    onClick={() => navigate("/pedidos-cargados")}
+                    onClick={() => navigate(-1)}
                     style={{
                         borderRadius: "8px",
                         padding: "10px 20px",
@@ -361,7 +399,7 @@ export default function PedidosDigital() {
                             <input
                                 type="date"
                                 value={fechaDesde}
-                                onChange={(e) => setFechaDesde(e.target.value)}
+                                onChange={handleFechaDesdeChange}
                                 style={{ padding: "8px", borderRadius: "6px", border: "2px solid #95a5a6" }}
                             />
                         </div>
@@ -370,8 +408,9 @@ export default function PedidosDigital() {
                             <input
                                 type="date"
                                 value={fechaHasta}
-                                onChange={(e) => setFechaHasta(e.target.value)}
+                                onChange={handleFechaHastaChange}
                                 style={{ padding: "8px", borderRadius: "6px", border: "2px solid #95a5a6" }}
+                                min={fechaDesde || undefined}  // evita warning si es cadena vacía
                             />
                         </div>
                         <div className="d-flex align-items-center justify-content-center">
@@ -555,7 +594,10 @@ export default function PedidosDigital() {
                                 <th style={thStyle}>Autor</th>
                                 <th style={thStyleCenter}>Cant.</th>
                                 <th style={thStyle}>ISBN</th>
-                                <th style={thStyleCenter}>Fecha</th>
+                                <th style={thStyleCenter}>Fecha pedido</th>
+                                {filtroEstado === "VIENE" && (
+                                    <th style={thStyleCenter}>Fecha viene</th>
+                                )}
                                 <th style={thStyle}>Comentarios</th>
                                 <th style={thStyle}>Estado</th>
                                 <th style={thStyle}>Motivo</th>
@@ -578,6 +620,11 @@ export default function PedidosDigital() {
                                             <td style={{ ...tdStyle, textAlign: "center", width: 60 }}>{p.cantidad || 1}</td>
                                             <td style={tdStyle}>{p.isbn || "-"}</td>
                                             <td style={{ ...tdStyle, whiteSpace: "nowrap" }}>{formatearFechaArgentina(p.fecha)}</td>
+                                            {filtroEstado === "VIENE" && (
+                                                <td style={{ ...tdStyle, whiteSpace: "nowrap" }}>
+                                                    {formatearFechaArgentina(p.fecha_viene)}
+                                                </td>
+                                            )}
                                             <td style={tdStyle}>{p.comentario || "-"}</td>
                                             <td style={tdStyle}>
                                                 {estado === "VIENE" ? "VIENE" : estado === "NO_VIENE" ? "NO VIENE" : "-"}

@@ -11,6 +11,7 @@ export const AppProvider = ({ children }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [librosDadosBaja, setLibrosDadosBaja] = useState([]);
   const [ultimaCantidadBajada, setUltimaCantidadBajada] = useState(null);
+  const [modalPedidosAbierto, setModalPedidosAbierto] = useState(false);
 
   const API_BASE = process.env.REACT_APP_API_BASE || "http://localhost:5000";
 
@@ -460,6 +461,8 @@ export const AppProvider = ({ children }) => {
               seña: pedidoActualizado.seña || 0,
               comentario: pedidoActualizado.comentario || "",
               isbn: pedidoActualizado.isbn || "",
+              // ⬇️ NUEVO (permite enviar fecha o null; si no está, no la manda)
+              fecha_viene: pedidoActualizado.fecha_viene || undefined,
               estado: pedidoActualizado.estado || "",
               motivo: pedidoActualizado.motivo || "",
               oculto: typeof pedidoActualizado.oculto === "boolean" ? pedidoActualizado.oculto : undefined
@@ -674,7 +677,10 @@ export const AppProvider = ({ children }) => {
   };
 
   return (
-    <AppContext.Provider value={{ store, actions }}>
+    <AppContext.Provider value={{
+      store, actions, modalPedidosAbierto,
+      setModalPedidosAbierto
+    }}>
       {children}
     </AppContext.Provider>
   );

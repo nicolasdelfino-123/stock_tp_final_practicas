@@ -631,6 +631,7 @@ def get_pedidos():
             'cliente_nombre': p.cliente_nombre,
             'seña': p.seña,
             'fecha': p.fecha.isoformat() if p.fecha else None,
+            'fecha_viene': p.fecha_viene.isoformat() if p.fecha_viene else None,
             'titulo': p.titulo,
             'autor': p.autor,
             'telefonoCliente': p.telefono,
@@ -668,7 +669,11 @@ def crear_pedido():
             cantidad=int(data.get('cantidad', 1)),
             isbn=data.get('isbn', ''),
             estado=data.get('estado', None),
-            motivo=data.get('motivo', None)
+            motivo=data.get('motivo', None),
+            fecha_viene=data.get('fecha_viene', None),
+          
+
+            
         )
         session.add(nuevo_pedido)
         session.commit()
@@ -685,7 +690,8 @@ def crear_pedido():
                 'autor': nuevo_pedido.autor,
                 'comentario': nuevo_pedido.comentario,
                 'cantidad': nuevo_pedido.cantidad,
-                'isbn': nuevo_pedido.isbn
+                'isbn': nuevo_pedido.isbn,
+                'fecha_viene': nuevo_pedido.fecha_viene.isoformat() if nuevo_pedido.fecha_viene else None,
             }
         }), 201
 
@@ -718,6 +724,18 @@ def actualizar_pedido(pedido_id):
         pedido.motivo = data.get('motivo', pedido.motivo)
         pedido.fecha = data.get('fecha', pedido.fecha)
         pedido.oculto = data.get('oculto', pedido.oculto)
+
+        # 👇 Manejo de fecha_viene
+        if data.get('estado') == 'VIENE':
+            # si viene fecha_viene explícita la usamos, sino la seteamos ahora
+            pedido.fecha_viene = data.get('fecha_viene') or func.now()
+        else:
+            # si mandan null explícito, la limpia
+            if 'fecha_viene' in data:
+                pedido.fecha_viene = data.get('fecha_viene')
+
+
+                
 
         session.commit()
         return jsonify({'mensaje': 'Pedido actualizado con éxito'})

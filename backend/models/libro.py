@@ -57,6 +57,7 @@ class Pedido(Base):
     estado: Mapped[str] = mapped_column(String(20), nullable=True)  # "VIENE" o "NO_VIENE"
     motivo: Mapped[str] = mapped_column(String(250), nullable=True) # Librería o motivo de no venir
     oculto: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default="false")
+    fecha_viene: Mapped[DateTime] = mapped_column(DateTime(timezone=True), nullable=True)  # NUEVO
 
 
 
