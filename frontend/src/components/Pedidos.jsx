@@ -628,11 +628,20 @@ const PedidoForm = () => {
     });
 
     const ventana = window.open('', '_blank');
+    const fechaImpresion = new Date().toLocaleDateString('es-AR');
+
+    // Sumar SOLO lo que se ve en la tabla (tras búsqueda/filtros)
+    // y NO inventar cantidad si falta (usa 0 en ese caso)
+    const visibles = filtrarPorBusqueda(pedidosFiltrados);
+    const totalLibros = visibles.length;
+
+
     ventana.document.write(`
-<html>
+<html lang="es">
 <head>
   <title>Pedidos Ricardo Delfino - Librería Charles</title>
   <style>
+    /* ——— Estilos base ——— */
     body {
       font-family: Arial, sans-serif;
       margin: 10px;
@@ -645,52 +654,61 @@ const PedidoForm = () => {
       color: #2c3e50;
       margin: 10px 0;
     }
+
+    /* ——— Tabla ——— */
     table {
       border-collapse: collapse;
       width: 100%;
       max-width: 100%;
-      table-layout: fixed;
+      table-layout: fixed;             /* columnas de ancho fijo */
       font-size: 10px;
-      overflow-wrap: break-word;
-      word-wrap: break-word;
       border: 1px solid black !important;
     }
     th, td {
       border: 1px solid black !important;
       padding: 4px 6px;
       text-align: left;
-      word-wrap: break-word;
-      overflow-wrap: break-word;
-      white-space: normal;
+      white-space: normal;             /* permite salto de línea natural */
       box-sizing: border-box;
       vertical-align: top;
+
+      /* —— cortes de palabra correctos —— */
+      hyphens: auto;                   /* guionado automático (español) */
+      -webkit-hyphens: auto;
+      -ms-hyphens: auto;
+      overflow-wrap: anywhere;         /* rompe palabras MUY largas si hace falta */
+      word-break: normal;              /* evita cortar en cualquier carácter */
     }
     th {
       background-color: white;
       color: black;
       font-weight: bold;
       border: 1px solid black !important;
-      white-space: nowrap;
+      white-space: normal;             /* deja que el encabezado pase a 2 líneas si hace falta */
     }
-    /* Anchos columnas */
-    th:nth-child(1), td:nth-child(1) { width: 25% !important; } /* Título */
-    th:nth-child(2), td:nth-child(2) { width: 20% !important; } /* Autor */
-    th:nth-child(3), td:nth-child(3) { width: 10% !important; } /* Cantidad */
-    th:nth-child(4), td:nth-child(4) { 
-      width: 20% !important; 
+
+    /* ——— Anchos de columnas en PANTALLA (4 columnas) ———
+       1: TÍTULO
+       2: AUTOR
+       3: CANTIDAD  ⬅️ AUMENTAR % AQUÍ para hacerla más ancha en pantalla
+       4: ISBN
+    */
+    th:nth-child(1), td:nth-child(1) { width: 38% !important; } /* 1: Título */
+    th:nth-child(2), td:nth-child(2) { width: 28% !important; } /* 2: Autor */
+    th:nth-child(3), td:nth-child(3) { width: 12% !important; } /* 3: Cantidad (↑ subir este %) */
+    th:nth-child(4), td:nth-child(4) {
+      width: 22% !important;          /* 4: ISBN */
       border-right: 1px solid black !important;
       white-space: normal;
-    } /* ISBN */
-    tr:nth-child(even) {
-      background-color: #f2f2f2;
     }
-    tr:hover {
-      background-color: #e8f4fd;
-    }
+
+    /* ——— Estética filas ——— */
+    tr:nth-child(even) { background-color: #f2f2f2; }
+    tr:hover { background-color: #e8f4fd; }
+
+    /* ——— Modo impresión ——— */
     @media print {
-      body {
-        margin: 0.5cm;
-      }
+      body { margin: 0.5cm; }
       table {
         font-size: 8pt;
         width: 100% !important;
@@ -698,7 +716,6 @@ const PedidoForm = () => {
         min-width: 100% !important;
         table-layout: fixed;
         page-break-inside: auto;
-        overflow-wrap: break-word;
         border: 1px solid black !important;
       }
       th, td {
@@ -706,10 +723,13 @@ const PedidoForm = () => {
         white-space: normal;
         color: black !important;
         border: 1px solid black !important;
-        word-wrap: break-word;
-        overflow-wrap: break-word;
-        word-break: break-all !important;
-        box-sizing: border-box !important;
+
+        /* mantener cortes correctos también en impresión */
+        hyphens: auto;
+        -webkit-hyphens: auto;
+        -ms-hyphens: auto;
+        overflow-wrap: anywhere;
+        word-break: normal !important;
       }
       th {
         background-color: white !important;
@@ -720,15 +740,21 @@ const PedidoForm = () => {
         page-break-inside: avoid;
         page-break-after: auto;
       }
-      /* Anchos para impresión */
-      th:nth-child(1), td:nth-child(1) { width: 25% !important; } /* Título */
-      th:nth-child(2), td:nth-child(2) { width: 20% !important; } /* Autor */
-      th:nth-child(3), td:nth-child(3) { width: 10% !important; } /* Cantidad */
-      th:nth-child(4), td:nth-child(4) { 
-        width: 20% !important; 
+
+      /* ——— Anchos de columnas en IMPRESIÓN (4 columnas) ———
+         1: TÍTULO
+         2: AUTOR
+         3: CANTIDAD   ⬅️ AUMENTAR % AQUÍ para hacerla más ancha en impresión
+         4: ISBN
+      */
+      th:nth-child(1), td:nth-child(1) { width: 40% !important; } /* 1: Título */
+      th:nth-child(2), td:nth-child(2) { width: 26% !important; } /* 2: Autor */
+      th:nth-child(3), td:nth-child(3) { width: 14% !important; } /* 3: Cantidad (↑ subir este %) */
+      th:nth-child(4), td:nth-child(4) {
+        width: 20% !important;        /* 4: ISBN */
         border-right: 1px solid black !important;
         white-space: normal;
-      } /* ISBN */
+      }
     }
   </style>
 </head>
@@ -737,11 +763,20 @@ const PedidoForm = () => {
     <h2 class="titulo">Librería Charles</h2>
     <h3>Las Varillas, Córdoba - 9 de julio 346</h3>
     <h4>Teléfonos: 03533-420183 / Móvil: 03533-682652</h4>
-    <h5>Fecha de impresión: 12/08/2025</h5>
+
+    <!-- Línea con fecha y TOTAL de libros (suma de la columna "Cantidad") -->
+   <h5>Fecha de impresión: ${fechaImpresion} &nbsp;|&nbsp; Cantidad de libros en página: ${totalLibros}</h5>
+
+    <!-- Si preferís "cantidad de filas", cambia totalLibros por: 
+         ${filtrarPorBusqueda(pedidosFiltrados).length} (o pedidosFiltrados.length si no usás el filtro)
+    -->
   </div>
+
+  <!-- Aquí insertamos la tabla ya clonada y recortada (Título, Autor, Cantidad, ISBN) -->
   ${tablaClonada.outerHTML}
 </body>
 </html>
+
   `);
     ventana.document.close();
 
