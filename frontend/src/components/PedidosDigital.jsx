@@ -438,7 +438,7 @@ export default function PedidosDigital() {
     };
 
 
-    const fondoURL = "/fondo-3.jpg";
+    const fondoURL = "/fondoo.webp";
 
     const totalVienen = pedidos.filter(p => p.estado === "VIENE").length;
     return (

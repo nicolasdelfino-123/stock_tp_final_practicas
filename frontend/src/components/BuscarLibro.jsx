@@ -174,7 +174,7 @@ const BuscarLibro = () => {
     });
   };
 
-  const fondoURL = "/fondo-3.jpg"
+  const fondoURL = "/fondoo.webp"
   // Mapeo de ubicación => color pastel
   const coloresUbicacion = {
     rosa: "#fa8eb4ff",
@@ -253,9 +253,12 @@ const BuscarLibro = () => {
         style={{
           backgroundImage: `linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), url(${fondoURL})`,
           backgroundSize: "cover",
-          backgroundPosition: "center",
-          minHeight: "100%",
-          paddingTop: "10px", // rompe el colapso del margin
+          backgroundPosition: "center bottom", // siempre anclada al borde inferior
+          backgroundRepeat: "no-repeat",
+          height: "100vh",                     // fijo al alto de pantalla
+          width: "100%",                       // ocupa todo el ancho
+          overflow: "auto",                    // permite scrollear el contenido si se pasa
+          paddingTop: "10px",
           boxSizing: "border-box",
         }}
       >

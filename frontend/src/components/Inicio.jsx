@@ -4,7 +4,7 @@ import { Trash2, Search, PlusCircle, PackageOpen, BookOpenCheck, TriangleAlert }
 
 const Inicio = () => {
   const navigate = useNavigate();
-  const fondoURL = "/fondo-3.jpg";
+  const fondoURL = "/fondoo.webp";
 
   return (
     <>

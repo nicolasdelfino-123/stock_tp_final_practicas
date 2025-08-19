@@ -16,10 +16,13 @@ code {
   background-color: red;
 }
 
+html,
+body,
+#root {
+  height: 100%;
+}
+
 body {
-  background-image: linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), url('../public/fondo-3.jpg');
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
-  background-attachment: fixed; /* esto ayuda a que el fondo no se corte al hacer scroll */
+  margin: 0;
+  background-image: none !important;
 }

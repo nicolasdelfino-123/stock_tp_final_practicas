@@ -880,7 +880,7 @@ const PedidoForm = () => {
     }
   };
 
-  const fondoURL = "/fondo-3.jpg"
+  const fondoURL = "/fondoo.webp"
 
 
   const handleCheckboxChange = (e) => {

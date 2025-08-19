@@ -178,229 +178,215 @@ const Faltantes = () => {
   // Antes había: const filtrados = res.faltantesEliminados.filter(...)
   // Esa línea estaba fuera de contexto y tiraba el error. (Se maneja correctamente dentro del onClick abajo.)
 
+
+  const fondoURL = "/fondoo.webp"; // Usar el fondo actualizado
   return (
-    <div
-      style={{
-        maxWidth: "600px",
-        margin: "20px auto",
-        padding: "20px",
-        borderRadius: "10px",
-        boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
-        backgroundColor: "#f9f9f9",
-        fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
-      }}
-    >
-      <div style={{ display: "flex", alignItems: "center", marginBottom: "10px" }}>
-        <button
-          onClick={() => navigate("/")}
-          style={{
-            backgroundColor: "#fcf00cff",
-            color: "#333",
-            border: "none",
-            borderRadius: "6px",
-            padding: "11px 12px",
-            cursor: "pointer",
-            fontWeight: "600",
-            marginRight: "10px",
-          }}
-          onMouseEnter={(e) => (e.target.style.backgroundColor = "#e4f00aff")}
-          onMouseLeave={(e) => (e.target.style.backgroundColor = "#fcf00cff")}
-        >
-          <span style={{ fontSize: "16px" }}>⬅ Volver al inicio</span>
-        </button>
-
-        <h3
-          style={{
-            textAlign: "center",
-            color: "#114470",
-            flexGrow: 1,
-            margin: 0,
-            fontWeight: "900",
-            fontSize: "40px",
-            textShadow: "2px 2px 30px rgba(0,0,0,0.5)",
-          }}
-        >
-          Faltantes de stock
-        </h3>
-      </div>
-
-      <textarea
-        placeholder="Anotá aquí los productos faltantes..."
-        value={nota}
-        onChange={(e) => setNota(e.target.value)}
-        onKeyDown={handleKeyDown}
+    <div style={{
+      backgroundImage: `linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), url(${fondoURL})`,
+      backgroundSize: "cover",
+      backgroundPosition: "center bottom", // siempre anclada al borde inferior
+      backgroundRepeat: "no-repeat",
+      height: "100vh",                     // fijo al alto de pantalla
+      width: "100%",                       // ocupa todo el ancho
+      overflow: "auto",                    // permite scrollear el contenido si se pasa
+      paddingTop: "10px",
+      boxSizing: "border-box",
+    }}>
+      < div
         style={{
-          width: "100%",
-          height: "100px",
-          padding: "10px",
-          fontSize: "1rem",
-          borderRadius: "6px",
-          border: "1px solid #ccc",
-          resize: "vertical",
-          marginBottom: "12px",
-          fontFamily: "inherit",
-        }}
-      />
-
-      <button
-        onClick={guardarNota}
-        style={{
-          width: "100%",
-          padding: "10px",
-          backgroundColor: "#114470",
-          color: "white",
-          border: "none",
-          borderRadius: "6px",
-          fontWeight: "700",
-          cursor: "pointer",
-          transition: "background-color 0.3s",
-          marginBottom: "12px",
-        }}
-        onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "#0d365d")}
-        onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "#114470")}
-      >
-        Guardar
-      </button>
-
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          marginBottom: "10px",
-          flexDirection: "column",
-          gap: "8px",
+          maxWidth: "600px",
+          margin: "20px auto",
+          padding: "20px",
+          borderRadius: "10px",
+          boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
+          backgroundColor: "#f9f9f9",
+          fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
         }}
       >
-        <div style={{ display: "flex", justifyContent: "space-between" }}>
+        <div style={{ display: "flex", alignItems: "center", marginBottom: "10px" }}>
           <button
-            onClick={imprimir}
+            onClick={() => navigate("/")}
             style={{
-              backgroundColor: "#4caf50",
-              color: "white",
+              backgroundColor: "#fcf00cff",
+              color: "#333",
               border: "none",
               borderRadius: "6px",
-              padding: "8px 16px",
+              padding: "11px 12px",
               cursor: "pointer",
-              fontWeight: "700",
+              fontWeight: "600",
+              marginRight: "10px",
             }}
+            onMouseEnter={(e) => (e.target.style.backgroundColor = "#e4f00aff")}
+            onMouseLeave={(e) => (e.target.style.backgroundColor = "#fcf00cff")}
           >
-            Imprimir
+            <span style={{ fontSize: "16px" }}>⬅ Volver al inicio</span>
           </button>
 
-          <button
-            onClick={limpiarTodo}
+          <h3
             style={{
-              backgroundColor: "#e53935",
-              color: "white",
-              border: "none",
-              borderRadius: "6px",
-              padding: "8px 16px",
-              cursor: "pointer",
-              fontWeight: "700",
+              textAlign: "center",
+              color: "#114470",
+              flexGrow: 1,
+              margin: 0,
+              fontWeight: "900",
+              fontSize: "40px",
+              textShadow: "2px 2px 30px rgba(0,0,0,0.5)",
             }}
           >
-            Limpiar Todo
-          </button>
+            Faltantes de stock
+          </h3>
         </div>
 
-        {/* Inputs fechas para filtrar */}
-        <div style={{ display: "flex", gap: "12px", marginBottom: "12px" }}>
-          <div style={{ flex: 1 }}>
-            <label htmlFor="fechaDesde" style={{ fontWeight: "700" }}>
-              Desde:
-            </label>
-            <input
-              id="fechaDesde"
-              type="date"
-              value={fechaDesde}
-              onChange={(e) => setFechaDesde(e.target.value)}
-              style={{ width: "100%", padding: "6px", borderRadius: "4px", border: "1px solid #ccc" }}
-              max={fechaHasta || undefined}
-            />
-          </div>
-          <div style={{ flex: 1 }}>
-            <label htmlFor="fechaHasta" style={{ fontWeight: "700" }}>
-              Hasta:
-            </label>
-            <input
-              id="fechaHasta"
-              type="date"
-              value={fechaHasta}
-              onChange={(e) => setFechaHasta(e.target.value)}
-              style={{ width: "100%", padding: "6px", borderRadius: "4px", border: "1px solid #ccc" }}
-              min={fechaDesde || undefined}
-            />
-          </div>
-        </div>
-
-        {/* Botón Recuperar Eliminados con filtro corregido */}
-        <button
-          onClick={async () => {
-            if (!fechaDesde || !fechaHasta) {
-              alert("Por favor seleccioná ambas fechas: desde y hasta.");
-              return;
-            }
-
-            const res = await actions.obtenerFaltantesEliminados();
-
-            if (res.success) {
-              console.log("Datos recibidos:", res.faltantesEliminados); // Para debug
-
-              // Si no hay filtro de fechas, mostrar todos los eliminados
-              let filtrados = res.faltantesEliminados;
-
-              // Solo filtrar si tenemos fechas válidas
-              if (fechaDesde && fechaHasta) {
-                const desdeDate = new Date(fechaDesde + 'T00:00:00');
-                const hastaDate = new Date(fechaHasta + 'T23:59:59');
-
-                filtrados = res.faltantesEliminados.filter(item => {
-                  // Si no tiene fecha_creacion, incluirlo (registros viejos)
-                  if (!item.fecha_creacion) return true;
-
-                  const fechaItem = new Date(item.fecha_creacion);
-                  return fechaItem >= desdeDate && fechaItem <= hastaDate;
-                });
-              }
-
-              alert(`Hay ${filtrados.length} faltantes eliminados entre esas fechas.`);
-              setFaltantes(filtrados);
-              setTachados(new Set());
-              setMostrandoEliminados(true);
-            } else {
-              alert("Error al obtener faltantes eliminados: " + res.error);
-            }
-          }}
+        <textarea
+          placeholder="Anotá aquí los productos faltantes..."
+          value={nota}
+          onChange={(e) => setNota(e.target.value)}
+          onKeyDown={handleKeyDown}
           style={{
-            backgroundColor: "#f0c330",
-            color: "black",
-            border: "none",
-            borderRadius: "6px",
-            padding: "8px 16px",
-            cursor: "pointer",
-            fontWeight: "700",
             width: "100%",
+            height: "100px",
+            padding: "10px",
+            fontSize: "1rem",
+            borderRadius: "6px",
+            border: "1px solid #ccc",
+            resize: "vertical",
+            marginBottom: "12px",
+            fontFamily: "inherit",
           }}
+        />
+
+        <button
+          onClick={guardarNota}
+          style={{
+            width: "100%",
+            padding: "10px",
+            backgroundColor: "#114470",
+            color: "white",
+            border: "none",
+            borderRadius: "6px",
+            fontWeight: "700",
+            cursor: "pointer",
+            transition: "background-color 0.3s",
+            marginBottom: "12px",
+          }}
+          onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "#0d365d")}
+          onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "#114470")}
         >
-          Recuperar Eliminados
+          Guardar
         </button>
 
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            marginBottom: "10px",
+            flexDirection: "column",
+            gap: "8px",
+          }}
+        >
+          <div style={{ display: "flex", justifyContent: "space-between" }}>
+            <button
+              onClick={imprimir}
+              style={{
+                backgroundColor: "#4caf50",
+                color: "white",
+                border: "none",
+                borderRadius: "6px",
+                padding: "8px 16px",
+                cursor: "pointer",
+                fontWeight: "700",
+              }}
+            >
+              Imprimir
+            </button>
 
+            <button
+              onClick={limpiarTodo}
+              style={{
+                backgroundColor: "#e53935",
+                color: "white",
+                border: "none",
+                borderRadius: "6px",
+                padding: "8px 16px",
+                cursor: "pointer",
+                fontWeight: "700",
+              }}
+            >
+              Limpiar Todo
+            </button>
+          </div>
 
-        {/* Botón para volver a los faltantes activos si está mostrando eliminados */}
-        {mostrandoEliminados && (
+          {/* Inputs fechas para filtrar */}
+          <div style={{ display: "flex", gap: "12px", marginBottom: "12px" }}>
+            <div style={{ flex: 1 }}>
+              <label htmlFor="fechaDesde" style={{ fontWeight: "700" }}>
+                Desde:
+              </label>
+              <input
+                id="fechaDesde"
+                type="date"
+                value={fechaDesde}
+                onChange={(e) => setFechaDesde(e.target.value)}
+                style={{ width: "100%", padding: "6px", borderRadius: "4px", border: "1px solid #ccc" }}
+                max={fechaHasta || undefined}
+              />
+            </div>
+            <div style={{ flex: 1 }}>
+              <label htmlFor="fechaHasta" style={{ fontWeight: "700" }}>
+                Hasta:
+              </label>
+              <input
+                id="fechaHasta"
+                type="date"
+                value={fechaHasta}
+                onChange={(e) => setFechaHasta(e.target.value)}
+                style={{ width: "100%", padding: "6px", borderRadius: "4px", border: "1px solid #ccc" }}
+                min={fechaDesde || undefined}
+              />
+            </div>
+          </div>
+
+          {/* Botón Recuperar Eliminados con filtro corregido */}
           <button
             onClick={async () => {
-              await cargarFaltantes(); // Usar la función que ya existe
-              setTachados(new Set()); // Limpiar tachados
-              setMostrandoEliminados(false);
-              setFechaDesde(""); // Limpiar filtros de fecha
-              setFechaHasta("");
+              if (!fechaDesde || !fechaHasta) {
+                alert("Por favor seleccioná ambas fechas: desde y hasta.");
+                return;
+              }
+
+              const res = await actions.obtenerFaltantesEliminados();
+
+              if (res.success) {
+                console.log("Datos recibidos:", res.faltantesEliminados); // Para debug
+
+                // Si no hay filtro de fechas, mostrar todos los eliminados
+                let filtrados = res.faltantesEliminados;
+
+                // Solo filtrar si tenemos fechas válidas
+                if (fechaDesde && fechaHasta) {
+                  const desdeDate = new Date(fechaDesde + 'T00:00:00');
+                  const hastaDate = new Date(fechaHasta + 'T23:59:59');
+
+                  filtrados = res.faltantesEliminados.filter(item => {
+                    // Si no tiene fecha_creacion, incluirlo (registros viejos)
+                    if (!item.fecha_creacion) return true;
+
+                    const fechaItem = new Date(item.fecha_creacion);
+                    return fechaItem >= desdeDate && fechaItem <= hastaDate;
+                  });
+                }
+
+                alert(`Hay ${filtrados.length} faltantes eliminados entre esas fechas.`);
+                setFaltantes(filtrados);
+                setTachados(new Set());
+                setMostrandoEliminados(true);
+              } else {
+                alert("Error al obtener faltantes eliminados: " + res.error);
+              }
             }}
             style={{
-              marginTop: "10px",
-              backgroundColor: "#114470",
-              color: "white",
+              backgroundColor: "#f0c330",
+              color: "black",
               border: "none",
               borderRadius: "6px",
               padding: "8px 16px",
@@ -409,119 +395,147 @@ const Faltantes = () => {
               width: "100%",
             }}
           >
-            Volver a faltantes activos
+            Recuperar Eliminados
           </button>
-        )}
-      </div>
 
-      {faltantes.length > 0 ? (
-        <ul
-          ref={listaRef}
-          style={{ marginTop: "10px", paddingLeft: "20px", listStyleType: "none", fontWeight: "bold" }}
-        >
-          {faltantes.map((item) => (
-            <li
-              key={item.id}
+
+
+          {/* Botón para volver a los faltantes activos si está mostrando eliminados */}
+          {mostrandoEliminados && (
+            <button
+              onClick={async () => {
+                await cargarFaltantes(); // Usar la función que ya existe
+                setTachados(new Set()); // Limpiar tachados
+                setMostrandoEliminados(false);
+                setFechaDesde(""); // Limpiar filtros de fecha
+                setFechaHasta("");
+              }}
               style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                marginBottom: "8px",
-                textDecoration: tachados.has(item.id) ? "line-through" : "none",
-                color: tachados.has(item.id) ? "#666" : "black",
+                marginTop: "10px",
+                backgroundColor: "#114470",
+                color: "white",
+                border: "none",
+                borderRadius: "6px",
+                padding: "8px 16px",
+                cursor: "pointer",
+                fontWeight: "700",
+                width: "100%",
               }}
             >
-              <span style={{ marginRight: "10px", fontSize: "20px", lineHeight: "1" }}>•</span>
+              Volver a faltantes activos
+            </button>
+          )}
+        </div>
 
-              {editandoId === item.id ? (
-                <>
-                  <input
-                    type="text"
-                    value={editTexto}
-                    onChange={(e) => setEditTexto(e.target.value)}
-                    className="form-control me-2"
-                    style={{ flexGrow: 1, maxWidth: "60%" }}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") guardarEdicion(item.id);
-                      if (e.key === "Escape") cancelarEdicion();
-                    }}
-                    autoFocus
-                  />
-                  <button
-                    onClick={() => guardarEdicion(item.id)}
-                    className="btn btn-success btn-sm me-2"
-                    title="Guardar"
-                  >
-                    Guardar
-                  </button>
-                  <button onClick={cancelarEdicion} className="btn btn-secondary btn-sm" title="Cancelar">
-                    Cancelar
-                  </button>
-                </>
-              ) : (
-                <>
-                  <span
-                    onClick={() => toggleTachado(item.id)}
-                    style={{ cursor: "pointer", flexGrow: 1 }}
-                    title="Tachar / Destachar"
-                  >
-                    {item.descripcion}
-                  </span>
-                  <div style={{ marginLeft: "10px", whiteSpace: "nowrap" }}>
-                    <button
-                      title="Editar"
-                      onClick={() => comenzarEdicion(item.id, item.descripcion)}
-                      style={{
-                        marginRight: "6px",
-                        cursor: "pointer",
-                        background: "none",
-                        border: "none",
-                        padding: 0,
-                        outline: "none",
-                        color: "#114470",
+        {faltantes.length > 0 ? (
+          <ul
+            ref={listaRef}
+            style={{ marginTop: "10px", paddingLeft: "20px", listStyleType: "none", fontWeight: "bold" }}
+          >
+            {faltantes.map((item) => (
+              <li
+                key={item.id}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  marginBottom: "8px",
+                  textDecoration: tachados.has(item.id) ? "line-through" : "none",
+                  color: tachados.has(item.id) ? "#666" : "black",
+                }}
+              >
+                <span style={{ marginRight: "10px", fontSize: "20px", lineHeight: "1" }}>•</span>
+
+                {editandoId === item.id ? (
+                  <>
+                    <input
+                      type="text"
+                      value={editTexto}
+                      onChange={(e) => setEditTexto(e.target.value)}
+                      className="form-control me-2"
+                      style={{ flexGrow: 1, maxWidth: "60%" }}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") guardarEdicion(item.id);
+                        if (e.key === "Escape") cancelarEdicion();
                       }}
-                    >
-                      <FontAwesomeIcon icon={faPen} size="lg" />
-                    </button>
+                      autoFocus
+                    />
                     <button
-                      title="Tachar"
+                      onClick={() => guardarEdicion(item.id)}
+                      className="btn btn-success btn-sm me-2"
+                      title="Guardar"
+                    >
+                      Guardar
+                    </button>
+                    <button onClick={cancelarEdicion} className="btn btn-secondary btn-sm" title="Cancelar">
+                      Cancelar
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <span
                       onClick={() => toggleTachado(item.id)}
-                      style={{
-                        marginRight: "6px",
-                        cursor: "pointer",
-                        background: "none",
-                        border: "none",
-                        padding: 0,
-                        outline: "none",
-                        color: tachados.has(item.id) ? "#4caf50" : "#000",
-                      }}
+                      style={{ cursor: "pointer", flexGrow: 1 }}
+                      title="Tachar / Destachar"
                     >
-                      <FontAwesomeIcon icon={faCheck} size="lg" />
-                    </button>
-                    <button
-                      title="Eliminar"
-                      onClick={() => eliminarItem(item.id)}
-                      style={{
-                        cursor: "pointer",
-                        background: "none",
-                        border: "none",
-                        padding: 0,
-                        outline: "none",
-                        color: "red",
-                      }}
-                    >
-                      <FontAwesomeIcon icon={faTrash} size="lg" />
-                    </button>
-                  </div>
-                </>
-              )}
-            </li>
-          ))}
-        </ul>
-      ) : (
-        <p style={{ textAlign: "center", color: "#777" }}>No hay faltantes registrados.</p>
-      )}
-    </div>
+                      {item.descripcion}
+                    </span>
+                    <div style={{ marginLeft: "10px", whiteSpace: "nowrap" }}>
+                      <button
+                        title="Editar"
+                        onClick={() => comenzarEdicion(item.id, item.descripcion)}
+                        style={{
+                          marginRight: "6px",
+                          cursor: "pointer",
+                          background: "none",
+                          border: "none",
+                          padding: 0,
+                          outline: "none",
+                          color: "#114470",
+                        }}
+                      >
+                        <FontAwesomeIcon icon={faPen} size="lg" />
+                      </button>
+                      <button
+                        title="Tachar"
+                        onClick={() => toggleTachado(item.id)}
+                        style={{
+                          marginRight: "6px",
+                          cursor: "pointer",
+                          background: "none",
+                          border: "none",
+                          padding: 0,
+                          outline: "none",
+                          color: tachados.has(item.id) ? "#4caf50" : "#000",
+                        }}
+                      >
+                        <FontAwesomeIcon icon={faCheck} size="lg" />
+                      </button>
+                      <button
+                        title="Eliminar"
+                        onClick={() => eliminarItem(item.id)}
+                        style={{
+                          cursor: "pointer",
+                          background: "none",
+                          border: "none",
+                          padding: 0,
+                          outline: "none",
+                          color: "red",
+                        }}
+                      >
+                        <FontAwesomeIcon icon={faTrash} size="lg" />
+                      </button>
+                    </div>
+                  </>
+                )}
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p style={{ textAlign: "center", color: "#777" }}>No hay faltantes registrados.</p>
+        )}
+      </div>
+    </div >
   );
 }
 export default Faltantes;
