@@ -859,7 +859,7 @@ export default function PedidosDigital() {
                                                         <button
                                                             onClick={() => {
                                                                 const ok = window.confirm(
-                                                                    "Ojo!! estás a punto de agregar el pedido a la lista para pedirlo de nuevo.\n\n¿Confirmás?"
+                                                                    "Ojo!! Estás a punto de agregar el pedido a la lista para pedirlo de nuevo.\n\n¿Confirmás?"
                                                                 );
                                                                 if (!ok) return;               // Cancelar: no hace nada
                                                                 setEstado(p.id, "NO_VIENE");   // Aceptar: comportamiento actual

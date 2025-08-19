@@ -758,7 +758,7 @@ const PedidoForm = () => {
 
   // ⬇️ DEBAJO de handleEditarPedido
   const handleOcultarPedido = async (id) => {
-    if (!window.confirm("¿Ocultar este pedido? (no se elimina de la base)")) return;
+    if (!window.confirm("Solo ocultar si el libro ya fue entregado, ¿Deseas ocultarlo?")) return;
     setLoading(true);
     try {
       const result = await actions.ocultarPedidos([id]); // ya existe en actions
@@ -994,10 +994,19 @@ const PedidoForm = () => {
               Volver al Inicio
             </button>
             <div style={{ textAlign: 'center', flexGrow: 1 }}>
-              <h2 style={{ color: 'white', marginTop: '10px', fontSize: "50px", fontWeight: "700px", textShadow: '4px 4px 22px rgba(0,0,0,0.9)' }}>
+              <h2
+                style={{
+                  color: 'white',
+                  fontSize: '50px',
+                  fontWeight: 700,                // ← estaba "700px"
+                  textShadow: '4px 4px 22px rgba(0,0,0,0.9)',
+                  lineHeight: 1,                  // compacta el alto
+                  transform: 'translateY(-7px)'  // ← sube el título (ajustá -18 a gusto)
+                }}
+              >
                 <strong>Formulario de Pedido</strong>
               </h2>
-            </div>
+          </div>
           </div>
 
 
@@ -1162,7 +1171,7 @@ const PedidoForm = () => {
           />
 
 
-          {/* REEMPLAZA TODO TU BLOQUE POR ESTO */}
+
           <div className="row">
             <div className="col-md-6" style={{ marginBottom: '20px' }}>
               <label
@@ -1496,7 +1505,7 @@ const PedidoForm = () => {
                 backgroundColor: 'white',
                 padding: '30px',
                 borderRadius: '10px',
-                maxWidth: '90vw',
+                maxWidth: '95vw',
                 width: 'max-content',
                 maxHeight: '80vh',
                 overflow: 'auto',
