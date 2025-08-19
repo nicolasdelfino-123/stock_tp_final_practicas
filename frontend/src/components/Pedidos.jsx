@@ -31,7 +31,7 @@ const PedidoForm = () => {
   const modalRef = useRef(null);
   const navType = useNavigationType();  // "PUSH", "POP" o "REPLACE"
   const firstRunRef = useRef(true);
-  const [editorialLibro, setEditorialLibro] = useState("");
+  const [editorial, setEditorialLibro] = useState("");
 
   useEffect(() => {
     if (nombreCliente?.trim()) {
@@ -241,7 +241,7 @@ const PedidoForm = () => {
       nombreCliente,
       tituloLibro,
       autorLibro,
-      editorialLibro,
+      editorial,
       cantidad,
       fecha,
       seña,
@@ -262,7 +262,7 @@ const PedidoForm = () => {
       nombreCliente,
       tituloLibro,
       autorLibro,
-      editorialLibro,
+      editorial,
       cantidad,
       fecha,
       seña,
@@ -1065,7 +1065,7 @@ const PedidoForm = () => {
                 ref={el => inputRef.current[4] = el}
                 onKeyDown={(e) => handleKeyDown(e, 4)}
                 type="text"
-                value={editorialLibro}
+                value={editorial}
                 onChange={(e) => setEditorialLibro(e.target.value)}
                 placeholder="Ingrese la editorial del libro"
                 style={{
@@ -1180,7 +1180,7 @@ const PedidoForm = () => {
                 type="text"
                 value={comentario}
                 onChange={(e) => setComentario(e.target.value)}
-                placeholder="Ingrese un comentario (opcional)"
+                placeholder="Ingrese un comentario (opcional). El cliente lo verá"
 
                 style={{
                   width: '100%',
@@ -1311,7 +1311,7 @@ const PedidoForm = () => {
                     <strong>Autor:</strong> <span className="valor">{autorLibro}</span>
                   </div>
                   <div className="campo">
-                    <strong>Editorial:</strong> <span className="valor">{editorialLibro}</span>
+                    <strong>Editorial:</strong> <span className="valor">{editorial}</span>
                   </div>
                   <div className="campo">
                     <strong>Cantidad:</strong> <span className="valor">{cantidad}</span>

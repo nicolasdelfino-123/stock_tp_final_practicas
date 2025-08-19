@@ -46,6 +46,7 @@ export default function PedidosDigital() {
     const [excluirVienen, setExcluirVienen] = useState(false);
     // Añadir al inicio del componente, junto a los otros estados
     const [pedidosMarcadosRecien, setPedidosMarcadosRecien] = useState(new Set());
+    const [editorial, setEditorialLibro] = useState("");
 
     useEffect(() => { setExcluirVienen(true); }, []);
 
@@ -286,17 +287,21 @@ export default function PedidosDigital() {
             const motivo = estado ? (getMotivo(p.id) || "-") : "-";
 
             return `
-        <tr>
-          <td>${p.cliente_nombre || "-"}</td>
-          <td>${p.titulo || "-"}</td>
-          <td>${p.autor || "-"}</td>
-          <td style="text-align:center">${p.cantidad || 1}</td>
-          <td>${motivo}</td>
-        </tr>
-      `;
+      <tr>
+        <td>${p.cliente_nombre || "-"}</td>
+        <td>${p.titulo || "-"}</td>
+        <td>${p.autor || "-"}</td>
+        <td>${p.editorial || "-"}</td>  <!-- ⬅️ NUEVO -->
+        <td style="text-align:center">${p.cantidad || 1}</td>
+        <td>${motivo}</td>
+      </tr>
+    `;
         }).join("");
 
         const vent = window.open("", "_blank");
+        const fechaImpresion = new Date().toLocaleDateString('es-AR');
+        const totalLibros = lista.length;
+
         vent.document.write(`
 <!doctype html>
 <html>
@@ -317,13 +322,14 @@ export default function PedidosDigital() {
 </head>
 <body>
   <h2>${titulo}</h2>
-  <p>Fecha de impresión: ${new Date().toLocaleString("es-AR")}</p>
+    <h5>Fecha de impresión: ${fechaImpresion} &nbsp;|&nbsp; Cantidad de títulos en página: ${totalLibros}</h5>
   <table>
     <thead>
       <tr>
         <th>Cliente</th>
         <th>Título</th>
         <th>Autor</th>
+        <th>Editorial</th>  <!-- ⬅️ NUEVO -->
         <th>Cant.</th>
         <th>Viene de:</th>
       </tr>
@@ -337,16 +343,14 @@ export default function PedidosDigital() {
   </script>
 </body>
 </html>
-    `);
+  `);
         vent.document.close();
     };
 
 
     // Imprime como "Para Ricardo" usando la vista TODOS (excluyendo VIENE)
     const imprimirParaRicardoDesdeDigital = () => {
-        // Base: aplica texto + fechas como en la tabla
         const base = filtrarPorBusqueda(filtrarPorFechas(pedidos));
-        // Queremos lo que queda en "Todos" excluyendo VIENE (la vista post-reset)
         const lista = base.filter(p => (p.estado || "") !== "VIENE");
 
         if (!lista.length) {
@@ -358,12 +362,17 @@ export default function PedidosDigital() {
     <tr>
       <td>${p.titulo || "-"}</td>
       <td>${p.autor || "-"}</td>
+      <td>${p.editorial || "-"}</td>   <!-- ⬅️ NUEVO -->
       <td style="text-align:center">${p.cantidad || 1}</td>
       <td>${p.isbn || "-"}</td>
     </tr>
   `).join("");
 
         const vent = window.open("", "_blank");
+        const fechaImpresion = new Date().toLocaleDateString('es-AR');
+        const visibles = filtrarPorBusqueda(pedidosFiltrados);
+        const totalLibros = visibles.length;
+
         vent.document.write(`
 <html>
 <head>
@@ -402,14 +411,16 @@ export default function PedidosDigital() {
     <h2 class="titulo">Librería Charles</h2>
     <h3>Las Varillas, Córdoba - 9 de julio 346</h3>
     <h4>Teléfonos: 03533-420183 / Móvil: 03533-682652</h4>
-    <h5>Fecha de impresión: ${new Date().toLocaleDateString('es-AR')}</h5>
+  <h5>Fecha de impresión: ${fechaImpresion} &nbsp;|&nbsp; Cantidad de títulos en página: ${totalLibros}</h5>
+
   </div>
   <table>
     <thead>
       <tr>
         <th>Título</th>
         <th>Autor</th>
-        <th>Cant.</th>
+        <th>Editorial</th>   <!-- ⬅️ NUEVO -->
+        <th>Cantidad</th>
         <th>ISBN</th>
       </tr>
     </thead>
@@ -425,6 +436,7 @@ export default function PedidosDigital() {
   `);
         vent.document.close();
     };
+
 
     const fondoURL = "/fondo-3.jpg";
 
@@ -688,7 +700,7 @@ export default function PedidosDigital() {
                         onClick={imprimirParaRicardoDesdeDigital}
                         style={{ backgroundColor: "#7952b3", color: "white", border: "none", padding: "10px 20px", borderRadius: "6px", cursor: "pointer", fontWeight: "bold" }}
                     >
-                        Imprimir/Guardar Librerías
+                        Imprimir / Enviar Librerías
                     </button>
 
                     <span style={{ alignSelf: "center", fontWeight: "bold", color: "#333" }}>
@@ -713,6 +725,7 @@ export default function PedidosDigital() {
                                 <th style={thStyle}>Cliente</th>
                                 <th style={thStyle}>Título</th>
                                 <th style={thStyle}>Autor</th>
+                                <th style={thStyle}>Editorial</th> {/* ⬅️ NUEVO */}
                                 <th style={thStyleCenter}>Cant.</th>
                                 <th style={thStyle}>ISBN</th>
                                 <th style={thStyleCenter}>Fecha pedido</th>
@@ -725,6 +738,7 @@ export default function PedidosDigital() {
                                 <th style={thStyleCenter}>Acciones</th>
                             </tr>
                         </thead>
+
                         <tbody>
                             {loading ? (
                                 <tr><td colSpan={10} style={tdLoading}>Cargando...</td></tr>
@@ -745,7 +759,9 @@ export default function PedidosDigital() {
                                             <td style={tdStyle}>{p.cliente_nombre || "-"}</td>
                                             <td style={tdStyle}>{p.titulo || "-"}</td>
                                             <td style={tdStyle}>{p.autor || "-"}</td>
+                                            <td style={tdStyle}>{p.editorial || "-"}</td> {/* ⬅️ NUEVO */}
                                             <td style={{ ...tdStyle, textAlign: "center", width: 60 }}>{p.cantidad || 1}</td>
+
                                             <td style={tdStyle}>{p.isbn || "-"}</td>
                                             <td style={{ ...tdStyle, whiteSpace: "nowrap" }}>{formatearFechaArgentina(p.fecha)}</td>
                                             {filtroEstado === "VIENE" && (
@@ -872,7 +888,7 @@ const thStyle = {
 const thStyleCenter = { ...thStyle, textAlign: "center" };
 const tdStyle = {
     padding: "10px",
-    border: "1px solid #adacac",
+    border: "1px solid #907575ff",
     color: "black",
     fontWeight: "bold",
     verticalAlign: "top"
