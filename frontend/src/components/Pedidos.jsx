@@ -31,6 +31,7 @@ const PedidoForm = () => {
   const modalRef = useRef(null);
   const navType = useNavigationType();  // "PUSH", "POP" o "REPLACE"
   const firstRunRef = useRef(true);
+  const [editorialLibro, setEditorialLibro] = useState("");
 
   useEffect(() => {
     if (nombreCliente?.trim()) {
@@ -229,6 +230,7 @@ const PedidoForm = () => {
     setIsbn('');
     setTelefonoCliente('');
     setEditandoId(null);
+    setEditorialLibro('');
     guardadoEnEstaImpresion.current = false;
     editadoConExito.current = false;
     ultimoPedidoGuardado.current = null;  // <-- LIMPIAMOS también aquí
@@ -239,6 +241,7 @@ const PedidoForm = () => {
       nombreCliente,
       tituloLibro,
       autorLibro,
+      editorialLibro,
       cantidad,
       fecha,
       seña,
@@ -259,6 +262,7 @@ const PedidoForm = () => {
       nombreCliente,
       tituloLibro,
       autorLibro,
+      editorialLibro,
       cantidad,
       fecha,
       seña,
@@ -378,6 +382,7 @@ const PedidoForm = () => {
     setEditandoId(null);
     setIsbn("");
     setTelefonoCliente("");
+    setEditorialLibro("");
   };
 
   const handleVerPedidos = () => {
@@ -409,28 +414,28 @@ const PedidoForm = () => {
     const ventana = window.open('', '_blank');
     const tablaClonada = tabla.cloneNode(true);
 
-    // ⬇️ ACÁ PEGÁS ESTO
-    const thCant = tablaClonada.querySelector('thead tr th:nth-child(5)');
+    // Ajustes de encabezados (ahora con Editorial)
+    const thCant = tablaClonada.querySelector('thead tr th:nth-child(6)'); // Cant. es col 6
     if (thCant) thCant.textContent = 'Cant.';
 
-    const thComentario = tablaClonada.querySelector('thead tr th:nth-child(10)');
+    const thComentario = tablaClonada.querySelector('thead tr th:nth-child(11)'); // Coment. es col 11
     if (thComentario) thComentario.textContent = 'Coment.';
-    // Eliminar la última columna (acciones) de encabezados y filas
+
+    // Eliminar la última columna (Acciones) de encabezados y filas (ahora es la 12)
     const encabezados = tablaClonada.querySelectorAll('th');
     const filas = tablaClonada.querySelectorAll('tr');
-
-    const ultimaCol = encabezados.length - 1;
+    const ultimaCol = encabezados.length - 1; // 12
 
     if (encabezados[ultimaCol]) {
       encabezados[ultimaCol].remove();
     }
-
     filas.forEach(fila => {
       const celdas = fila.querySelectorAll('td');
       if (celdas.length > ultimaCol) {
         celdas[ultimaCol].remove();
       }
     });
+
     const fechaImpresion = new Date().toLocaleDateString('es-AR');
     const visibles = filtrarPorBusqueda(pedidosFiltrados);
     const totalLibros = visibles.length;
@@ -440,134 +445,78 @@ const PedidoForm = () => {
   <head>
     <title>Todos los Pedidos - Librería Charles</title>
     <style>
-      /* —— Base —— */
-      body {
-        font-family: Arial, sans-serif;
-        margin: 10px;
-      }
-      .header {
-        text-align: center;
-        margin-bottom: 15px;
-      }
-      .titulo {
-        color: #2c3e50;
-        margin: 10px 0;
-      }
+      body { font-family: Arial, sans-serif; margin: 10px; }
+      .header { text-align: center; margin-bottom: 15px; }
+      .titulo { color: #2c3e50; margin: 10px 0; }
+
       table {
-        border-collapse: collapse;
-        width: 100%;
-        max-width: 100%;
-        table-layout: fixed;
-        font-size: 10px;
-        border: 1px solid black !important;
+        border-collapse: collapse; width: 100%; max-width: 100%;
+        table-layout: fixed; font-size: 10px; border: 1px solid black !important;
       }
       th, td {
-        border: 1px solid black !important;
-        padding: 4px 6px;
-        text-align: left;
-        white-space: normal;            /* permite saltos de línea */
-        box-sizing: border-box;
-        vertical-align: top;
-
-        /* —— CORTES DE PALABRA CORRECTOS —— */
-        hyphens: auto;                  /* activa guionado automático */
-        -webkit-hyphens: auto;
-        -ms-hyphens: auto;
-        overflow-wrap: anywhere;        /* rompe palabras largas si hace falta */
-        word-break: normal;             /* evita cortar en cualquier carácter */
+        border: 1px solid black !important; padding: 4px 6px; text-align: left;
+        white-space: normal; box-sizing: border-box; vertical-align: top;
+        hyphens: auto; -webkit-hyphens: auto; -ms-hyphens: auto;
+        overflow-wrap: anywhere; word-break: normal;
       }
       th {
-        background-color: white;
-        color: black;
-        font-weight: bold;
-        border: 1px solid black !important;
-        white-space: normal;            /* permite que "Fecha Pedido" pase a 2 líneas */
+        background-color: white; color: black; font-weight: bold;
+        border: 1px solid black !important; white-space: normal;
       }
 
-      /* —— ANCHOS COLUMNAS EN PANTALLA (10 columnas, SIN “Acciones”) —— 
+      /* —— ANCHOS COLUMNAS EN PANTALLA (11 columnas, SIN “Acciones”) —— 
          1: CLIENTE
          2: TELÉFONO
          3: TÍTULO
          4: AUTOR
-         5: CANTIDAD   ⬅️ AUMENTAR % AQUÍ para agrandarla en PANTALLA
-         6: ISBN
-         7: FECHA
-         8: FECHA PEDIDO
-         9: SEÑA
-        10: COMENTARIOS
+         5: EDITORIAL (NUEVO)
+         6: CANTIDAD
+         7: ISBN
+         8: FECHA
+         9: FECHA PEDIDO
+        10: SEÑA
+        11: COMENTARIOS
       */
-      th:nth-child(1),  td:nth-child(1)  { width: 12% !important; } /* 1: CLIENTE */
-      th:nth-child(2),  td:nth-child(2)  { width: 12% !important; } /* 2: TELÉFONO */
-      th:nth-child(3),  td:nth-child(3)  { width: 14% !important; } /* 3: TÍTULO */
-      th:nth-child(4),  td:nth-child(4)  { width: 14% !important; } /* 4: AUTOR */
-      th:nth-child(5),  td:nth-child(5)  { width: 6%  !important; } /* 5: CANTIDAD (↑ subir este %) */
-      th:nth-child(6),  td:nth-child(6)  { width: 8%  !important; } /* 6: ISBN */
-      th:nth-child(7),  td:nth-child(7)  { width: 8%  !important; } /* 7: FECHA */
-      th:nth-child(8),  td:nth-child(8)  { width: 8%  !important; } /* 8: FECHA PEDIDO */
-      th:nth-child(9),  td:nth-child(9)  { width: 6%  !important; } /* 9: SEÑA */
-      th:nth-child(10), td:nth-child(10) { width: 12% !important; } /* 10: COMENTARIOS */
+      th:nth-child(1),  td:nth-child(1)  { width: 11% !important; }
+      th:nth-child(2),  td:nth-child(2)  { width: 10% !important; }
+      th:nth-child(3),  td:nth-child(3)  { width: 13% !important; }
+      th:nth-child(4),  td:nth-child(4)  { width: 12% !important; }
+      th:nth-child(5),  td:nth-child(5)  { width: 10% !important; } /* Editorial */
+      th:nth-child(6),  td:nth-child(6)  { width: 6%  !important; } /* Cant. */
+      th:nth-child(7),  td:nth-child(7)  { width: 8%  !important; } /* ISBN */
+      th:nth-child(8),  td:nth-child(8)  { width: 8%  !important; } /* Fecha */
+      th:nth-child(9),  td:nth-child(9)  { width: 8%  !important; } /* Fecha Pedido */
+      th:nth-child(10), td:nth-child(10) { width: 6%  !important; } /* Seña */
+      th:nth-child(11), td:nth-child(11) { width: 8%  !important; } /* Coment. */
 
-      /* —— Estética filas —— */
       tr:nth-child(even) { background-color: #f2f2f2; }
       tr:hover { background-color: #e8f4fd; }
 
-      /* —— MODO IMPRESIÓN —— */
       @media print {
         body { margin: 0.5cm; }
         table {
-          font-size: 8pt;
-          width: 100% !important;
-          max-width: 100% !important;
-          min-width: 100% !important;
-          table-layout: fixed;
-          page-break-inside: auto;
-          border: 1px solid black !important;
+          font-size: 8pt; width: 100% !important; max-width: 100% !important; min-width: 100% !important;
+          table-layout: fixed; page-break-inside: auto; border: 1px solid black !important;
         }
         th, td {
-          padding: 2px 4px;
-          white-space: normal;
-          color: black !important;
-          border: 1px solid black !important;
+          padding: 2px 4px; white-space: normal; color: black !important; border: 1px solid black !important;
+          hyphens: auto; -webkit-hyphens: auto; -ms-hyphens: auto; overflow-wrap: anywhere; word-break: normal !important;
+        }
+        th { background-color: white !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+        tr { page-break-inside: avoid; page-break-after: auto; }
 
-          /* —— mantener cortes correctos también en impresión —— */
-          hyphens: auto;
-          -webkit-hyphens: auto;
-          -ms-hyphens: auto;
-          overflow-wrap: anywhere;
-          word-break: normal !important;   /* reemplaza el break-all anterior */
-        }
-        th {
-          background-color: white !important;
-          -webkit-print-color-adjust: exact;
-          print-color-adjust: exact;
-        }
-        tr {
-          page-break-inside: avoid;
-          page-break-after: auto;
-        }
-
-        /* —— ANCHOS COLUMNAS EN IMPRESIÓN (10 columnas, SIN “Acciones”) —— 
-           1: CLIENTE
-           2: TELÉFONO
-           3: TÍTULO
-           4: AUTOR
-           5: CANT.     ⬅️ AUMENTAR % AQUÍ para agrandarla en IMPRESIÓN
-           6: ISBN
-           7: FECHA
-           8: FECHA PEDIDO
-           9: SEÑA
-          10: COMENTARIOS
-        */
-        th:nth-child(1),  td:nth-child(1)  { width: 12% !important; } /* 1: CLIENTE */
-        th:nth-child(2),  td:nth-child(2)  { width: 12% !important; } /* 2: TELÉFONO */
-        th:nth-child(3),  td:nth-child(3)  { width: 13% !important; } /* 3: TÍTULO */
-        th:nth-child(4),  td:nth-child(4)  { width: 12% !important; } /* 4: AUTOR */
-        th:nth-child(5),  td:nth-child(5)  { width: 8%  !important; } /* 5: CANT. (↑ subir este %) */
-        th:nth-child(6),  td:nth-child(6)  { width: 8%  !important; } /* 6: ISBN */
-        th:nth-child(7),  td:nth-child(7)  { width: 8%  !important; } /* 7: FECHA */
-        th:nth-child(8),  td:nth-child(8)  { width: 8%  !important; } /* 8: FECHA PEDIDO */
-        th:nth-child(9),  td:nth-child(9)  { width: 9%  !important; } /* 9: SEÑA */
-        th:nth-child(10), td:nth-child(10) { width: 10% !important; } /* 10: COMENTARIOS */
+        /* —— ANCHOS EN IMPRESIÓN (11 columnas) —— */
+        th:nth-child(1),  td:nth-child(1)  { width: 10% !important; }/* Cliente */
+        th:nth-child(2),  td:nth-child(2)  { width: 10% !important; }/* Tel */
+        th:nth-child(3),  td:nth-child(3)  { width: 10% !important; }/* titulo */
+        th:nth-child(4),  td:nth-child(4)  { width: 9% !important; }/* autor */
+        th:nth-child(5),  td:nth-child(5)  { width: 10% !important; } /* Editorial */
+        th:nth-child(6),  td:nth-child(6)  { width: 8%  !important; } /* Cant. */
+        th:nth-child(7),  td:nth-child(7)  { width: 8%  !important; }/* isbn */
+        th:nth-child(8),  td:nth-child(8)  { width: 8%  !important; }/* fecha */
+        th:nth-child(9),  td:nth-child(9)  { width: 8%  !important; }/* fecha pedido */
+        th:nth-child(10), td:nth-child(10) { width: 9%  !important; }/* seña */
+        th:nth-child(11), td:nth-child(11) { width: 10%  !important; }/* comentarios */
       }
     </style>
   </head>
@@ -579,15 +528,10 @@ const PedidoForm = () => {
     ${tablaClonada.outerHTML}
   </body>
 </html>
-
   `);
     ventana.document.close();
-
-
-
     ventana.print();
   };
-
 
 
   const handleImprimirParaRicardo = () => {
@@ -602,10 +546,11 @@ const PedidoForm = () => {
     const encabezados = tablaClonada.querySelectorAll('th');
     const celdas = tablaClonada.querySelectorAll('td');
 
-    // Ahora la tabla tiene 11 columnas (se añadió "Fecha viene" en la posición 7)
-    const columnasAEliminar = [0, 1, 6, 7, 8, 9, 10]; // quitamos todo menos Título(2), Autor(3), Cant.(4), ISBN(5)
-    const cantidadColumnas = 11;
-
+    // Con Editorial, hay 12 columnas en total:
+    // 1 Cliente, 2 Teléfono, 3 Título, 4 Autor, 5 Editorial, 6 Cantidad, 7 ISBN, 8 Fecha, 9 Fecha Pedido, 10 Seña, 11 Comentarios, 12 Acciones
+    // Queremos conservar: 3,4,5,6,7 -> Título, Autor, Editorial, Cantidad, ISBN
+    const columnasAEliminar = [0, 1, 7, 8, 9, 10, 11]; // (0-based) quitamos: Cliente, Teléfono, Fecha, Fecha Pedido, Seña, Comentarios, Acciones
+    const cantidadColumnas = 12;
 
     columnasAEliminar.forEach(index => {
       if (encabezados[index]) encabezados[index].remove();
@@ -617,130 +562,73 @@ const PedidoForm = () => {
     const ventana = window.open('', '_blank');
     const fechaImpresion = new Date().toLocaleDateString('es-AR');
 
-    // Sumar SOLO lo que se ve en la tabla (tras búsqueda/filtros)
-    // y NO inventar cantidad si falta (usa 0 en ese caso)
     const visibles = filtrarPorBusqueda(pedidosFiltrados);
     const totalLibros = visibles.length;
-
 
     ventana.document.write(`
 <html lang="es">
 <head>
   <title>Pedidos Ricardo Delfino - Librería Charles</title>
   <style>
-    /* ——— Estilos base ——— */
-    body {
-      font-family: Arial, sans-serif;
-      margin: 10px;
-    }
-    .header {
-      text-align: center;
-      margin-bottom: 15px;
-    }
-    .titulo {
-      color: #2c3e50;
-      margin: 10px 0;
-    }
+    body { font-family: Arial, sans-serif; margin: 10px; }
+    .header { text-align: center; margin-bottom: 15px; }
+    .titulo { color: #2c3e50; margin: 10px 0; }
 
-    /* ——— Tabla ——— */
     table {
-      border-collapse: collapse;
-      width: 100%;
-      max-width: 100%;
-      table-layout: fixed;             /* columnas de ancho fijo */
-      font-size: 10px;
-      border: 1px solid black !important;
+      border-collapse: collapse; width: 100%; max-width: 100%;
+      table-layout: fixed; font-size: 10px; border: 1px solid black !important;
     }
     th, td {
-      border: 1px solid black !important;
-      padding: 4px 6px;
-      text-align: left;
-      white-space: normal;             /* permite salto de línea natural */
-      box-sizing: border-box;
-      vertical-align: top;
-
-      /* —— cortes de palabra correctos —— */
-      hyphens: auto;                   /* guionado automático (español) */
-      -webkit-hyphens: auto;
-      -ms-hyphens: auto;
-      overflow-wrap: anywhere;         /* rompe palabras MUY largas si hace falta */
-      word-break: normal;              /* evita cortar en cualquier carácter */
+      border: 1px solid black !important; padding: 4px 6px; text-align: left;
+      white-space: normal; box-sizing: border-box; vertical-align: top;
+      hyphens: auto; -webkit-hyphens: auto; -ms-hyphens: auto;
+      overflow-wrap: anywhere; word-break: normal;
     }
     th {
-      background-color: white;
-      color: black;
-      font-weight: bold;
-      border: 1px solid black !important;
-      white-space: normal;             /* deja que el encabezado pase a 2 líneas si hace falta */
+      background-color: white; color: black; font-weight: bold;
+      border: 1px solid black !important; white-space: normal;
     }
 
-    /* ——— Anchos de columnas en PANTALLA (4 columnas) ———
+    /* —— Anchos PANTALLA (5 columnas) ——
        1: TÍTULO
        2: AUTOR
-       3: CANTIDAD  ⬅️ AUMENTAR % AQUÍ para hacerla más ancha en pantalla
-       4: ISBN
+       3: EDITORIAL
+       4: CANTIDAD
+       5: ISBN
     */
-    th:nth-child(1), td:nth-child(1) { width: 38% !important; } /* 1: Título */
-    th:nth-child(2), td:nth-child(2) { width: 28% !important; } /* 2: Autor */
-    th:nth-child(3), td:nth-child(3) { width: 12% !important; } /* 3: Cantidad (↑ subir este %) */
-    th:nth-child(4), td:nth-child(4) {
-      width: 22% !important;          /* 4: ISBN */
-      border-right: 1px solid black !important;
-      white-space: normal;
+    th:nth-child(1), td:nth-child(1) { width: 34% !important; } /* Título */
+    th:nth-child(2), td:nth-child(2) { width: 22% !important; } /* Autor */
+    th:nth-child(3), td:nth-child(3) { width: 16% !important; } /* Editorial */
+    th:nth-child(4), td:nth-child(4) { width: 10% !important; } /* Cantidad */
+    th:nth-child(5), td:nth-child(5) {
+      width: 18% !important;         /* ISBN */
+      border-right: 1px solid black !important; white-space: normal;
     }
 
-    /* ——— Estética filas ——— */
     tr:nth-child(even) { background-color: #f2f2f2; }
     tr:hover { background-color: #e8f4fd; }
 
-    /* ——— Modo impresión ——— */
     @media print {
       body { margin: 0.5cm; }
       table {
-        font-size: 8pt;
-        width: 100% !important;
-        max-width: 100% !important;
-        min-width: 100% !important;
-        table-layout: fixed;
-        page-break-inside: auto;
-        border: 1px solid black !important;
+        font-size: 8pt; width: 100% !important; max-width: 100% !important; min-width: 100% !important;
+        table-layout: fixed; page-break-inside: auto; border: 1px solid black !important;
       }
       th, td {
-        padding: 2px 4px;
-        white-space: normal;
-        color: black !important;
-        border: 1px solid black !important;
+        padding: 2px 4px; white-space: normal; color: black !important; border: 1px solid black !important;
+        hyphens: auto; -webkit-hyphens: auto; -ms-hyphens: auto; overflow-wrap: anywhere; word-break: normal !important;
+      }
+      th { background-color: white !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      tr { page-break-inside: avoid; page-break-after: auto; }
 
-        /* mantener cortes correctos también en impresión */
-        hyphens: auto;
-        -webkit-hyphens: auto;
-        -ms-hyphens: auto;
-        overflow-wrap: anywhere;
-        word-break: normal !important;
-      }
-      th {
-        background-color: white !important;
-        -webkit-print-color-adjust: exact;
-        print-color-adjust: exact;
-      }
-      tr {
-        page-break-inside: avoid;
-        page-break-after: auto;
-      }
-
-      /* ——— Anchos de columnas en IMPRESIÓN (4 columnas) ———
-         1: TÍTULO
-         2: AUTOR
-         3: CANTIDAD   ⬅️ AUMENTAR % AQUÍ para hacerla más ancha en impresión
-         4: ISBN
-      */
-      th:nth-child(1), td:nth-child(1) { width: 40% !important; } /* 1: Título */
-      th:nth-child(2), td:nth-child(2) { width: 26% !important; } /* 2: Autor */
-      th:nth-child(3), td:nth-child(3) { width: 14% !important; } /* 3: Cantidad (↑ subir este %) */
-      th:nth-child(4), td:nth-child(4) {
-        width: 20% !important;        /* 4: ISBN */
-        border-right: 1px solid black !important;
-        white-space: normal;
+      /* —— Anchos IMPRESIÓN (5 columnas) —— */
+      th:nth-child(1), td:nth-child(1) { width: 36% !important; } /* Título */
+      th:nth-child(2), td:nth-child(2) { width: 22% !important; } /* Autor */
+      th:nth-child(3), td:nth-child(3) { width: 16% !important; } /* Editorial */
+      th:nth-child(4), td:nth-child(4) { width: 10% !important; } /* Cantidad */
+      th:nth-child(5), td:nth-child(5) {
+        width: 16% !important;        /* ISBN */
+        border-right: 1px solid black !important; white-space: normal;
       }
     }
   </style>
@@ -750,29 +638,17 @@ const PedidoForm = () => {
     <h2 class="titulo">Librería Charles</h2>
     <h3>Las Varillas, Córdoba - 9 de julio 346</h3>
     <h4>Teléfonos: 03533-420183 / Móvil: 03533-682652</h4>
-
-    <!-- Línea con fecha y TOTAL de libros (suma de la columna "Cantidad") -->
-   <h5>Fecha de impresión: ${fechaImpresion} &nbsp;|&nbsp; Cantidad de libros en página: ${totalLibros}</h5>
-
-    <!-- Si preferís "cantidad de filas", cambia totalLibros por: 
-         ${filtrarPorBusqueda(pedidosFiltrados).length} (o pedidosFiltrados.length si no usás el filtro)
-    -->
+    <h5>Fecha de impresión: ${fechaImpresion} &nbsp;|&nbsp; Cantidad de libros en página: ${totalLibros}</h5>
   </div>
 
-  <!-- Aquí insertamos la tabla ya clonada y recortada (Título, Autor, Cantidad, ISBN) -->
   ${tablaClonada.outerHTML}
 </body>
 </html>
-
   `);
     ventana.document.close();
-
-
-
-
-
     ventana.print();
   };
+
   const handleEditarPedido = async (id) => {
     const pedido = todosLosPedidos.find(p => p.id === id);
     if (pedido) {
@@ -793,6 +669,7 @@ const PedidoForm = () => {
       setIsbn(pedido.isbn || "");
       setTelefonoCliente(pedido.telefonoCliente || "");
       setEditandoId(id);
+      setEditorialLibro(pedido.editorial || "");
 
       // 4. Navegar al formulario (si es necesario)
       navigate("/pedidos"); // Asegúrate que esta ruta sea correcta para tu formulario
@@ -1154,27 +1031,53 @@ const PedidoForm = () => {
           />
 
 
+          {/* REEMPLAZA TODO TU BLOQUE POR ESTO */}
+          <div className="row">
+            <div className="col-md-6" style={{ marginBottom: '20px' }}>
+              <label
+                style={{ fontWeight: 'bold', color: 'black', display: 'block', marginBottom: '5px', marginTop: '15px', fontSize: "22px", fontFamily: 'Roboto' }}>
+                Autor
+              </label>
+              <input
+                ref={el => inputRef.current[3] = el}
+                onKeyDown={(e) => handleKeyDown(e, 3)}
+                type="text"
+                value={autorLibro}
+                onChange={(e) => setAutorLibro(e.target.value)}
+                placeholder="Ingrese el autor del libro"
+                style={{
+                  width: '100%',
+                  padding: '10px',
+                  border: '2px solid #95a5a6',
+                  borderRadius: '14px',
+                  fontSize: '20px',
+                  fontWeight: '700'
+                }}
+              />
+            </div>
 
-          <div style={{ marginBottom: '20px' }}>
-            <label style={{ fontWeight: 'bold', color: 'black', display: 'block', marginBottom: '5px', marginTop: '15px', fontSize: "22px", fontFamily: 'Roboto' }}>
-              Autor
-            </label>
-            <input
-              ref={el => inputRef.current[3] = el}
-              onKeyDown={(e) => handleKeyDown(e, 3)}
-              type="text"
-              value={autorLibro}
-              onChange={(e) => setAutorLibro(e.target.value)}
-              placeholder="Ingrese el autor del libro"
-              style={{
-                width: '100%',
-                padding: '10px',
-                border: '2px solid #95a5a6',
-                borderRadius: '14px',
-                fontSize: '20px',
-                fontWeight: '700'
-              }}
-            />
+            <div className="col-md-6" style={{ marginBottom: '20px' }}>
+              <label
+                style={{ fontWeight: 'bold', color: 'black', display: 'block', marginBottom: '5px', marginTop: '15px', fontSize: "22px", fontFamily: 'Roboto' }}>
+                Editorial
+              </label>
+              <input
+                ref={el => inputRef.current[4] = el}
+                onKeyDown={(e) => handleKeyDown(e, 4)}
+                type="text"
+                value={editorialLibro}
+                onChange={(e) => setEditorialLibro(e.target.value)}
+                placeholder="Ingrese la editorial del libro"
+                style={{
+                  width: '100%',
+                  padding: '10px',
+                  border: '2px solid #95a5a6',
+                  borderRadius: '14px',
+                  fontSize: '20px',
+                  fontWeight: '700'
+                }}
+              />
+            </div>
           </div>
 
 
@@ -1183,8 +1086,8 @@ const PedidoForm = () => {
             <div className="col-6 col-md-1">
               <label className="fw-bold text-black d-block mb-1" style={{ fontSize: '22px', fontFamily: 'Roboto' }}>Cantidad</label>
               <input
-                ref={el => inputRef.current[4] = el}
-                onKeyDown={(e) => handleKeyDown(e, 4)}
+                ref={el => inputRef.current[5] = el}
+                onKeyDown={(e) => handleKeyDown(e, 5)}
                 type="number"
                 min="1"
                 value={cantidad}
@@ -1206,8 +1109,8 @@ const PedidoForm = () => {
             <div className="col-6 col-md-2">
               <label className="fw-bold text-black d-block mb-1" style={{ fontSize: '22px', fontFamily: 'Roboto' }}>Fecha</label>
               <input
-                ref={el => inputRef.current[5] = el}
-                onKeyDown={(e) => handleKeyDown(e, 5)}
+                ref={el => inputRef.current[6] = el}
+                onKeyDown={(e) => handleKeyDown(e, 6)}
                 type="text"
                 value={fecha}
                 onChange={(e) => setFecha(e.target.value)}
@@ -1228,8 +1131,8 @@ const PedidoForm = () => {
             <div className="col-6 col-md-2">
               <label className="fw-bold text-black d-block mb-1" style={{ fontSize: '22px', fontFamily: 'Roboto' }}>ISBN</label>
               <input
-                ref={el => inputRef.current[6] = el}
-                onKeyDown={(e) => handleKeyDown(e, 6)}
+                ref={el => inputRef.current[7] = el}
+                onKeyDown={(e) => handleKeyDown(e, 7)}
                 type="text"
                 value={isbn}
                 onChange={(e) => setIsbn(e.target.value)}
@@ -1249,8 +1152,8 @@ const PedidoForm = () => {
             <div className="col-6 col-md-1">
               <label className="fw-bold text-black d-block mb-1" style={{ fontSize: '22px', fontFamily: 'Roboto' }}>Seña</label>
               <input
-                ref={el => inputRef.current[7] = el}
-                onKeyDown={(e) => handleKeyDown(e, 7)}
+                ref={el => inputRef.current[8] = el}
+                onKeyDown={(e) => handleKeyDown(e, 8)}
                 type="text"
                 value={formatNumberWithDots(seña)}
                 onChange={(e) => setSenia(e.target.value.replace(/\D/g, ''))}
@@ -1272,8 +1175,8 @@ const PedidoForm = () => {
             <div className="col-12 col-md-6">
               <label className="fw-bold text-black d-block mb-1" style={{ fontSize: '22px', fontFamily: 'Roboto' }}>Comentario</label>
               <input
-                ref={el => inputRef.current[8] = el}
-                onKeyDown={(e) => handleKeyDown(e, 8)}
+                ref={el => inputRef.current[9] = el}
+                onKeyDown={(e) => handleKeyDown(e, 9)}
                 type="text"
                 value={comentario}
                 onChange={(e) => setComentario(e.target.value)}
@@ -1298,7 +1201,7 @@ const PedidoForm = () => {
 
           <div style={{ display: 'flex', gap: '10px', justifyContent: 'center', flexWrap: 'wrap' }}>
             <button
-              ref={ele => inputRef.current[9] = ele}
+              ref={ele => inputRef.current[10] = ele}
               onKeyDown={(e) => {
                 if (e.key === 'Enter') {
                   e.preventDefault();
@@ -1322,7 +1225,7 @@ const PedidoForm = () => {
               {loading ? "Guardando..." : editandoId ? "Actualizar Pedido" : "Guardar Pedido"}
             </button>
             <button
-              ref={ele => inputRef.current[10] = ele}
+              ref={ele => inputRef.current[11] = ele}
               onClick={handleImprimirClick}
               style={{
                 backgroundColor: '#0c62beff',
@@ -1399,10 +1302,16 @@ const PedidoForm = () => {
                     <strong>Cliente:</strong> <span className="valor">{nombreCliente}</span>
                   </div>
                   <div className="campo">
+                    <strong>Teléfono:</strong> <span className="valor">{telefonoCliente}</span>
+                  </div>
+                  <div className="campo">
                     <strong>Título:</strong> <span className="valor">{tituloLibro}</span>
                   </div>
                   <div className="campo">
                     <strong>Autor:</strong> <span className="valor">{autorLibro}</span>
+                  </div>
+                  <div className="campo">
+                    <strong>Editorial:</strong> <span className="valor">{editorialLibro}</span>
                   </div>
                   <div className="campo">
                     <strong>Cantidad:</strong> <span className="valor">{cantidad}</span>
@@ -1421,6 +1330,7 @@ const PedidoForm = () => {
                   </div>
                 </div>
               </div>
+
             </div>
           ))}
         </div>
@@ -1694,20 +1604,21 @@ const PedidoForm = () => {
                 >
                   <thead>
                     <tr style={{ backgroundColor: '#0655a8ff', color: 'white' }}>
-                      <th style={{ padding: '12px', border: '1px solid #ddd' }}>Cliente</th>
-                      <th style={{ padding: '12px', border: '1px solid #ddd' }}>Teléfono</th>
-                      <th style={{ padding: '12px', border: '1px solid #ddd' }}>Título</th>
-                      <th style={{ padding: '12px', border: '1px solid #ddd' }}>Autor</th>
-                      <th style={{ padding: '12px', border: '1px solid #ddd' }}>Cantidad</th>
-                      <th style={{ padding: '12px', border: '1px solid #ddd' }}>ISBN</th>
-                      <th style={{ padding: '12px', border: '1px solid #ddd' }}>Fecha</th>
-                      <th style={{ padding: '12px', border: '1px solid #ddd' }}>Fecha Pedido</th> {/* ⬅️ NUEVO */}
-                      <th style={{ padding: '12px', border: '1px solid #ddd' }}>Seña</th>
-                      <th style={{ padding: '12px', border: '1px solid #ddd' }}>Comentarios</th>
-                      <th style={{ padding: '12px', border: '1px solid #ddd' }}>Acciones</th>
-
+                      <th style={{ padding: '12px', border: '1px solid #ddd' }}>Cliente</th>           {/* 1 */}
+                      <th style={{ padding: '12px', border: '1px solid #ddd' }}>Teléfono</th>          {/* 2 */}
+                      <th style={{ padding: '12px', border: '1px solid #ddd' }}>Título</th>            {/* 3 */}
+                      <th style={{ padding: '12px', border: '1px solid #ddd' }}>Autor</th>             {/* 4 */}
+                      <th style={{ padding: '12px', border: '1px solid #ddd' }}>Editorial</th>         {/* 5 (NUEVO) */}
+                      <th style={{ padding: '12px', border: '1px solid #ddd' }}>Cantidad</th>          {/* 6 (se corre) */}
+                      <th style={{ padding: '12px', border: '1px solid #ddd' }}>ISBN</th>              {/* 7 */}
+                      <th style={{ padding: '12px', border: '1px solid #ddd' }}>Fecha</th>             {/* 8 */}
+                      <th style={{ padding: '12px', border: '1px solid #ddd' }}>Fecha Pedido</th>      {/* 9 */}
+                      <th style={{ padding: '12px', border: '1px solid #ddd' }}>Seña</th>              {/* 10 */}
+                      <th style={{ padding: '12px', border: '1px solid #ddd' }}>Comentarios</th>       {/* 11 */}
+                      <th style={{ padding: '12px', border: '1px solid #ddd' }}>Acciones</th>          {/* 12 */}
                     </tr>
                   </thead>
+
                   <tbody>
                     {filtrarPorBusqueda(pedidosFiltrados).length > 0 ? (
                       filtrarPorBusqueda(pedidosFiltrados).map((pedido, idx) => (
@@ -1745,6 +1656,13 @@ const PedidoForm = () => {
                           </td>
                           <td style={{
                             padding: '12px', border: '1px solid #adacac', width: '100px',
+                            maxWidth: '180px', wordWrap: 'break-word',
+                            whiteSpace: 'normal', overflowWrap: 'break-word', color: 'black', fontWeight: 'bold'
+                          }}>
+                            {pedido.editorial || '-'}     {/* ⬅️ NUEVO: EDITORIAL */}
+                          </td>
+                          <td style={{
+                            padding: '12px', border: '1px solid #adacac', width: '100px',
                             maxWidth: '100px', wordWrap: 'break-word',
                             whiteSpace: 'normal', overflowWrap: 'break-word', color: 'black', fontWeight: 'bold'
                           }}>
@@ -1763,8 +1681,6 @@ const PedidoForm = () => {
                           <td style={{ padding: '12px', border: '1px solid #adacac', color: 'black', fontWeight: 'bold' }}>
                             {pedido.estado === 'VIENE' && pedido.fecha_viene ? formatearFechaArgentina(pedido.fecha_viene) : '-'}
                           </td>
-
-
                           <td style={{ padding: '12px', border: '1px solid #adacac', color: 'black', fontWeight: 'bold' }}>
                             ${pedido.seña || 0}
                           </td>
@@ -1775,6 +1691,7 @@ const PedidoForm = () => {
                           }}>
                             {pedido.comentario || '-'}
                           </td>
+
                           <td style={{ padding: '12px', border: '1px solid #adacac', display: 'flex', gap: '5px' }}>
                             <button
                               onClick={() => handleEditarPedido(pedido.id)}

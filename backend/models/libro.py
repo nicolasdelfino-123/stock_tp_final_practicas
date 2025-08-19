@@ -51,6 +51,7 @@ class Pedido(Base):
     titulo: Mapped[str] = mapped_column(String(800), nullable=False)
     telefono: Mapped[str] = mapped_column(String(90), nullable=True)
     autor: Mapped[str] = mapped_column(String(800), nullable=False)
+    editorial: Mapped[str] = mapped_column(String(250), nullable=True)
     comentario: Mapped[str] = mapped_column(String(1000), nullable=True)
     cantidad: Mapped[int] = mapped_column(Integer, nullable=False)
     isbn: Mapped[str] = mapped_column(String(60), nullable=True)

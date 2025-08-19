@@ -38,11 +38,17 @@ export default function PedidosDigital() {
     const [fechaDesde, setFechaDesde] = useState("");
     const [fechaHasta, setFechaHasta] = useState("");
     const [filtroEstado, setFiltroEstado] = useState("TODOS"); // "TODOS" | "VIENE" | "NO_VIENE"
+    // 👇 NUEVO: guarda el primer proveedor elegido en VIENE durante la sesión actual
+    const [proveedorPorDefecto, setProveedorPorDefecto] = useState("");
+
 
     // NUEVO: tras "Resetear", en la vista TODOS ocultamos los que están en VIENE
     const [excluirVienen, setExcluirVienen] = useState(false);
     // Añadir al inicio del componente, junto a los otros estados
     const [pedidosMarcadosRecien, setPedidosMarcadosRecien] = useState(new Set());
+
+    useEffect(() => { setExcluirVienen(true); }, []);
+
 
     // Cargar pedidos al montar (sin "mostrarOcultos")
     useEffect(() => {
@@ -167,39 +173,33 @@ export default function PedidosDigital() {
     //   pero NO guarda todavía: espera a que el usuario elija un motivo.
     // - Para cualquier otro estado: actualiza en memoria y luego persiste inmediatamente.
     const setEstado = async (id, nuevoEstado) => {
-        // Marca en sessionStorage que debemos preservar estados (banderita usada en otra parte de la app).
         sessionStorage.setItem("pd_preservarEstados", "1");
 
-        // Busca el pedido actual en el array 'pedidos' por id.
         const pedidoActual = pedidos.find(p => p.id === id);
 
-        // Toma el motivo ya existente (si lo hubiera); si no hay, usa cadena vacía.
-        const motivo = pedidoActual?.motivo || "";
-
-        // Esta funcion actualiza el estado del pedido en memoria.
-        // Si el nuevo estado es "VIENE", lo marca como tal y limpia el motivo
         if (nuevoEstado === "VIENE") {
             setPedidosMarcadosRecien(prev => new Set(prev).add(id));
-            //INICIANDO CAMBIOSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS
+
             const ahoraISO = new Date().toISOString();
+            // 👇 si ya hay proveedorPorDefecto, lo aplicamos automáticamente
+            const motivoAplicado = proveedorPorDefecto || "";
 
             setPedidos(prev => prev.map(p =>
-                p.id === id ? { ...p, estado: "VIENE", motivo: "", fecha_viene: ahoraISO } : p
+                p.id === id ? { ...p, estado: "VIENE", motivo: motivoAplicado, fecha_viene: ahoraISO } : p
             ));
 
             await actions.actualizarPedido(id, {
                 ...pedidoActual,
                 estado: "VIENE",
-                motivo: "",
+                motivo: motivoAplicado,
                 fecha_viene: ahoraISO
             });
-
 
             return;
         }
 
-
-        // Para otros estados: actualiza el estado y conserva el motivo que tenía el pedido.
+        // para otros estados:
+        const motivo = pedidoActual?.motivo || "";
         const patch = (nuevoEstado === "NO_VIENE")
             ? { estado: "NO_VIENE", motivo, fecha_viene: "" }
             : { estado: nuevoEstado, motivo };
@@ -208,15 +208,16 @@ export default function PedidosDigital() {
             p.id === id ? { ...p, ...patch } : p
         ));
 
-        await actions.actualizarPedido(id, {
-            ...pedidoActual,
-            ...patch
-        });
-
+        await actions.actualizarPedido(id, { ...pedidoActual, ...patch });
     };
 
     const setMotivoViene = async (id, motivo) => {
         sessionStorage.setItem("pd_preservarEstados", "1");
+
+        // 👇 si es el primer motivo elegido en la sesión, lo guardamos como defecto
+        if (!proveedorPorDefecto && motivo) {
+            setProveedorPorDefecto(motivo);
+        }
 
         const pedidoActual = pedidos.find(p => p.id === id);
         const fechaV = pedidoActual?.fecha_viene || new Date().toISOString();
@@ -232,10 +233,10 @@ export default function PedidosDigital() {
             fecha_viene: fechaV
         });
 
-
-        setPedidosMarcadosRecien(prev => new Set(prev).add(id)); // Añadir a pedidos recientes
-        // Resto del código igual...
+        setPedidosMarcadosRecien(prev => new Set(prev).add(id));
     };
+    //Esta funcion cuenta cuantos pedidos tienen el estado NO_VIENE
+    const totalNoVienen = pedidos.filter(p => (p.estado || "") === "NO_VIENE").length;
 
     const setMotivoNoViene = async (id, motivo) => {
         sessionStorage.setItem("pd_preservarEstados", "1");
@@ -268,11 +269,11 @@ export default function PedidosDigital() {
         pedidos.filter(p => (p.estado || "") === "VIENE"),
         [pedidos]);
 
-    // No vienen filtrados por fechas y búsqueda
+    /* // No vienen filtrados por fechas y búsqueda
     const pedidosNoVienen = useMemo(
         () => pedidosFiltrados.filter(p => (p.estado || "") === "NO_VIENE"),
         [pedidosFiltrados]
-    );
+    ); */
 
     const imprimirLista = (lista, titulo) => {
         if (lista.length === 0) {
@@ -324,7 +325,7 @@ export default function PedidosDigital() {
         <th>Título</th>
         <th>Autor</th>
         <th>Cant.</th>
-        <th>Motivo (si NO VIENE)</th>
+        <th>Viene de:</th>
       </tr>
     </thead>
     <tbody>
@@ -628,6 +629,8 @@ export default function PedidosDigital() {
 
                                     // Limpiar pedidos marcados recientemente
                                     setPedidosMarcadosRecien(new Set());
+                                    setProveedorPorDefecto(""); // 👈 limpia el proveedor por defecto al comenzar nuevo pedido
+
 
                                     // Paso 3) Ajusta la vista (código existente)
                                     setFiltroEstado("TODOS");
@@ -678,20 +681,7 @@ export default function PedidosDigital() {
                     >
                         Imprimir los que VIENEN
                     </button>
-                    <button
-                        onClick={() => imprimirLista(pedidosNoVienen, "Pedidos que NO VIENEN")}
-                        style={{
-                            backgroundColor: "#6c757d",
-                            color: "white",
-                            border: "none",
-                            padding: "10px 20px",
-                            borderRadius: "6px",
-                            cursor: "pointer",
-                            fontWeight: "bold"
-                        }}
-                    >
-                        Imprimir los que NO VIENEN
-                    </button>
+
 
                     {/* NUEVO BOTÓN */}
                     <button
@@ -702,8 +692,9 @@ export default function PedidosDigital() {
                     </button>
 
                     <span style={{ alignSelf: "center", fontWeight: "bold", color: "#333" }}>
-                        Total en vista: {pedidosFiltrados.length} — VIENEN: {totalVienen} — NO VIENEN: {pedidosNoVienen.length} - SIN MARCAR: {pedidosFiltrados.filter(p => !p.estado).length}
+                        Total en vista: {pedidosFiltrados.length} — VIENEN: {totalVienen} — NO VIENEN: {totalNoVienen} - SIN MARCAR: {pedidosFiltrados.filter(p => !p.estado).length}
                     </span>
+
                 </div>
 
                 {/* Tabla */}
