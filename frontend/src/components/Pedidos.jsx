@@ -1001,12 +1001,12 @@ const PedidoForm = () => {
                   fontWeight: 700,                // ← estaba "700px"
                   textShadow: '4px 4px 22px rgba(0,0,0,0.9)',
                   lineHeight: 1,                  // compacta el alto
-                  transform: 'translateY(-7px)'  // ← sube el título (ajustá -18 a gusto)
+                  transform: 'translateY(-3px)'  // ← sube el título (ajustá -18 a gusto)
                 }}
               >
                 <strong>Formulario de Pedido</strong>
               </h2>
-          </div>
+            </div>
           </div>
 
 

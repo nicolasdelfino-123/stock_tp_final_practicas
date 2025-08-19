@@ -598,7 +598,7 @@ const AgregarLibro = () => {
     };
   }, [mensaje]);
 
-  const fondoURL = "/fondo-3.jpg";
+  const fondoURL = "/fondoo.webp"
 
 
 

@@ -220,7 +220,7 @@ const BajarLibro = () => {
     setResultado("");
   };
 
-  const fondoURL = "/fondo-3.jpg"
+  const fondoURL = "/fondoo.webp"
 
   // Solo este useEffect necesita cambio mínimo en BajarLibro.jsx
   // Busca esta parte en tu componente y reemplázala:
