@@ -219,7 +219,8 @@ const PedidoForm = () => {
   const handleImprimirVienen = () => {
     // Base: lo que estás viendo en el modal con el filtro de búsqueda
     const visibles = filtrarPorBusqueda(pedidosFiltrados);
-    const lista = visibles.filter(p => (p.estado || "") === "VIENE");
+    const lista = visibles.filter(p => (p.estado || "") === "VIENE" && !p.oculto);
+
 
     if (!lista.length) {
       alert("No hay pedidos marcados como VIENE para imprimir.");
@@ -754,6 +755,63 @@ const PedidoForm = () => {
       });
     }
   };
+
+  // ⬇️ DEBAJO de handleEditarPedido
+  const handleOcultarPedido = async (id) => {
+    if (!window.confirm("¿Ocultar este pedido? (no se elimina de la base)")) return;
+    setLoading(true);
+    try {
+      const result = await actions.ocultarPedidos([id]); // ya existe en actions
+      if (result.success) {
+        alert("Pedido ocultado");
+        await cargarPedidos(); // recarga visibles
+      } else {
+        alert(`Error al ocultar: ${result.error}`);
+      }
+    } catch (error) {
+      console.error("Error al ocultar:", error);
+      alert("Error al conectar con el servidor");
+    }
+    setLoading(false);
+  };
+
+  // ⬇️ DEBAJO de handleOcultarPedido
+  const handleRecuperarPedido = async (pedido) => {
+    // Usamos actualizarPedido con TODOS los datos actuales + oculto:false
+    // para no pisar campos con ""/0 (por cómo arma el body tu action).
+    setLoading(true);
+    try {
+      const bodyParaActualizar = {
+        nombreCliente: pedido.cliente_nombre,
+        tituloLibro: pedido.titulo,
+        telefonoCliente: pedido.telefonoCliente || "",
+        autorLibro: pedido.autor,
+        editorial: pedido.editorial || "",
+        cantidad: pedido.cantidad,
+        fecha: pedido.fecha,               // ISO del backend -> ok
+        seña: pedido.seña || 0,
+        comentario: pedido.comentario || "",
+        isbn: pedido.isbn || "",
+        fecha_viene: pedido.fecha_viene || null,
+        estado: pedido.estado || "",
+        motivo: pedido.motivo || "",
+        oculto: false                      // 🚀 clave para recuperar
+      };
+
+      const result = await actions.actualizarPedido(pedido.id, bodyParaActualizar);
+      if (result.success) {
+        alert("Pedido recuperado");
+        await cargarPedidos(); // vuelve a mostrar visibles
+      } else {
+        alert(`Error al recuperar: ${result.error}`);
+      }
+    } catch (error) {
+      console.error("Error al recuperar:", error);
+      alert("Error al conectar con el servidor");
+    }
+    setLoading(false);
+  };
+
 
 
   const handleEliminarPedido = async (id) => {
@@ -1581,11 +1639,13 @@ const PedidoForm = () => {
                 {/* 👇 Nueva fila con los dos botones, uno al lado del otro */}
                 <div style={{ display: 'flex', gap: '10px', alignItems: 'center', marginTop: '6px', marginBottom: '10px' }}>
                   <button
-                    onClick={() => {
-                      setPedidosFiltrados(todosLosPedidos);
+                    onClick={async () => {
+                      await cargarPedidos(); // recarga VISIBLES desde el backend
+                      setTerminoBusqueda("");
                       setFechaDesde("");
                       setFechaHasta("");
                     }}
+
                     style={{
                       backgroundColor: '#ffc107',
                       color: 'black',
@@ -1598,6 +1658,33 @@ const PedidoForm = () => {
                   >
                     <strong>Mostrar Todos</strong>
                   </button>
+                  <button
+                    onClick={async () => {
+                      const res = await actions.obtenerPedidos(true); // 🔎 trae SOLO ocultos
+                      if (res.success) {
+                        setTodosLosPedidos(res.pedidos);
+                        setPedidosFiltrados(res.pedidos);
+                        setTerminoBusqueda("");
+                        setFechaDesde("");
+                        setFechaHasta("");
+                        alert(`Mostrando ${res.pedidos.length} pedidos ocultos`);
+                      } else {
+                        alert(`Error al cargar ocultos: ${res.error}`);
+                      }
+                    }}
+                    style={{
+                      backgroundColor: '#6c757d',
+                      color: 'white',
+                      border: 'none',
+                      padding: '10px 20px',
+                      borderRadius: '5px',
+                      cursor: 'pointer',
+                      marginBottom: 0,
+                    }}
+                  >
+                    <strong>Ver Ocultos</strong>
+                  </button>
+
 
                   <button
                     onClick={() => {
@@ -1723,9 +1810,14 @@ const PedidoForm = () => {
                   <tbody>
                     {filtrarPorBusqueda(pedidosFiltrados).length > 0 ? (
                       filtrarPorBusqueda(pedidosFiltrados).map((pedido, idx) => (
-                        <tr key={pedido.id || idx} style={{
-                          backgroundColor: pedido.estado === "VIENE" ? '#80e06cff' : 'white'
-                        }}>
+                        <tr
+                          key={pedido.id || idx}
+                          style={{
+                            backgroundColor: pedido.estado === "VIENE" ? '#80e06cff' : 'white',
+                            opacity: pedido.oculto ? 0.55 : 1
+                          }}
+                        >
+
                           <td style={{
                             padding: '12px', border: '1px solid #270d0dff', width: '100px',
                             maxWidth: '180px', wordWrap: 'break-word',
@@ -1808,22 +1900,44 @@ const PedidoForm = () => {
                             >
                               Editar
                             </button>
+
+                            {/* Ocultar (soft delete) */}
                             <button
-                              onClick={() => handleEliminarPedido(pedido.id)}
+                              onClick={() => handleOcultarPedido(pedido.id)}
+                              disabled={pedido.oculto === true}
+                              title={pedido.oculto ? "Ya está oculto" : "Ocultar"}
                               style={{
-                                backgroundColor: '#dc3545',
+                                backgroundColor: pedido.oculto ? '#adb5bd' : '#dc3545',
                                 color: 'white',
                                 border: 'none',
                                 padding: '5px 10px',
                                 borderRadius: '3px',
-                                cursor: 'pointer',
+                                cursor: pedido.oculto ? 'not-allowed' : 'pointer',
                                 fontWeight: 'bold'
-
                               }}
                             >
-                              Eliminar
+                              Ocultar
+                            </button>
+
+                            {/* Recuperar */}
+                            <button
+                              onClick={() => handleRecuperarPedido(pedido)}
+                              disabled={pedido.oculto !== true}
+                              title={pedido.oculto ? "Recuperar (volver a mostrar)" : "Sólo para pedidos ocultos"}
+                              style={{
+                                backgroundColor: pedido.oculto ? '#198754' : '#adb5bd',
+                                color: 'white',
+                                border: 'none',
+                                padding: '5px 10px',
+                                borderRadius: '3px',
+                                cursor: pedido.oculto ? 'pointer' : 'not-allowed',
+                                fontWeight: 'bold'
+                              }}
+                            >
+                              Recuperar
                             </button>
                           </td>
+
                         </tr>
                       ))
                     ) : (

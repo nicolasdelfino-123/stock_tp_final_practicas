@@ -600,6 +600,7 @@ export default function PedidosDigital() {
                             No vienen
                         </button>
 
+
                         {/* Botón Resetear: deja en TODOS PERO excluyendo los que están en VIENE */}
                         <div className="boton-reset-div d-flex">
                             <button
