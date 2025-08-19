@@ -854,12 +854,29 @@ export default function PedidosDigital() {
                                                     >
                                                         VIENE
                                                     </button>
-                                                    <button
-                                                        onClick={() => setEstado(p.id, "NO_VIENE")}
-                                                        style={btnNo}
-                                                    >
-                                                        NO VIENE
-                                                    </button>
+                                                    {/* Botón ROJO: cambia solo en la vista VIENEN */}
+                                                    {filtroEstado === "VIENE" ? (
+                                                        <button
+                                                            onClick={() => {
+                                                                const ok = window.confirm(
+                                                                    "Ojo!! estás a punto de agregar el pedido a la lista para pedirlo de nuevo.\n\n¿Confirmás?"
+                                                                );
+                                                                if (!ok) return;               // Cancelar: no hace nada
+                                                                setEstado(p.id, "NO_VIENE");   // Aceptar: comportamiento actual
+                                                            }}
+                                                            style={btnNo}
+                                                        >
+                                                            NO TOCAR
+                                                        </button>
+                                                    ) : (
+                                                        <button
+                                                            onClick={() => setEstado(p.id, "NO_VIENE")}
+                                                            style={btnNo}
+                                                        >
+                                                            NO VIENE
+                                                        </button>
+                                                    )}
+
                                                 </div>
                                             </td>
                                         </tr>
