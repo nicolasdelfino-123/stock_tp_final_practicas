@@ -215,6 +215,79 @@ const PedidoForm = () => {
   };
 
 
+  // NUEVO: imprime solo los pedidos que VIENEN usando la vista actual (con búsqueda aplicada)
+  const handleImprimirVienen = () => {
+    // Base: lo que estás viendo en el modal con el filtro de búsqueda
+    const visibles = filtrarPorBusqueda(pedidosFiltrados);
+    const lista = visibles.filter(p => (p.estado || "") === "VIENE");
+
+    if (!lista.length) {
+      alert("No hay pedidos marcados como VIENE para imprimir.");
+      return;
+    }
+
+    const rows = lista.map((p) => `
+    <tr>
+      <td>${p.cliente_nombre || "-"}</td>
+      <td>${p.titulo || "-"}</td>
+      <td>${p.autor || "-"}</td>
+      <td>${p.editorial || "-"}</td>
+      <td style="text-align:center">${p.cantidad || 1}</td>
+      <td>${p.motivo || "-"}</td>
+    </tr>
+  `).join("");
+
+    const vent = window.open("", "_blank");
+    const fechaImpresion = new Date().toLocaleDateString('es-AR');
+    const totalLibros = lista.length;
+
+    vent.document.write(`
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Pedidos que VIENEN</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 12px; }
+    h2 { margin: 0 0 8px 0; }
+    table { border-collapse: collapse; width: 100%; font-size: 12px; }
+    th, td { border: 1px solid #000; padding: 6px; }
+    th { background: #eee; }
+    @media print {
+      body { margin: 8mm; }
+      th, td { border: 1px solid #000; }
+    }
+  </style>
+</head>
+<body>
+  <h2>Pedidos que VIENEN</h2>
+  <h5>Fecha de impresión: ${fechaImpresion} &nbsp;|&nbsp; Cantidad de títulos en página: ${totalLibros}</h5>
+  <table>
+    <thead>
+      <tr>
+        <th>Cliente</th>
+        <th>Título</th>
+        <th>Autor</th>
+        <th>Editorial</th>
+        <th>Cant.</th>
+        <th>Viene de:</th>
+      </tr>
+    </thead>
+    <tbody>
+      ${rows}
+    </tbody>
+  </table>
+  <script>
+    setTimeout(() => { window.print(); window.close(); }, 300);
+  </script>
+</body>
+</html>
+  `);
+    vent.document.close();
+  };
+
+
+
   const guardadoEnEstaImpresion = useRef(false);
   const editadoConExito = useRef(false);
   const ultimoPedidoGuardado = useRef(null); // <-- NUEVO
@@ -1401,32 +1474,53 @@ const PedidoForm = () => {
                 </button>
               </div>
 
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '10px',
+                  flexWrap: 'wrap',       // 👉 poné 'nowrap' si lo querés SIEMPRE en una sola línea
+                  marginTop: '6px'
+                }}
+              >
+                <input
+                  type="text"
+                  placeholder="🔍 Cliente, Libro, Autor o ISBN"
+                  value={terminoBusqueda}
+                  onChange={(e) => setTerminoBusqueda(e.target.value)}
+                  style={{
+                    padding: "12px 12px",
+                    borderRadius: "6px",
+                    border: "2px solid #95a5a6",
+                    minWidth: "260px",
+                    fontWeight: 700,
+                    lineHeight: "normal",
+                    height: "44px",
+                    boxSizing: "border-box"
+                  }}
+                />
 
 
-              {/* Filtro por fechas */}
-              <div style={{
-                display: 'flex',
-                gap: '10px',
-                marginBottom: '20px',
-                alignItems: 'center',
-                flexWrap: 'wrap'
-              }}>
-                <div>
-                  <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>Desde:</label>
+
+                {/* Desde */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <label style={{ margin: 0, fontWeight: 'bold' }}>Desde:</label>
                   <input
                     type="date"
                     value={fechaDesde}
                     onChange={(e) => setFechaDesde(e.target.value)}
-                    style={{ padding: '8px', borderRadius: '5px', border: '1px solid #ddd' }}
+                    style={{ padding: '8px', borderRadius: '5px', border: '1px solid #ddd', height: '44px' }}
                   />
                 </div>
-                <div>
-                  <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>Hasta:</label>
+
+                {/* Hasta */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <label style={{ margin: 0, fontWeight: 'bold' }}>Hasta:</label>
                   <input
                     type="date"
                     value={fechaHasta}
                     onChange={(e) => setFechaHasta(e.target.value)}
-                    style={{ padding: '8px', borderRadius: '5px', border: '1px solid #ddd' }}
+                    style={{ padding: '8px', borderRadius: '5px', border: '1px solid #ddd', height: '44px' }}
                   />
                 </div>
                 <button
@@ -1438,13 +1532,33 @@ const PedidoForm = () => {
                     padding: '10px 20px',
                     borderRadius: '5px',
                     cursor: 'pointer',
-                    height: '40px',
-                    alignSelf: 'flex-end'
+                    height: '44px'
                   }}
                 >
                   <strong>Filtrar por Fecha</strong>
-
                 </button>
+                <button
+                  onClick={() => {
+                    setTerminoBusqueda("");
+                    setFechaDesde("");
+                    setFechaHasta("");
+                    setPedidosFiltrados(todosLosPedidos);
+                  }}
+                  style={{
+                    backgroundColor: '#ec1814ff',
+                    color: 'white',
+                    border: 'none',
+                    padding: '10px 20px',
+                    borderRadius: '5px',
+                    cursor: 'pointer',
+                    height: '44px'
+                  }}
+                >
+                  <strong>Limpiar búsqueda</strong>
+                </button>
+
+
+
                 <button
                   onClick={() => navigate("/pedidos-digital")}
                   style={{
@@ -1454,130 +1568,116 @@ const PedidoForm = () => {
                     padding: '10px 20px',
                     borderRadius: '5px',
                     cursor: 'pointer',
-                    height: '40px',
-                    alignSelf: 'flex-end'
+                    height: '44px'
                   }}
                 >
                   <strong>Pedidos Ricardo (Digital)</strong>
                 </button>
-                <button
-                  onClick={() => {
-                    const vienen = todosLosPedidos.filter(p => p.estado === "VIENE");
-                    setPedidosFiltrados(vienen);
-                    setTerminoBusqueda("");
-                    setFechaDesde("");
-                    setFechaHasta("");
-                  }}
-                  style={{
-                    backgroundColor: '#28a745', // verde
-                    color: 'white',
-                    border: 'none',
-                    padding: '9px 20px',
-                    borderRadius: '5px',
-                    cursor: 'pointer',
-                    marginBottom: '-31px',
-                  }}
-                >
-                  <strong>Ver los que VIENEN</strong>
-                </button>
 
 
-              </div>
+                {/* 👇 Fuerza salto de línea dentro del contenedor flex existente */}
+                <div style={{ flexBasis: '100%' }} />
 
-              <div style={{
-                display: 'flex',
-                gap: '10px',
-                marginBottom: '20px',
-                flexWrap: 'wrap'
-              }}>
-                <button
-                  onClick={handleImprimirTodos}
-                  style={{
-                    backgroundColor: '#007bff',
-                    color: 'white',
-                    border: 'none',
-                    padding: '10px 20px',
-                    borderRadius: '5px',
-                    cursor: 'pointer'
-                  }}
-                >
-                  <strong>
-                    Imprimir Todos (Librería)
+                {/* 👇 Nueva fila con los dos botones, uno al lado del otro */}
+                <div style={{ display: 'flex', gap: '10px', alignItems: 'center', marginTop: '6px', marginBottom: '10px' }}>
+                  <button
+                    onClick={() => {
+                      setPedidosFiltrados(todosLosPedidos);
+                      setFechaDesde("");
+                      setFechaHasta("");
+                    }}
+                    style={{
+                      backgroundColor: '#ffc107',
+                      color: 'black',
+                      border: 'none',
+                      padding: '10px 20px',
+                      borderRadius: '5px',
+                      cursor: 'pointer',
+                      marginBottom: 0, // 👈 quitamos el negativo
+                    }}
+                  >
+                    <strong>Mostrar Todos</strong>
+                  </button>
 
-                  </strong>
-                </button>
-                <button
-                  onClick={handleImprimirParaRicardo}
-                  style={{
-                    backgroundColor: '#6c757d',
-                    color: 'white',
-                    border: 'none',
-                    padding: '10px 20px',
-                    borderRadius: '5px',
-                    cursor: 'pointer'
-                  }}
-                >
-                  <strong>
+                  <button
+                    onClick={() => {
+                      const vienen = todosLosPedidos.filter(p => p.estado === "VIENE");
+                      setPedidosFiltrados(vienen);
+                      setTerminoBusqueda("");
+                      setFechaDesde("");
+                      setFechaHasta("");
+                    }}
+                    style={{
+                      backgroundColor: '#28a745',
+                      color: 'white',
+                      border: 'none',
+                      padding: '9px 20px',
+                      borderRadius: '5px',
+                      cursor: 'pointer',
+                      marginBottom: 0, // 👈 quitamos el negativo
+                    }}
+                  >
+                    <strong>Ver los que VIENEN</strong>
+                  </button>
 
-                    Imprimir Para Ricardo
-                  </strong>
-                </button>
+                  <button
+                    onClick={handleImprimirTodos}
+                    style={{
+                      backgroundColor: '#007bff',
+                      color: 'white',
+                      border: 'none',
+                      padding: '10px 20px',
+                      borderRadius: '5px',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    <strong>
+                      Imprimir Filtrados (Librería)
 
-                <button
-                  onClick={() => {
-                    setPedidosFiltrados(todosLosPedidos);
-                    setFechaDesde("");
-                    setFechaHasta("");
-                  }}
-                  style={{
-                    backgroundColor: '#ffc107',
-                    color: 'black',
-                    border: 'none',
-                    padding: '10px 20px',
-                    borderRadius: '5px',
-                    cursor: 'pointer'
-                  }}
-                >
-                  <strong>
+                    </strong>
+                  </button>
 
-                    Mostrar Todos
-                  </strong>
-                </button>
+                  <button
+                    onClick={handleImprimirParaRicardo}
+                    style={{
+                      backgroundColor: '#6c757d',
+                      color: 'white',
+                      border: 'none',
+                      padding: '10px 20px',
+                      borderRadius: '5px',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    <strong>
 
-                <input
-                  type="text"
-                  placeholder="🔍 Cliente, Libro, Autor o ISBN"
-                  value={terminoBusqueda}
-                  onChange={(e) => setTerminoBusqueda(e.target.value)}
-                  style={{
-                    padding: '8px 12px',
-                    borderRadius: '4px',
-                    border: '2px solid black',
-                    width: '250px'
-                  }}
-                />
-                <button
-                  onClick={() => {
-                    setTerminoBusqueda("");
-                    setFechaDesde("");
-                    setFechaHasta("");
-                    setPedidosFiltrados(todosLosPedidos);
+                      Imprimir Filtrados Para Ricardo
+                    </strong>
+                  </button>
+                  <button
+                    onClick={handleImprimirVienen}
+                    style={{
+                      backgroundColor: '#198754',
+                      color: 'white',
+                      border: 'none',
+                      padding: '9px 20px',
+                      borderRadius: '5px',
+                      cursor: 'pointer',
+                      marginBottom: 0, // 👈 quitamos el negativo
 
-                  }}
-                  style={{
-                    backgroundColor: '#ec1814ff',
-                    color: 'white',
-                    border: 'none',
-                    padding: '10px 20px',
-                    borderRadius: '5px',
-                    cursor: 'pointer'
-                  }}
-                >
-                  <strong>
+                    }}
+                  >
+                    <strong>Imprimir los que VIENEN</strong>
+                  </button>
 
-                    Limpiar búsqueda
-                  </strong>
-                </button>
+
+
+
+
+                </div>
+
+
+
+
                 <span style={{
                   marginLeft: '10px',
                   fontWeight: 'bold',
@@ -1599,7 +1699,8 @@ const PedidoForm = () => {
                     width: '100%',
                     borderCollapse: 'collapse',
                     border: '1px solid #ddd',
-                    minWidth: '1200px' // Asegura que la tabla sea más ancha que el contenedor
+                    minWidth: '1200px', // Asegura que la tabla sea más ancha que el contenedor
+                    marginTop: '10px',
                   }}
                 >
                   <thead>
@@ -1626,14 +1727,14 @@ const PedidoForm = () => {
                           backgroundColor: pedido.estado === "VIENE" ? '#80e06cff' : 'white'
                         }}>
                           <td style={{
-                            padding: '12px', border: '1px solid #adacac', width: '100px',
+                            padding: '12px', border: '1px solid #270d0dff', width: '100px',
                             maxWidth: '180px', wordWrap: 'break-word',
                             whiteSpace: 'normal', overflowWrap: 'break-word', color: 'black', fontWeight: 'bold'
                           }}>
                             {pedido.cliente_nombre}
                           </td>
                           <td style={{
-                            padding: '12px', border: '1px solid #adacac', width: '100px',
+                            padding: '12px', border: '1px solid #3c2828ff', width: '100px',
                             maxWidth: '180px', wordWrap: 'break-word',
                             whiteSpace: 'normal', overflowWrap: 'break-word', color: 'black', fontWeight: 'bold'
                           }}>
@@ -1641,58 +1742,58 @@ const PedidoForm = () => {
                             {pedido.telefonoCliente ? pedido.telefonoCliente.toString() : '-'}
                           </td>
                           <td style={{
-                            padding: '12px', border: '1px solid #adacac', width: '100px',
+                            padding: '12px', border: '1px solid #3c2828ff', width: '100px',
                             maxWidth: '180px', wordWrap: 'break-word',
                             whiteSpace: 'normal', overflowWrap: 'break-word', color: 'black', fontWeight: 'bold'
                           }}>
                             {pedido.titulo}
                           </td>
                           <td style={{
-                            padding: '12px', border: '1px solid #adacac', width: '100px',
+                            padding: '12px', border: '1px solid #3c2828ff', width: '100px',
                             maxWidth: '180px', wordWrap: 'break-word',
                             whiteSpace: 'normal', overflowWrap: 'break-word', color: 'black', fontWeight: 'bold'
                           }}>
                             {pedido.autor}
                           </td>
                           <td style={{
-                            padding: '12px', border: '1px solid #adacac', width: '100px',
+                            padding: '12px', border: '1px solid #3c2828ff', width: '100px',
                             maxWidth: '180px', wordWrap: 'break-word',
                             whiteSpace: 'normal', overflowWrap: 'break-word', color: 'black', fontWeight: 'bold'
                           }}>
                             {pedido.editorial || '-'}     {/* ⬅️ NUEVO: EDITORIAL */}
                           </td>
                           <td style={{
-                            padding: '12px', border: '1px solid #adacac', width: '100px',
+                            padding: '12px', border: '1px solid #3c2828ff', width: '100px',
                             maxWidth: '100px', wordWrap: 'break-word',
                             whiteSpace: 'normal', overflowWrap: 'break-word', color: 'black', fontWeight: 'bold'
                           }}>
                             {pedido.cantidad || 1}
                           </td>
                           <td style={{
-                            padding: '12px', border: '1px solid #adacac', width: '100px',
+                            padding: '12px', border: '1px solid #3c2828ff', width: '100px',
                             maxWidth: '180px', wordWrap: 'break-word',
                             whiteSpace: 'normal', overflowWrap: 'break-word', color: 'black', fontWeight: 'bold'
                           }}>
                             {pedido.isbn || '-'}
                           </td>
-                          <td style={{ padding: '12px', border: '1px solid #adacac', color: 'black', fontWeight: 'bold' }}>
+                          <td style={{ padding: '12px', border: '1px solid #3c2828ff', color: 'black', fontWeight: 'bold' }}>
                             {formatearFechaArgentina(pedido.fecha)}
                           </td>
-                          <td style={{ padding: '12px', border: '1px solid #adacac', color: 'black', fontWeight: 'bold' }}>
+                          <td style={{ padding: '12px', border: '1px solid #3c2828ff', color: 'black', fontWeight: 'bold' }}>
                             {pedido.estado === 'VIENE' && pedido.fecha_viene ? formatearFechaArgentina(pedido.fecha_viene) : '-'}
                           </td>
-                          <td style={{ padding: '12px', border: '1px solid #adacac', color: 'black', fontWeight: 'bold' }}>
+                          <td style={{ padding: '12px', border: '1px solid #3c2828ff', color: 'black', fontWeight: 'bold' }}>
                             ${pedido.seña || 0}
                           </td>
                           <td style={{
-                            padding: '12px', border: '1px solid #adacac', width: '200px',
+                            padding: '12px', border: '1px solid #3c2828ff', width: '200px',
                             maxWidth: '210px', wordWrap: 'break-word',
                             whiteSpace: 'normal', overflowWrap: 'break-word', color: 'black', fontWeight: 'bold'
                           }}>
                             {pedido.comentario || '-'}
                           </td>
 
-                          <td style={{ padding: '12px', border: '1px solid #adacac', display: 'flex', gap: '5px' }}>
+                          <td style={{ padding: '12px', border: '1px solid #3c2828ff', display: 'flex', gap: '5px' }}>
                             <button
                               onClick={() => handleEditarPedido(pedido.id)}
                               style={{

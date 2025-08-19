@@ -449,9 +449,8 @@ export default function PedidosDigital() {
             backgroundImage: `linear-gradient(rgba(0,0,0,0.55), rgba(0,0,0,0.55)),url(${fondoURL})`,
             backgroundSize: "cover"
         }}>
-            <div className="d-flex align-items-center mb-3">
+            <div className="d-flex align-items-center mb-3" style={{ position: "relative", minHeight: 44 }}>
                 <button
-
                     type="button"
                     className="btn"
                     onClick={() => navigate(-1)}
@@ -464,8 +463,7 @@ export default function PedidosDigital() {
                         fontWeight: "bold",
                         height: "44px",
                         marginRight: "10px",
-
-
+                        zIndex: 2
                     }}
                     onMouseEnter={(e) => (e.target.style.backgroundColor = "#e4f00aff")}
                     onMouseLeave={(e) => (e.target.style.backgroundColor = "#fcf00cff")}
@@ -473,18 +471,22 @@ export default function PedidosDigital() {
                     Volver a pedidos cargados
                 </button>
 
-                <div style={{ textAlign: "center", flexGrow: 1 }}>
-                    <h2 style={{
+                <h2
+                    style={{
+                        position: "absolute",
+                        top: "50%",
+                        left: "50%",
+                        transform: "translate(-50%, -50%)",
+                        margin: 0,
                         color: "white",
-                        marginTop: "10px",
                         fontSize: "40px",
-                        fontWeight: "700",
+                        fontWeight: 700,
                         textShadow: "4px 4px 22px rgba(0,0,0,0.9)",
-
-                    }}>
-                        <strong>Pedidos Digital – Ricardo</strong>
-                    </h2>
-                </div>
+                        pointerEvents: "none" // opcional: evita capturar clicks
+                    }}
+                >
+                    <strong>Pedidos Digital – Ricardo</strong>
+                </h2>
             </div>
 
             <div style={{
