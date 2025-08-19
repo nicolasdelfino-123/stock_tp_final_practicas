@@ -44,7 +44,8 @@ def create_app():
     # --------------------------------------------------------
 
     engine = create_engine(app.config["SQLALCHEMY_DATABASE_URI"], echo=True)
-    Base.metadata.create_all(engine)
+    if os.getenv("FLASK_ENV") == "development":
+        Base.metadata.create_all(engine)
 
     Session = sessionmaker(autocommit=False, autoflush=False, bind=engine)
     app.session = Session()
