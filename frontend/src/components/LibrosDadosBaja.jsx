@@ -217,10 +217,10 @@ const titleStyle = {
     position: "absolute",
     left: "50%",
     transform: "translateX(-50%)",
-    fontSize: "24px",
+    fontSize: "44px",
     userSelect: "none",
     color: "#f0db4f",
-    textShadow: "0 0 8px #f0db4f",
+    textShadow: "0 0 2px #f0db4f",
     tableLayout: "fixed",
 };
 
@@ -287,6 +287,7 @@ const emptyStyle = {
     textAlign: "center",
     color: "#888",
     fontStyle: "italic",
+
 };
 
 const rowStyle = {
