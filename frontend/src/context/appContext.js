@@ -808,26 +808,17 @@ export const AppProvider = ({ children }) => {
       },
 
       // POST /api/caja/passwords/verificar
-      cajaVerificarPassword: async ({ username, password, pin } = {}) => {
+      cajaVerificarPassword: async ({ username, password } = {}) => {
         try {
           const user = (username || "").trim().toLowerCase();
 
-          // Heurística mínima:
-          // - Si nos pasan un PIN de 4 dígitos (o password de 4 dígitos): tipo = pin4
-          // - Si es admin/ricardo_admin o password largo: tipo = apertura_cierre
-          const passOrPin = pin ?? password ?? "";
-          const is4 = /^\d{4}$/.test(String(passOrPin));
-
-          const tipo =
-            (!is4 || user.includes("admin") || user === "r" || user === "ricardo")
-              ? "apertura_cierre"
-              : "pin4";
-
-          const body =
-            tipo === "pin4"
-              ? { tipo, username: user[0], pin4: String(passOrPin) }   // f / y / n / r
-              : { tipo, username: user, pass: String(passOrPin) };     // p.ej. "ricardo_admin"
-
+          let body;
+          if (user === "ricardo_admin" || user.includes("admin")) {
+            body = { tipo: "apertura_cierre", username: user, pass: String(password) };
+          } else {
+            // manda username tal cual (puede ser 'f' o 'flor')
+            body = { tipo: "pin4", username: user, pin4: String(password) };
+          }
 
           const res = await fetch(`${API_BASE}/api/caja/passwords/verificar`, {
             method: "POST",
@@ -835,13 +826,12 @@ export const AppProvider = ({ children }) => {
             body: JSON.stringify(body),
           });
           const data = await res.json().catch(() => ({}));
-          if (res.ok && (data.ok === true)) return { ok: true, success: true };
+          if (res.ok && data.ok === true) return { ok: true, success: true };
           return { ok: false, success: false, error: data.error || "Credenciales inválidas" };
         } catch (e) {
           return { ok: false, success: false, error: e.message };
         }
       },
-
 
       cajaAbrirTurno: async ({ codigo, observacion, denominaciones = [] }) => {
         try {

@@ -37,14 +37,16 @@ async function pedirLoginRicardoAdmin(actions, titulo = "Autenticación requerid
 
 /** Login con letra+PIN de 4 dígitos (ej: f1234) para firmar movimientos/ediciones/borrados */
 async function loginWithLetterAndPin(actions, letter, pin) {
-    const username = LETTER_TO_USERNAME[(letter || "").toLowerCase()];
-    if (!username || !/^\d{4}$/.test(pin || "")) {
-        return { ok: false, error: "Formato de credenciales inválido (letra + 4 dígitos)" };
+    const username = String(letter || "").trim().toLowerCase(); // usa la letra directa
+    // aceptar 4+ dígitos por si el PIN nuevo es más largo
+    if (!username || !/^\d{4,}$/.test(pin || "")) {
+        return { ok: false, error: "Formato de credenciales inválido (letra + PIN)" };
     }
 
+
     const r = await actions.cajaVerificarPassword({
-        username,            // flor / yani / nico / ricardo
-        password: pin,       // PIN de 4 dígitos
+        username,            // f / y / r / n  ← clave del fix
+        password: pin,       // el action ya lo manda como pin4 al backend
     });
 
     if (r?.ok || r?.success) return { ok: true };
@@ -52,9 +54,12 @@ async function loginWithLetterAndPin(actions, letter, pin) {
 }
 
 
+
 /** f123420000 => { userLetter:'f', pass4:'1234', importe:Number } */
 function parseLineaVenta(txt) {
-    const m = /^\s*([fyrn])\s*(\d{4})\s*(\d+(?:[.,]\d{1,2})?)\s*$/.exec(txt || "");
+
+    const m = /^\s*([fyrn])\s*(\d{4,})\s*(\d+(?:[.,]\d{1,2})?)\s*$/.exec(txt || "");
+
     if (!m) return null;
     return {
         userLetter: m[1].toLowerCase(),
@@ -65,7 +70,8 @@ function parseLineaVenta(txt) {
 
 /** f1234 => { letter:'f', pin:'1234' } */
 function parseCred(txt) {
-    const m = /^\s*([fyrn])\s*(\d{4})\s*$/.exec(txt || "");
+    const m = /^\s*([fyrn])\s*(\d{4,})\s*$/.exec(txt || "");
+
     return m ? { letter: m[1].toLowerCase(), pin: m[2] } : null;
 }
 
@@ -91,11 +97,52 @@ async function bootstrapUsuarios({ florPin, yaniPin, nicoPin, ricPin, ricAdminPa
     return r.ok ? { success: true } : { success: false, error: r.error || "No se pudo crear usuarios" };
 }
 
+// Traducciones tolerantes para username
+const USER_ALIASES = {
+    f: ["f", "flor"],
+    flor: ["flor", "f"],
+    y: ["y", "yani"],
+    yani: ["yani", "y"],
+    n: ["n", "nico"],
+    nico: ["nico", "n"],
+    r: ["r", "ricardo"],
+    ricardo: ["ricardo", "r"],
+    ricardo_admin: ["ricardo_admin", "admin"],
+    admin: ["admin", "ricardo_admin"],
+};
+
+// Reemplaza la función verifyCredsFlexible en tu componente por esta versión simplificada:
+
+async function verifyCredsSimple({ username, password, isAdmin = false }) {
+    try {
+        const body = {
+            username: username.toLowerCase(),
+            password: password
+        };
+
+        const res = await fetch(`${API_BASE}/api/caja/passwords/verificar`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(body),
+        });
+
+        const data = await res.json().catch(() => ({}));
+
+        if (res.ok && data?.ok === true) {
+            return { ok: true };
+        }
+
+        return { ok: false, error: data.error || "Credenciales inválidas" };
+
+    } catch (e) {
+        return { ok: false, error: e.message };
+    }
+}
 
 
 
 
-/** ================= Componente ================= **/
+/** ================= Componente caja ================= **/
 export default function Caja() {
     const { store, actions } = useAppContext();
     // --- Descubre si hay un turno ABIERTO en el backend (post-refresh) ---
@@ -138,6 +185,15 @@ export default function Caja() {
     const [nicoPin, setNicoPin] = useState("");
     const [ricPin, setRicPin] = useState(""); // PIN 4 dígitos de Ricardo (para ventas/salidas)
     const [ricAdminPass, setRicAdminPass] = useState(""); // contraseña larga de Ricardo (ADMIN)
+    const [selectedUser, setSelectedUser] = useState("");
+    const [oldPass, setOldPass] = useState("");
+    const [newPass, setNewPass] = useState("");
+    const [showPassModal, setShowPassModal] = useState(false);
+    const [resetFromZero, setResetFromZero] = useState(false);
+
+
+
+
 
 
     // --------- Inicio de caja (importe por billetes) ---------
@@ -341,6 +397,8 @@ export default function Caja() {
         if (res?.success) {
             alert("Turno cerrado.");
             setShowResumen(false);
+            setTurnoServer(null);
+
         } else {
             alert(res?.error || "No se pudo cerrar el turno");
         }
@@ -758,9 +816,31 @@ export default function Caja() {
         },
     };
 
-    /** ---------- UI ---------- **/
+    /** ---------- BLOQUE RETURN ---------- **/
     return (
         <div style={styles.wrap}>
+            {/* Cambiar contraseñas */}
+            <div style={{ top: 70, right: 20, zIndex: 1000 }}>
+                <select
+                    style={styles.input}
+                    value={selectedUser}
+                    onChange={(e) => {
+                        const val = e.target.value;
+                        if (val) {
+                            setSelectedUser(val);
+                            setShowPassModal(true);
+                        }
+                    }}
+                >
+                    <option value="">Cambiar contraseña…</option>
+                    <option value="ricardo_admin">Ricardo (ADMIN)</option>
+                    <option value="r">Ricardo (user)</option>
+                    <option value="f">Flor</option>
+                    <option value="y">Yani</option>
+                    <option value="n">Nico</option>
+                </select>
+            </div>
+
             <div style={{ position: 'fixed', top: 20, right: 20, zIndex: 1000 }}>
                 <button
                     style={{
@@ -776,6 +856,8 @@ export default function Caja() {
                 >
                     {isDarkMode ? '☀️' : '🌙'}
                 </button>
+
+
             </div>
             {/* Inicio de caja */}
             <section style={styles.card}>
@@ -991,7 +1073,7 @@ export default function Caja() {
                 <div style={{ ...styles.controlsRow, gridTemplateColumns: "2fr 1.6fr 1fr auto" }}>
                     <input
                         style={{ ...styles.input, border: "2px solid black" }}
-                        placeholder="f123420000 (letra + 4 dígitos + importe)"
+                        placeholder="f1234 2000 / f12345 2000 (letra + PIN + importe)"
                         value={entradaRapida}
                         onChange={(e) => setEntradaRapida(e.target.value)}
                         onKeyDown={(e) => e.key === "Enter" && agregarVenta()}
@@ -1159,12 +1241,17 @@ export default function Caja() {
                                 <div style={styles.summaryLabel}>Crédito</div>
                                 <div style={styles.summaryValue}>{moneda(totalCredito)}</div>
                             </div>
+                            <div style={styles.summaryBox}>
+                                <div style={styles.summaryLabel}>Salidas</div>
+                                <div style={styles.summaryValue}>{moneda(totalSalidas)}</div>
+                            </div>
                             <div style={{ ...styles.summaryBox, background: "#0f766e", color: "white" }}>
                                 <div style={{ ...styles.summaryLabel, color: "#e0fffb" }}>
                                     Balance Caja (efectivo)
                                 </div>
                                 <div style={styles.summaryValue}>{moneda(balanceCaja)}</div>
                             </div>
+
                         </div>
 
                         <div style={{ marginTop: 12, display: "flex", justifyContent: "flex-end", gap: 8 }}>
@@ -1182,7 +1269,207 @@ export default function Caja() {
                     </>
                 )}
             </section>
-        </div>
+            {showPassModal && (
+                <div style={{
+                    position: "fixed",
+                    top: 0, left: 0,
+                    width: "100vw", height: "100vh",
+                    background: "rgba(0,0,0,0.5)",
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    zIndex: 2000
+                }}>
+                    <div style={{
+                        background: isDarkMode ? "#1f2937" : "white",
+                        color: isDarkMode ? "#f9fafb" : "#111827",
+                        padding: 20,
+                        borderRadius: 12,
+                        width: "90%", maxWidth: 400
+                    }}>
+                        <h3 style={{ marginBottom: 12 }}>Cambiar contraseña: {selectedUser}</h3>
+
+                        <input
+                            style={{ ...styles.input, marginBottom: 10 }}
+                            type="password"
+                            placeholder="Contraseña/PIN actual"
+                            value={oldPass}
+                            onChange={(e) => setOldPass(e.target.value)}
+                        />
+                        <input
+                            style={{ ...styles.input, marginBottom: 10 }}
+                            type="password"
+                            placeholder="Nueva contraseña/PIN"
+                            value={newPass}
+                            onChange={(e) => setNewPass(e.target.value)}
+                        />
+                        <div style={{ marginBottom: 10 }}>
+                            <label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 14 }}>
+                                <input
+                                    type="checkbox"
+                                    checked={resetFromZero}
+                                    onChange={(e) => setResetFromZero(e.target.checked)}
+                                    disabled={selectedUser === "ricardo_admin"} // ADMIN no puede saltar verificación
+                                />
+                                Crear nueva contraseña desde cero (sin recordar la anterior)
+                            </label>
+                            {selectedUser === "ricardo_admin" && (
+                                <div style={{ fontSize: 12, opacity: 0.7, marginTop: 4 }}>
+                                    Para Ricardo ADMIN siempre se exige la contraseña actual.
+                                </div>
+                            )}
+                        </div>
+
+
+                        <div style={{ display: "flex", justifyContent: "flex-end", gap: 8 }}>
+                            <button
+                                style={styles.iconBtn}
+                                onClick={() => {
+                                    setShowPassModal(false);
+                                    setOldPass(""); setNewPass(""); setSelectedUser("");
+                                }}
+                            >
+                                Cancelar
+                            </button>
+                            <button
+                                style={styles.primaryBtn}
+                                // En tu componente, reemplaza la parte del onClick del botón "Guardar" en el modal por esto:
+                                // REEMPLAZA TODA la sección del onClick del botón "Guardar" por esto:
+
+                                onClick={async () => {
+                                    // Validaciones básicas
+                                    if (!newPass) {
+                                        alert("Ingresá la nueva contraseña/PIN");
+                                        return;
+                                    }
+
+                                    const isAdmin = selectedUser === "ricardo_admin";
+
+                                    // Si NO es admin y quiere crear desde cero: pedir autorización de ADMIN
+                                    if (!isAdmin && resetFromZero) {
+                                        const adminPw = window.prompt("Autorización requerida.\nContraseña de Ricardo (ADMIN):") || "";
+                                        if (!adminPw) {
+                                            alert("Operación cancelada");
+                                            return;
+                                        }
+
+                                        // Verificar ADMIN directamente
+                                        try {
+                                            const adminRes = await fetch(`${API_BASE}/api/caja/passwords/verificar`, {
+                                                method: "POST",
+                                                headers: { "Content-Type": "application/json" },
+                                                body: JSON.stringify({
+                                                    username: "ricardo_admin",
+                                                    password: adminPw
+                                                }),
+                                            });
+                                            const adminData = await adminRes.json().catch(() => ({}));
+
+                                            if (!adminRes.ok || !adminData?.ok) {
+                                                alert("Autorización ADMIN inválida");
+                                                return;
+                                            }
+                                        } catch (e) {
+                                            alert("Error verificando ADMIN: " + e.message);
+                                            return;
+                                        }
+
+                                        // Setear NUEVO PIN/PASSWORD directamente
+                                        const endpoint = isAdmin ?
+                                            `${API_BASE}/api/caja/usuarios/set-pass-largo` :
+                                            `${API_BASE}/api/caja/usuarios/set-pin4`;
+
+                                        const body = isAdmin ?
+                                            { username: selectedUser, pass: newPass } :
+                                            { username: selectedUser, pin4: newPass };
+
+                                        try {
+                                            const res = await fetch(endpoint, {
+                                                method: "POST",
+                                                headers: { "Content-Type": "application/json" },
+                                                body: JSON.stringify(body),
+                                            });
+
+                                            const data = await res.json().catch(() => ({}));
+                                            if (res.ok && data.ok) {
+                                                alert("Contraseña actualizada con éxito");
+                                                setShowPassModal(false);
+                                                setOldPass(""); setNewPass(""); setSelectedUser(""); setResetFromZero(false);
+                                            } else {
+                                                alert(data.error || "No se pudo actualizar");
+                                            }
+                                        } catch (e) {
+                                            alert("Error actualizando contraseña: " + e.message);
+                                        }
+                                        return;
+                                    }
+
+                                    // Flujo normal: verificar contraseña actual
+                                    if (!oldPass) {
+                                        alert(isAdmin ? "Ingresá la contraseña actual de ADMIN" : "Ingresá el PIN actual");
+                                        return;
+                                    }
+
+                                    // Verificar contraseña actual DIRECTAMENTE
+                                    try {
+                                        const verifRes = await fetch(`${API_BASE}/api/caja/passwords/verificar`, {
+                                            method: "POST",
+                                            headers: { "Content-Type": "application/json" },
+                                            body: JSON.stringify({
+                                                username: selectedUser,
+                                                password: oldPass
+                                            }),
+                                        });
+
+                                        const verifData = await verifRes.json().catch(() => ({}));
+
+                                        if (!verifRes.ok || !verifData?.ok) {
+                                            alert("La contraseña/PIN actual es incorrecta");
+                                            return;
+                                        }
+                                    } catch (e) {
+                                        alert("Error verificando contraseña actual: " + e.message);
+                                        return;
+                                    }
+
+                                    // Si llegamos acá, la verificación fue exitosa - cambiar contraseña
+                                    const endpoint = isAdmin ?
+                                        `${API_BASE}/api/caja/usuarios/set-pass-largo` :
+                                        `${API_BASE}/api/caja/usuarios/set-pin4`;
+
+                                    const body = isAdmin ?
+                                        { username: selectedUser, pass: newPass } :
+                                        { username: selectedUser, pin4: newPass };
+
+                                    try {
+                                        const res = await fetch(endpoint, {
+                                            method: "POST",
+                                            headers: { "Content-Type": "application/json" },
+                                            body: JSON.stringify(body),
+                                        });
+
+                                        const data = await res.json().catch(() => ({}));
+                                        if (res.ok && data.ok) {
+                                            alert("Contraseña/PIN actualizado con éxito");
+                                            setShowPassModal(false);
+                                            setOldPass(""); setNewPass(""); setSelectedUser(""); setResetFromZero(false);
+                                        } else {
+                                            alert(data.error || "No se pudo actualizar");
+                                        }
+                                    } catch (e) {
+                                        alert("Error actualizando contraseña: " + e.message);
+                                    }
+                                }}
+                            >
+                                Guardar
+                            </button>
+
+
+                        </div>
+                    </div>
+                </div>
+            )
+            }
+
+        </div >
     );
 }
 

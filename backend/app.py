@@ -22,6 +22,8 @@ from flask_migrate import Migrate
 
 # ==== IMPORTS PARA USUARIOS + EDICIÓN CAJA ====
 import bcrypt  # pip install bcrypt
+import re
+
 
 
 
@@ -66,8 +68,11 @@ def _bcrypt_hash(pw: str) -> str:
 
 def _bcrypt_check(pw: str, hashed: str) -> bool:
     try:
+        if not pw or not hashed:
+            return False
         return bcrypt.checkpw(pw.encode("utf-8"), hashed.encode("utf-8"))
-    except Exception:
+    except Exception as e:
+        print(f"Error en _bcrypt_check: {e}")
         return False
 
 @app.route("/api/caja/usuarios/bootstrap", methods=["POST"])
@@ -134,40 +139,64 @@ def usuarios_bootstrap():
         s.rollback()
         return jsonify({"error": "No se pudo crear usuarios", "mensaje": str(e)}), 500
 
+# Reemplaza tu ruta @app.route("/api/caja/passwords/verificar", methods=["POST"]) por esta:
+
 @app.route("/api/caja/passwords/verificar", methods=["POST"])
 def verificar_passwords():
-    """
-    Verifica:
-      - para apertura/cierre: {"tipo":"apertura_cierre","username":"r","pass":"<pass largo>"}
-      - para movimientos (ed/elim): {"tipo":"pin4","username":"f","pin4":"1234"}
-    """
     s = app.session
     try:
         data = request.get_json() or {}
-        tipo = data.get("tipo")
-        username = (data.get("username") or "").strip().lower()
-        u = s.query(Usuario).filter(Usuario.username == username, Usuario.activo == True).first()  # noqa
+        tipo = (data.get("tipo") or "").strip()
+        raw_username = (data.get("username") or "").strip().lower()
+        
+        # Obtener la contraseña/PIN desde diferentes campos posibles
+        password = data.get("pass") or data.get("password") or data.get("pin4") or ""
+        password = str(password).strip()
+        
+        if not raw_username or not password:
+            return jsonify({"ok": False, "error": "Username y password requeridos"}), 400
 
+        # Alias tolerantes para usuarios
+        alias = {
+            "flor": "f", "yani": "y", "nico": "n", "ricardo": "r", "ric": "r",
+            "owner": "ricardo_admin", "dueno": "ricardo_admin", "dueño": "ricardo_admin",
+            "admin": "ricardo_admin",
+        }
+        username = alias.get(raw_username, raw_username)
+        # --- Normalizar formato de PIN para usuarios de PIN corto ---
+# Aceptar tanto "1234" como "y1234" / "y 1234" (quedarnos con los dígitos)
+        if username in ("f", "y", "n", "r"):
+            m = re.match(r"^\s*([a-z])\s*(\d{4,})\s*$", password, re.I)
+            if m:
+                password = m.group(2)
+
+
+        # Buscar usuario en la base de datos
+        u = s.query(Usuario).filter(Usuario.username == username, Usuario.activo == True).first()
         if not u:
             return jsonify({"ok": False, "error": "Usuario no encontrado"}), 404
 
-        if tipo == "apertura_cierre":
-            pw = data.get("pass") or ""
-            # Validamos contra password_hash del usuario que nos pidan (p.ej. "ricardo_admin")
-            stored = _get_password_hash_from_user(u)
-            return jsonify({"ok": bool(stored and bcrypt.checkpw(pw.encode("utf-8"), stored))})
+        # Verificar la contraseña usando bcrypt
+        if u.password_hash:
+            try:
+                # La contraseña está hasheada con bcrypt
+                password_bytes = password.encode('utf-8')
+                hash_bytes = u.password_hash.encode('utf-8') if isinstance(u.password_hash, str) else u.password_hash
+                
+                if _bcrypt_check(password, u.password_hash):
+                    return jsonify({"ok": True}), 200
+                else:
+                    return jsonify({"ok": False, "error": "Contraseña incorrecta"}), 401
+                    
+            except Exception as e:
+                return jsonify({"ok": False, "error": "Error al verificar contraseña"}), 500
+        
+        return jsonify({"ok": False, "error": "Usuario sin contraseña configurada"}), 401
 
-        if tipo == "pin4":
-            p = (data.get("pin4") or "").strip()
-            # Sin columna pin4: tratamos el PIN como password del usuario letra (f/y/n/r)
-            stored = _get_password_hash_from_user(u)
-            return jsonify({"ok": bool(stored and bcrypt.checkpw(p.encode("utf-8"), stored))})
-
-
-
-        return jsonify({"ok": False, "error": "tipo inválido"}), 400
     except Exception as e:
-        return jsonify({"ok": False, "error": str(e)}), 500
+        return jsonify({"ok": False, "error": f"Error interno: {str(e)}"}), 500
+    
+# Reemplaza tus rutas de cambio de password por estas:
 
 @app.route("/api/caja/usuarios/set-pin4", methods=["POST"])
 def usuarios_set_pin4():
@@ -176,16 +205,31 @@ def usuarios_set_pin4():
         data = request.get_json() or {}
         username = (data.get("username") or "").strip().lower()
         pin4 = (data.get("pin4") or "").strip()
-        if not username or not pin4 or len(pin4) != 4 or not pin4.isdigit():
-            return jsonify({"ok": False, "error": "username y pin4 (4 dígitos) requeridos"}), 400
+        
+        if not username or not pin4:
+            return jsonify({"ok": False, "error": "Username y pin4 requeridos"}), 400
+
+        # Alias tolerantes
+        alias = {
+            "flor": "f", "yani": "y", "nico": "n", "ricardo": "r", "ric": "r"
+        }
+        username = alias.get(username, username)
+        # --- Normalizar por si mandan "y12345" en lugar de solo números ---
+        m = re.match(r"^\s*([a-z])\s*(\d{4,})\s*$", pin4, re.I)
+        if m:
+            pin4 = m.group(2)
+
 
         u = s.query(Usuario).filter(Usuario.username == username, Usuario.activo == True).first()
         if not u:
             return jsonify({"ok": False, "error": "Usuario no encontrado"}), 404
 
-        u.pin4 = pin4
+        # Actualizar password_hash con el nuevo PIN hasheado
+        u.password_hash = _bcrypt_hash(pin4)
         s.commit()
+        
         return jsonify({"ok": True}), 200
+        
     except Exception as e:
         s.rollback()
         return jsonify({"ok": False, "error": str(e)}), 500
@@ -197,17 +241,25 @@ def usuarios_set_pass_largo():
     try:
         data = request.get_json() or {}
         username = (data.get("username") or "").strip().lower()
-        pw = data.get("pass") or ""
-        if not username or not pw:
-            return jsonify({"ok": False, "error": "username y pass requeridos"}), 400
+        password = data.get("pass") or data.get("password") or ""
+        
+        if not username or not password:
+            return jsonify({"ok": False, "error": "Username y password requeridos"}), 400
+
+        # Para admin siempre usamos ricardo_admin
+        if username in ["admin", "ricardo_admin", "owner", "dueno", "dueño"]:
+            username = "ricardo_admin"
 
         u = s.query(Usuario).filter(Usuario.username == username, Usuario.activo == True).first()
         if not u:
             return jsonify({"ok": False, "error": "Usuario no encontrado"}), 404
 
-        u.pass_largo_hash = _bcrypt_hash(pw)
+        # Actualizar password_hash con la nueva contraseña hasheada
+        u.password_hash = _bcrypt_hash(password)
         s.commit()
+        
         return jsonify({"ok": True}), 200
+        
     except Exception as e:
         s.rollback()
         return jsonify({"ok": False, "error": str(e)}), 500
