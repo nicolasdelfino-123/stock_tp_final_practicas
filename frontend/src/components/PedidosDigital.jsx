@@ -937,3 +937,12 @@ const btnNo = {
     fontWeight: "bold",
     cursor: "pointer"
 };
+const btnReset = {
+    backgroundColor: "#007bff",
+    color: "white",
+    border: "none",
+    padding: "6px 10px",
+    borderRadius: "4px",
+    fontWeight: "bold",
+    cursor: "pointer"
+};

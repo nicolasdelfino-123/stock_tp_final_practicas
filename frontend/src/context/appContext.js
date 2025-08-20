@@ -13,6 +13,17 @@ export const AppProvider = ({ children }) => {
   const [ultimaCantidadBajada, setUltimaCantidadBajada] = useState(null);
   const [modalPedidosAbierto, setModalPedidosAbierto] = useState(false);
 
+  // --- ESTADO CAJA ---
+  const [turnoActual, setTurnoActual] = useState(null);
+  const [turnos, setTurnos] = useState([]);
+  const [denominacionesInicio, setDenominacionesInicio] = useState([]);
+  const [movimientos, setMovimientos] = useState([]);
+  const [arqueos, setArqueos] = useState([]);
+  const [resumenTurno, setResumenTurno] = useState(null);
+  const [auditoria, setAuditoria] = useState([]);
+  // --- FIN ESTADO CAJA ---
+
+
   const API_BASE = process.env.REACT_APP_API_BASE || "http://localhost:5000";
 
   // Inicializar datos desde localStorage al cargar la aplicación
@@ -604,8 +615,630 @@ export const AppProvider = ({ children }) => {
         }
       },
 
-      // IMPORTANTE: También necesitas agregar este estado al inicio de tu AppProvider:
-      // const [ultimaCantidadBajada, setUltimaCantidadBajada] = useState(null);
+      /* ACCIONES CAJA */
+
+      // ===========================
+      // USUARIOS (bcrypt + JWT caja)
+      // ===========================
+      usuariosRegister: async (username, password, rol = "EMPLEADO") => {
+        try {
+          const res = await fetch(`${API_BASE}/api/usuarios/register`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ username, password, rol }),
+          });
+          const data = await res.json();
+          if (res.ok) return { success: true, user: data };
+          return { success: false, error: data.error || "No se pudo registrar" };
+        } catch (e) {
+          return { success: false, error: e.message };
+        }
+      },
+
+      usuariosLogin: async (username, password) => {
+        try {
+          const res = await fetch(`${API_BASE}/api/usuarios/login`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ username, password }),
+          });
+          const data = await res.json();
+          if (res.ok) {
+            localStorage.setItem("token", data.token);
+            localStorage.setItem("user", data.user);
+            setUser(data.user);
+            setToken(data.token);
+            setIsLoading(false);
+            return { success: true, user: data.user, rol: data.rol };
+          }
+          return { success: false, error: data.error || "Login inválido" };
+        } catch (e) {
+          return { success: false, error: e.message };
+        }
+      },
+
+      usuariosMe: async () => {
+        try {
+          const res = await fetch(`${API_BASE}/api/usuarios/me`, {
+            headers: { Authorization: `Bearer ${localStorage.getItem("token") || token || ""}` },
+          });
+          const data = await res.json();
+          if (res.ok) return { success: true, me: data };
+          return { success: false, error: data.error || "No se pudo validar" };
+        } catch (e) {
+          return { success: false, error: e.message };
+        }
+      },
+
+      usuariosListar: async (soloActivos = false) => {
+        try {
+          const url = `${API_BASE}/api/usuarios${soloActivos ? "?activos=1" : ""}`;
+          const res = await fetch(url, {
+            headers: { Authorization: `Bearer ${localStorage.getItem("token") || token || ""}` },
+          });
+          const data = await res.json();
+          if (res.ok) return { success: true, usuarios: data };
+          return { success: false, error: data.error || "No se pudo listar usuarios" };
+        } catch (e) {
+          return { success: false, error: e.message };
+        }
+      },
+
+      usuariosDetalle: async (userId) => {
+        try {
+          const res = await fetch(`${API_BASE}/api/usuarios/${userId}`, {
+            headers: { Authorization: `Bearer ${localStorage.getItem("token") || token || ""}` },
+          });
+          const data = await res.json();
+          if (res.ok) return { success: true, usuario: data };
+          return { success: false, error: data.error || "No se pudo obtener usuario" };
+        } catch (e) {
+          return { success: false, error: e.message };
+        }
+      },
+
+      usuariosActualizar: async (userId, payload) => {
+        try {
+          const res = await fetch(`${API_BASE}/api/usuarios/${userId}`, {
+            method: "PUT",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${localStorage.getItem("token") || token || ""}`,
+            },
+            body: JSON.stringify(payload),
+          });
+          if (res.ok) return { success: true };
+          const data = await res.json();
+          return { success: false, error: data.error || "No se pudo actualizar" };
+        } catch (e) {
+          return { success: false, error: e.message };
+        }
+      },
+
+      usuariosEliminar: async (userId) => {
+        try {
+          const res = await fetch(`${API_BASE}/api/usuarios/${userId}`, {
+            method: "DELETE",
+            headers: { Authorization: `Bearer ${localStorage.getItem("token") || token || ""}` },
+          });
+          if (res.ok) return { success: true };
+          const data = await res.json();
+          return { success: false, error: data.error || "No se pudo desactivar usuario" };
+        } catch (e) {
+          return { success: false, error: e.message };
+        }
+      },
+
+      // ======================
+      // CAJA - helpers locales
+      // ======================
+      _mapMetodoUItoEnum: (metodo) => {
+        const m = (metodo || "").toString().toLowerCase();
+        if (m.includes("efectivo")) return "EFECTIVO";
+        if (m.includes("bancaria")) return "TRANSF_BANCARIA";
+        if (m.includes("mercado")) return "TRANSF_MP";
+        if (m.includes("débito") || m.includes("debito")) return "DEBITO";
+        if (m.includes("crédito") || m.includes("credito")) return "CREDITO";
+        return "OTRO";
+      },
+      _mapTipoUItoEnum: (tipo) => {
+        const t = (tipo || "").toString().toLowerCase();
+        if (t.includes("venta")) return "VENTA";
+        if (t.includes("salida")) return "SALIDA";
+        if (t.includes("ajuste")) return "AJUSTE";
+        if (t.includes("anul")) return "ANULACION";
+        return "VENTA";
+      },
+
+
+
+
+
+      // ======================
+      // CAJA - TURNOS
+      // ======================
+
+      // POST /api/caja/usuarios/bootstrap
+      cajaUsuariosBootstrap: async (payload) => {
+        try {
+          // Soporta AMBOS formatos:
+          // A) { flor:{username,password}, ... ricardo_admin:{username,password} }
+          // B) { florPin,yaniPin,nicoPin,ricPin,ricAdminPass }  (lo transformamos)
+          let body;
+
+          if (payload?.flor && payload?.yani && payload?.nico && payload?.ricardo && payload?.ricardo_admin) {
+            // Formato A → usamos el otro endpoint para compatibilidad plena
+            // Pero el backend que maneja PIN4 y pass largo es /api/caja/usuarios/bootstrap,
+            // así que convertimos a pins + pass_largo.
+            body = {
+              pins: {
+                f: String(payload.flor.password || ""),
+                y: String(payload.yani.password || ""),
+                n: String(payload.nico.password || ""),
+                r: String(payload.ricardo.password || ""),
+              },
+              ricardo_pass_largo: String(payload.ricardo_admin.password || ""),
+              admin_username: "admin",
+            };
+          } else {
+            // Formato B
+            body = {
+              pins: {
+                f: String(payload.florPin || ""),
+                y: String(payload.yaniPin || ""),
+                n: String(payload.nicoPin || ""),
+                r: String(payload.ricPin || ""),
+              },
+              ricardo_pass_largo: String(payload.ricAdminPass || ""),
+              admin_username: "admin",
+            };
+          }
+
+          const res = await fetch(`${API_BASE}/api/caja/usuarios/bootstrap`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(body),
+          });
+          const data = await res.json().catch(() => ({}));
+          if (res.ok) return { ok: true, success: true, data };
+          return { ok: false, success: false, error: data.error || "No se pudo bootstrapear usuarios" };
+        } catch (e) {
+          return { ok: false, success: false, error: e.message };
+        }
+      },
+
+      // POST /api/caja/passwords/verificar
+      cajaVerificarPassword: async ({ username, password, pin } = {}) => {
+        try {
+          const user = (username || "").trim().toLowerCase();
+
+          // Heurística mínima:
+          // - Si nos pasan un PIN de 4 dígitos (o password de 4 dígitos): tipo = pin4
+          // - Si es admin/ricardo_admin o password largo: tipo = apertura_cierre
+          const passOrPin = pin ?? password ?? "";
+          const is4 = /^\d{4}$/.test(String(passOrPin));
+
+          const tipo =
+            (!is4 || user.includes("admin") || user === "r" || user === "ricardo")
+              ? "apertura_cierre"
+              : "pin4";
+
+          const body =
+            tipo === "pin4"
+              ? { tipo, username: user[0], pin4: String(passOrPin) }   // f / y / n / r
+              : { tipo, username: user, pass: String(passOrPin) };     // p.ej. "ricardo_admin"
+
+
+          const res = await fetch(`${API_BASE}/api/caja/passwords/verificar`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(body),
+          });
+          const data = await res.json().catch(() => ({}));
+          if (res.ok && (data.ok === true)) return { ok: true, success: true };
+          return { ok: false, success: false, error: data.error || "Credenciales inválidas" };
+        } catch (e) {
+          return { ok: false, success: false, error: e.message };
+        }
+      },
+
+
+      cajaAbrirTurno: async ({ codigo, observacion, denominaciones = [] }) => {
+        try {
+          const res = await fetch(`${API_BASE}/api/caja/turnos/abrir`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${localStorage.getItem("token") || token || ""}`,
+            },
+            body: JSON.stringify({
+              codigo,
+              observacion,
+              denominaciones, // [{ etiqueta, importe_total }]
+            }),
+          });
+          const data = await res.json();
+          if (res.ok) {
+            setTurnoActual(data.turno || null);
+            return { success: true, turno: data.turno };
+          }
+          return { success: false, error: data.error || "No se pudo abrir turno" };
+        } catch (e) {
+          return { success: false, error: e.message };
+        }
+      },
+
+      cajaListarTurnos: async (filtros = {}) => {
+        try {
+          const params = new URLSearchParams();
+          if (filtros.estado) params.set("estado", filtros.estado);
+          if (filtros.desde) params.set("desde", filtros.desde);
+          if (filtros.hasta) params.set("hasta", filtros.hasta);
+          const url = `${API_BASE}/api/caja/turnos${params.toString() ? `?${params}` : ""}`;
+          const res = await fetch(url, {
+            headers: { Authorization: `Bearer ${localStorage.getItem("token") || token || ""}` },
+          });
+          const data = await res.json();
+          if (res.ok) {
+            setTurnos(data);
+            return { success: true, turnos: data };
+          }
+          return { success: false, error: data.error || "No se pudo listar turnos" };
+        } catch (e) {
+          return { success: false, error: e.message };
+        }
+      },
+
+      cajaObtenerTurno: async (turnoId) => {
+        try {
+          const res = await fetch(`${API_BASE}/api/caja/turnos/${turnoId}`, {
+            headers: { Authorization: `Bearer ${localStorage.getItem("token") || token || ""}` },
+          });
+          const data = await res.json();
+          if (res.ok) {
+            setTurnoActual(data || null);
+            setDenominacionesInicio(data.denominaciones || []);
+            return { success: true, ...data };
+          }
+          return { success: false, error: data.error || "No se pudo obtener turno" };
+        } catch (e) {
+          return { success: false, error: e.message };
+        }
+      },
+
+      cajaCerrarTurno: async (turnoId, { efectivo_contado, resumen_por_metodo, observacion } = {}) => {
+        try {
+          const res = await fetch(`${API_BASE}/api/caja/turnos/${turnoId}/cerrar`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${localStorage.getItem("token") || token || ""}`,
+            },
+            body: JSON.stringify({ efectivo_contado, resumen_por_metodo, observacion }),
+          });
+          const data = await res.json();
+          if (res.ok) {
+            setTurnoActual(null);
+            return { success: true, diferencia_efectivo: data.diferencia_efectivo };
+          }
+          return { success: false, error: data.error || "No se pudo cerrar turno" };
+        } catch (e) {
+          return { success: false, error: e.message };
+        }
+      },
+
+      cajaResumenTurno: async (turnoId) => {
+        try {
+          const res = await fetch(`${API_BASE}/api/caja/turnos/${turnoId}/resumen`, {
+            headers: { Authorization: `Bearer ${localStorage.getItem("token") || token || ""}` },
+          });
+          const data = await res.json();
+          if (res.ok) {
+            setResumenTurno(data);
+            return { success: true, resumen: data };
+          }
+          return { success: false, error: data.error || "No se pudo obtener resumen" };
+        } catch (e) {
+          return { success: false, error: e.message };
+        }
+      },
+
+      // ======================
+      // CAJA - MOVIMIENTOS
+      // ======================
+      cajaCrearMovimiento: async (payloadUI) => {
+        try {
+          const body = {
+            turno_id: payloadUI.turno_id,
+            tipo: actions._mapTipoUItoEnum(payloadUI.tipo),
+            metodo_pago: actions._mapMetodoUItoEnum(payloadUI.metodo_pago),
+            importe: Number(payloadUI.importe),
+            descripcion: payloadUI.descripcion || "",
+            paga_con: payloadUI.paga_con ?? null,
+            vuelto: payloadUI.vuelto ?? null,
+          };
+          const res = await fetch(`${API_BASE}/api/caja/movimientos`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${localStorage.getItem("token") || token || ""}`,
+            },
+            body: JSON.stringify(body),
+          });
+          const data = await res.json();
+          if (res.ok) {
+            // opcional: refrescar lista
+            // await actions.cajaListarMovimientos({ turno_id: body.turno_id });
+            return { success: true, movimiento: { id: data.id } };
+          }
+          return { success: false, error: data.error || "No se pudo crear movimiento" };
+        } catch (e) {
+          return { success: false, error: e.message };
+        }
+      },
+
+      cajaListarMovimientos: async (filtros = {}) => {
+        try {
+          const params = new URLSearchParams();
+          if (filtros.turno_id) params.set("turno_id", filtros.turno_id);
+          if (filtros.tipo) params.set("tipo", actions._mapTipoUItoEnum(filtros.tipo));
+          if (filtros.metodo) params.set("metodo", actions._mapMetodoUItoEnum(filtros.metodo));
+          const url = `${API_BASE}/api/caja/movimientos${params.toString() ? `?${params}` : ""}`;
+          const res = await fetch(url, {
+            headers: { Authorization: `Bearer ${localStorage.getItem("token") || token || ""}` },
+          });
+          const data = await res.json();
+          if (res.ok) {
+            setMovimientos(data);
+            return { success: true, movimientos: data };
+          }
+          return { success: false, error: data.error || "No se pudo listar movimientos" };
+        } catch (e) {
+          return { success: false, error: e.message };
+        }
+      },
+
+      cajaMovimientoDetalle: async (movId) => {
+        try {
+          const res = await fetch(`${API_BASE}/api/caja/movimientos/${movId}`, {
+            headers: { Authorization: `Bearer ${localStorage.getItem("token") || token || ""}` },
+          });
+          const data = await res.json();
+          if (res.ok) return { success: true, movimiento: data };
+          return { success: false, error: data.error || "No se pudo obtener movimiento" };
+        } catch (e) {
+          return { success: false, error: e.message };
+        }
+      },
+
+      cajaAnularMovimiento: async (movId, motivo = "Anulación") => {
+        try {
+          const res = await fetch(`${API_BASE}/api/caja/movimientos/${movId}/anular`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${localStorage.getItem("token") || token || ""}`,
+            },
+            body: JSON.stringify({ motivo }),
+          });
+          const data = await res.json();
+          if (res.ok) return { success: true, original: data.original, reverso: data.reverso };
+          return { success: false, error: data.error || "No se pudo anular movimiento" };
+        } catch (e) {
+          return { success: false, error: e.message };
+        }
+      },
+
+      cajaBorrarMovimiento: async (movId, motivo = "") => {
+        try {
+          const qs = motivo ? `?motivo=${encodeURIComponent(motivo)}` : "";
+          const res = await fetch(`${API_BASE}/api/caja/movimientos/${movId}${qs}`, {
+            method: "DELETE",
+            headers: { Authorization: `Bearer ${localStorage.getItem("token") || token || ""}` },
+          });
+          const data = res.ok ? null : await res.json();
+          if (res.ok) return { success: true };
+          return { success: false, error: (data && data.error) || "No se pudo borrar movimiento" };
+        } catch (e) {
+          return { success: false, error: e.message };
+        }
+      },
+
+      cajaEditarMovimiento: async (movId, payloadUI = {}) => {
+        try {
+          const payload = { ...payloadUI };
+          if (payload.metodo_pago) payload.metodo_pago = actions._mapMetodoUItoEnum(payload.metodo_pago);
+          if (payload.tipo) payload.tipo = actions._mapTipoUItoEnum(payload.tipo); // por si en el futuro permitís
+          const res = await fetch(`${API_BASE}/api/caja/movimientos/${movId}`, {
+            method: "PATCH",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${localStorage.getItem("token") || token || ""}`,
+            },
+            body: JSON.stringify(payload),
+          });
+          const data = await res.json();
+          if (res.ok) return { success: true, movimiento: data.movimiento };
+          return { success: false, error: data.error || "No se pudo editar movimiento" };
+        } catch (e) {
+          return { success: false, error: e.message };
+        }
+      },
+
+      // ======================
+      // CAJA - INICIO DETALLES
+      // ======================
+      cajaListarInicioDetalles: async (turno_id) => {
+        try {
+          const res = await fetch(`${API_BASE}/api/caja/inicio-detalles?turno_id=${turno_id}`, {
+            headers: { Authorization: `Bearer ${localStorage.getItem("token") || token || ""}` },
+          });
+          const data = await res.json();
+          if (res.ok) {
+            setDenominacionesInicio(data);
+            return { success: true, detalles: data };
+          }
+          return { success: false, error: data.error || "No se pudo listar inicio-detalles" };
+        } catch (e) {
+          return { success: false, error: e.message };
+        }
+      },
+
+      cajaCrearInicioDetalle: async ({ turno_id, etiqueta, importe_total }) => {
+        try {
+          const res = await fetch(`${API_BASE}/api/caja/inicio-detalles`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${localStorage.getItem("token") || token || ""}`,
+            },
+            body: JSON.stringify({ turno_id, etiqueta, importe_total }),
+          });
+          const data = await res.json();
+          if (res.ok) {
+            // refrescar lista
+            await actions.cajaListarInicioDetalles(turno_id);
+            return { success: true, id: data.id };
+          }
+          return { success: false, error: data.error || "No se pudo crear inicio-detalle" };
+        } catch (e) {
+          return { success: false, error: e.message };
+        }
+      },
+
+      cajaInicioDetalleDetalle: async (detalle_id) => {
+        try {
+          const res = await fetch(`${API_BASE}/api/caja/inicio-detalles/${detalle_id}`, {
+            headers: { Authorization: `Bearer ${localStorage.getItem("token") || token || ""}` },
+          });
+          const data = await res.json();
+          if (res.ok) return { success: true, detalle: data };
+          return { success: false, error: data.error || "No se pudo obtener inicio-detalle" };
+        } catch (e) {
+          return { success: false, error: e.message };
+        }
+      },
+
+      cajaEditarInicioDetalle: async (detalle_id, { etiqueta, importe_total, motivo }) => {
+        try {
+          const res = await fetch(`${API_BASE}/api/caja/inicio-detalles/${detalle_id}`, {
+            method: "PATCH",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${localStorage.getItem("token") || token || ""}`,
+            },
+            body: JSON.stringify({ etiqueta, importe_total, motivo }),
+          });
+          const data = await res.json();
+          if (res.ok) {
+            // si querés, podés refrescar con el turno_id, pero no lo tenemos acá
+            return { success: true, detalle: data.detalle };
+          }
+          return { success: false, error: data.error || "No se pudo editar inicio-detalle" };
+        } catch (e) {
+          return { success: false, error: e.message };
+        }
+      },
+
+      cajaBorrarInicioDetalle: async (detalle_id) => {
+        try {
+          const res = await fetch(`${API_BASE}/api/caja/inicio-detalles/${detalle_id}`, {
+            method: "DELETE",
+            headers: { Authorization: `Bearer ${localStorage.getItem("token") || token || ""}` },
+          });
+          if (res.ok) return { success: true };
+          const data = await res.json();
+          return { success: false, error: data.error || "No se pudo borrar inicio-detalle" };
+        } catch (e) {
+          return { success: false, error: e.message };
+        }
+      },
+
+      // ======================
+      // CAJA - ARQUEOS
+      // ======================
+      cajaCrearArqueo: async ({ turno_id, efectivo_contado, resumen_por_metodo, observacion, es_cierre = false }) => {
+        try {
+          const res = await fetch(`${API_BASE}/api/caja/arqueos`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${localStorage.getItem("token") || token || ""}`,
+            },
+            body: JSON.stringify({ turno_id, efectivo_contado, resumen_por_metodo, observacion, es_cierre }),
+          });
+          const data = await res.json();
+          if (res.ok) return { success: true, arqueo_id: data.arqueo_id };
+          return { success: false, error: data.error || "No se pudo crear arqueo" };
+        } catch (e) {
+          return { success: false, error: e.message };
+        }
+      },
+
+      cajaListarArqueos: async (turno_id) => {
+        try {
+          const url = `${API_BASE}/api/caja/arqueos${turno_id ? `?turno_id=${turno_id}` : ""}`;
+          const res = await fetch(url, {
+            headers: { Authorization: `Bearer ${localStorage.getItem("token") || token || ""}` },
+          });
+          const data = await res.json();
+          if (res.ok) {
+            setArqueos(data);
+            return { success: true, arqueos: data };
+          }
+          return { success: false, error: data.error || "No se pudo listar arqueos" };
+        } catch (e) {
+          return { success: false, error: e.message };
+        }
+      },
+
+      cajaArqueoDetalle: async (arqueo_id) => {
+        try {
+          const res = await fetch(`${API_BASE}/api/caja/arqueos/${arqueo_id}`, {
+            headers: { Authorization: `Bearer ${localStorage.getItem("token") || token || ""}` },
+          });
+          const data = await res.json();
+          if (res.ok) return { success: true, arqueo: data };
+          return { success: false, error: data.error || "No se pudo obtener arqueo" };
+        } catch (e) {
+          return { success: false, error: e.message };
+        }
+      },
+
+      // ======================
+      // CAJA - AUDITORÍA
+      // ======================
+      cajaListarAuditoria: async (filtros = {}) => {
+        try {
+          const params = new URLSearchParams();
+          if (filtros.entidad) params.set("entidad", filtros.entidad);
+          if (filtros.entidad_id) params.set("entidad_id", filtros.entidad_id);
+          const res = await fetch(`${API_BASE}/api/caja/auditoria${params.toString() ? `?${params}` : ""}`, {
+            headers: { Authorization: `Bearer ${localStorage.getItem("token") || token || ""}` },
+          });
+          const data = await res.json();
+          if (res.ok) {
+            setAuditoria(data);
+            return { success: true, auditoria: data };
+          }
+          return { success: false, error: data.error || "No se pudo listar auditoría" };
+        } catch (e) {
+          return { success: false, error: e.message };
+        }
+      },
+
+      cajaAuditoriaDetalle: async (aud_id) => {
+        try {
+          const res = await fetch(`${API_BASE}/api/caja/auditoria/${aud_id}`, {
+            headers: { Authorization: `Bearer ${localStorage.getItem("token") || token || ""}` },
+          });
+          const data = await res.json();
+          if (res.ok) return { success: true, evento: data };
+          return { success: false, error: data.error || "No se pudo obtener evento de auditoría" };
+        } catch (e) {
+          return { success: false, error: e.message };
+        }
+      },
 
 
 
@@ -676,6 +1309,15 @@ export const AppProvider = ({ children }) => {
     token,
     isLoading,
     librosDadosBaja,
+    // --- CAJA ---
+    turnoActual,
+    turnos,
+    denominacionesInicio,
+    movimientos,
+    arqueos,
+    resumenTurno,
+    auditoria,
+    // --- FIN CAJA ---
   };
 
   return (
