@@ -1,5 +1,7 @@
 import React, { useMemo, useState, useEffect } from "react";
 import { useAppContext } from "../context/appContext";
+import { useNavigate } from "react-router-dom";
+
 
 // Usuarios “letra” -> nombre
 const USUARIOS = { f: "Flor", y: "Yani", r: "Ricardo", n: "Nico" };
@@ -148,6 +150,8 @@ export default function Caja() {
     // --- Descubre si hay un turno ABIERTO en el backend (post-refresh) ---
     const [turnoServer, setTurnoServer] = useState(null);
     const [isDarkMode, setIsDarkMode] = useState(false);
+    const navigate = useNavigate();
+
 
     function getAuthToken() {
         // ajustá si tu token vive en otro lado
@@ -190,6 +194,9 @@ export default function Caja() {
     const [newPass, setNewPass] = useState("");
     const [showPassModal, setShowPassModal] = useState(false);
     const [resetFromZero, setResetFromZero] = useState(false);
+    const [cajaFecha, setCajaFecha] = useState(() => new Date().toISOString().slice(0, 10)); // "YYYY-MM-DD"
+    const [cajaTurno, setCajaTurno] = useState("MANANA"); // "MANANA" | "TARDE"
+
 
 
 
@@ -263,6 +270,12 @@ export default function Caja() {
         [inicioTotal, totalEfectivo, totalSalidas]
     );
 
+    // --------- Balance TOTAL (ingresos por todos los métodos - salidas) ---------
+    const balanceCajaTotal = useMemo(
+        () => Number((totalEfectivo + totalTransferencias + totalDebito + totalCredito - totalSalidas).toFixed(2)),
+        [totalEfectivo, totalTransferencias, totalDebito, totalCredito, totalSalidas]
+    );
+
     // --------- Turno ---------
     const turnoId = (store?.turnoActual?.id || turnoServer?.id) || null;
     const turnoAbierto = !!turnoId;
@@ -330,7 +343,10 @@ export default function Caja() {
             codigo,
             observacion: "Apertura desde componente",
             denominaciones,
+            fecha: cajaFecha,        // NUEVO
+            turno: cajaTurno,        // NUEVO
         });
+
 
         if (res?.success) {
             alert("Turno abierto.");
@@ -952,6 +968,31 @@ export default function Caja() {
                     {/* 10 */}
                     <div style={styles.countBox}>
                         <div style={{ fontSize: 12, opacity: 0.75 }}>Importe en billetes de</div>
+                        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 10 }}>
+                            <div>
+                                <div style={{ fontSize: 12, opacity: 0.75 }}>Fecha de caja</div>
+                                <input
+                                    type="date"
+                                    style={styles.input}
+                                    value={cajaFecha}
+                                    onChange={(e) => setCajaFecha(e.target.value)}
+                                    disabled={turnoAbierto}
+                                />
+                            </div>
+                            <div>
+                                <div style={{ fontSize: 12, opacity: 0.75 }}>Turno</div>
+                                <select
+                                    style={styles.input}
+                                    value={cajaTurno}
+                                    onChange={(e) => setCajaTurno(e.target.value)}
+                                    disabled={turnoAbierto}
+                                >
+                                    <option value="MANANA">Mañana</option>
+                                    <option value="TARDE">Tarde</option>
+                                </select>
+                            </div>
+                        </div>
+
                         <div style={{ fontWeight: 800 }}>ARS 10</div>
                         <input
                             type="number"
@@ -1217,7 +1258,6 @@ export default function Caja() {
                         </button>
                     </div>
                 )}
-
                 {showResumen && (
                     <>
                         <div style={styles.summaryRow}>
@@ -1245,6 +1285,8 @@ export default function Caja() {
                                 <div style={styles.summaryLabel}>Salidas</div>
                                 <div style={styles.summaryValue}>{moneda(totalSalidas)}</div>
                             </div>
+
+                            {/* Balance de EFECTIVO */}
                             <div style={{ ...styles.summaryBox, background: "#0f766e", color: "white" }}>
                                 <div style={{ ...styles.summaryLabel, color: "#e0fffb" }}>
                                     Balance Caja (efectivo)
@@ -1252,9 +1294,29 @@ export default function Caja() {
                                 <div style={styles.summaryValue}>{moneda(balanceCaja)}</div>
                             </div>
 
+                            {/* Balance TOTAL = efectivo + transf + débito + crédito - salidas */}
+                            <div style={{ ...styles.summaryBox, background: "#111827", color: "white" }}>
+                                <div style={{ ...styles.summaryLabel, color: "#cbd5e1" }}>
+                                    Balance Caja (total)
+                                </div>
+                                <div style={styles.summaryValue}>
+                                    {moneda(
+                                        Number(
+                                            (
+                                                inicioTotal +
+                                                totalEfectivo +
+                                                totalTransferencias +
+                                                totalDebito +
+                                                totalCredito -
+                                                totalSalidas
+                                            ).toFixed(2)
+                                        )
+                                    )}
+                                </div>
+                            </div>
                         </div>
 
-                        <div style={{ marginTop: 12, display: "flex", justifyContent: "flex-end", gap: 8 }}>
+                        <div style={{ marginTop: 12, display: "flex", justifyContent: "flex-end", gap: 8, flexWrap: "wrap" }}>
                             <button
                                 style={styles.iconBtn}
                                 onClick={() => setShowResumen(false)}
@@ -1262,12 +1324,23 @@ export default function Caja() {
                             >
                                 Ocultar resumen
                             </button>
+
+                            {/* NUEVO: aparece sólo cuando showResumen es true (tras pass de ADMIN) */}
+                            <button
+                                style={styles.iconBtn}
+                                onClick={() => navigate("/historial-cajas")}
+                                title="Ver historial de cajas (ir a HistorialCajas)"
+                            >
+                                Ver historial
+                            </button>
+
                             <button style={styles.primaryBtn} onClick={confirmarCierreCaja} disabled={!turnoAbierto}>
                                 Confirmar cierre ahora
                             </button>
                         </div>
                     </>
                 )}
+
             </section>
             {showPassModal && (
                 <div style={{

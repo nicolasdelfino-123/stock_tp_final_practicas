@@ -833,7 +833,7 @@ export const AppProvider = ({ children }) => {
         }
       },
 
-      cajaAbrirTurno: async ({ codigo, observacion, denominaciones = [] }) => {
+      cajaAbrirTurno: async ({ codigo, observacion, denominaciones = [], fecha, turno }) => {
         try {
           const res = await fetch(`${API_BASE}/api/caja/turnos/abrir`, {
             method: "POST",
@@ -845,6 +845,8 @@ export const AppProvider = ({ children }) => {
               codigo,
               observacion,
               denominaciones, // [{ etiqueta, importe_total }]
+              fecha,          // "YYYY-MM-DD"  <-- NUEVO
+              turno,          // "MANANA" | "TARDE" <-- NUEVO
             }),
           });
           const data = await res.json();
@@ -987,6 +989,35 @@ export const AppProvider = ({ children }) => {
           return { success: false, error: e.message };
         }
       },
+
+      cajaListarMovimientosEditados: async (turno_id) => {
+        try {
+          const url = `${API_BASE}/api/caja/movimientos-editados?turno_id=${turno_id}`;
+          const res = await fetch(url, {
+            headers: { Authorization: `Bearer ${localStorage.getItem("token") || token || ""}` },
+          });
+          const data = await res.json();
+          if (res.ok) return { success: true, editados: data };
+          return { success: false, error: data.error || "No se pudo listar movimientos editados" };
+        } catch (e) {
+          return { success: false, error: e.message };
+        }
+      },
+
+      cajaListarMovimientosBorrados: async (turno_id) => {
+        try {
+          const url = `${API_BASE}/api/caja/movimientos-borrados?turno_id=${turno_id}`;
+          const res = await fetch(url, {
+            headers: { Authorization: `Bearer ${localStorage.getItem("token") || token || ""}` },
+          });
+          const data = await res.json();
+          if (res.ok) return { success: true, borrados: data };
+          return { success: false, error: data.error || "No se pudo listar movimientos borrados" };
+        } catch (e) {
+          return { success: false, error: e.message };
+        }
+      },
+
 
       cajaMovimientoDetalle: async (movId) => {
         try {

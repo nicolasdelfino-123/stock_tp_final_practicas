@@ -15,6 +15,7 @@ import Pedidos from "./components/Pedidos";
 import LibrosDadosBaja from "./components/LibrosDadosBaja";
 import PedidosDigital from "./components/PedidosDigital";
 import Caja from "./components/Caja";
+import HistorialCajas from "./components/HistorialCajas";
 
 // Componente para proteger rutas
 const ProtectedRoute = ({ children }) => {
@@ -152,6 +153,14 @@ function AppContent() {
           element={
             <ProtectedRoute>
               <Pedidos />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/historial-cajas"
+          element={
+            <ProtectedRoute>
+              <HistorialCajas />
             </ProtectedRoute>
           }
         />
