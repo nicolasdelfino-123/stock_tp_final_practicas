@@ -1248,6 +1248,18 @@ def caja_turno_abrir():
         obs = data.get("observacion")
         denominaciones = data.get("denominaciones", [])  # [{etiqueta, importe_total}]
 
+        # --- NUEVO: fecha y turno ---
+        tz_arg = timezone(timedelta(hours=-3))
+        fecha_str = (data.get("fecha") or "").strip()  # "YYYY-MM-DD"
+        try:
+            fecha = datetime.fromisoformat(fecha_str).date() if fecha_str else datetime.now(tz_arg).date()
+        except Exception:
+            fecha = datetime.now(tz_arg).date()
+
+        turno = (data.get("turno") or "").strip().upper()  # "MANANA" | "TARDE"
+        if turno not in ("MANANA", "TARDE", ""):
+            turno = ""
+
         # Evitar dos turnos abiertos
         abierto = s.query(CajaTurno).filter(CajaTurno.estado == "ABIERTO").first()
         if abierto:
@@ -1258,7 +1270,9 @@ def caja_turno_abrir():
             estado="ABIERTO",
             abierto_por_id=user.id,
             observacion_apertura=obs,
-            monto_inicial_efectivo=0.0
+            monto_inicial_efectivo=0.0,
+            fecha=fecha,          # NUEVO
+            turno=turno or None,  # NUEVO
         )
         s.add(t)
         s.flush()  # para tener t.id
@@ -1280,12 +1294,15 @@ def caja_turno_abrir():
                 "id": t.id, "codigo": t.codigo, "estado": t.estado,
                 "abierto_por_id": t.abierto_por_id,
                 "abierto_en": t.abierto_en.isoformat() if t.abierto_en else None,
-                "monto_inicial_efectivo": t.monto_inicial_efectivo
+                "monto_inicial_efectivo": t.monto_inicial_efectivo,
+                "fecha": t.fecha.isoformat() if t.fecha else None,   # NUEVO
+                "turno": t.turno,                                     # NUEVO
             }
         }), 201
     except Exception as e:
         s.rollback()
         return jsonify({"error": "No se pudo abrir el turno", "mensaje": str(e)}), 500
+
 
 # LISTAR TURNOS (?estado=ABIERTO/CERRADO, ?desde=ISO, ?hasta=ISO)
 @app.route("/api/caja/turnos", methods=["GET"])
@@ -1299,12 +1316,28 @@ def caja_turnos_listar():
         estado = request.args.get("estado")
         if estado:
             q = q.filter(CajaTurno.estado == estado)
+
+        # Filtros existentes
         desde = request.args.get("desde")
         hasta = request.args.get("hasta")
         if desde:
             q = q.filter(CajaTurno.abierto_en >= datetime.fromisoformat(desde))
         if hasta:
             q = q.filter(CajaTurno.abierto_en <= datetime.fromisoformat(hasta))
+
+        # NUEVO: filtro por fecha exacta (YYYY-MM-DD)
+        fecha_str = request.args.get("fecha")
+        if fecha_str:
+            try:
+                fecha = datetime.fromisoformat(fecha_str).date()
+                q = q.filter(CajaTurno.fecha == fecha)
+            except Exception:
+                pass
+
+        # NUEVO: filtro por turno (MANANA/TARDE)
+        turno = (request.args.get("turno") or "").strip().upper()
+        if turno in ("MANANA", "TARDE"):
+            q = q.filter(CajaTurno.turno == turno)
 
         turnos = q.all()
         out = []
@@ -1317,7 +1350,9 @@ def caja_turnos_listar():
                 "cerrado_en": t.cerrado_en.isoformat() if t.cerrado_en else None,
                 "monto_inicial_efectivo": t.monto_inicial_efectivo,
                 "efectivo_contado_cierre": t.efectivo_contado_cierre,
-                "diferencia_efectivo": t.diferencia_efectivo
+                "diferencia_efectivo": t.diferencia_efectivo,
+                "fecha": t.fecha.isoformat() if t.fecha else None,  # NUEVO
+                "turno": t.turno,                                    # NUEVO
             })
         return jsonify(out), 200
     except Exception as e:
@@ -1345,6 +1380,8 @@ def caja_turno_detalle(turno_id):
             "monto_inicial_efectivo": t.monto_inicial_efectivo,
             "efectivo_contado_cierre": t.efectivo_contado_cierre,
             "diferencia_efectivo": t.diferencia_efectivo,
+            "fecha": t.fecha.isoformat() if t.fecha else None,   # NUEVO
+            "turno": t.turno,                                     # NUEVO
             "denominaciones": [{
                 "id": d.id, "etiqueta": d.etiqueta,
                 "importe_total": float(d.importe_total or 0),

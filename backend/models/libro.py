@@ -1,8 +1,9 @@
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
-from sqlalchemy import Integer, String, Float, DateTime, func, Boolean, ForeignKey
+from sqlalchemy import Integer, String, Float, DateTime, func, Boolean, ForeignKey, Date
 from datetime import datetime
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 from sqlalchemy import Integer, String, Float, DateTime, func, Boolean, ForeignKey, JSON
+from datetime import datetime, date
 
 
 
@@ -149,7 +150,9 @@ class CajaTurno(Base):
     inicio_editado_por_id: Mapped[int] = mapped_column(Integer, ForeignKey("stock_charles_schema.usuarios.id"), nullable=True, index=True)
     inicio_editado_en: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=True)
     motivo_ultima_edicion: Mapped[str] = mapped_column(String(250), nullable=True)
-
+# NUEVO: fecha del día y turno (MANANA/TARDE)
+    fecha: Mapped[date] = mapped_column(Date, nullable=True)
+    turno: Mapped[str] = mapped_column(String(10), nullable=True)  # "MANANA" | "TARDE"
 
 
 class CajaInicioDetalle(Base):
