@@ -720,7 +720,8 @@ export default function PedidosDigital() {
                             minWidth: "1100px",
                             borderCollapse: "collapse",
                             border: "1px solid #adb5bd",
-                            background: "blue"
+                            background: "blue",
+                            tableLayout: "fixed" // 👈 evita que el contenido estire columnas
                         }}
                     >
                         <thead>
@@ -911,8 +912,12 @@ const tdStyle = {
     border: "1px solid #907575ff",
     color: "black",
     fontWeight: "bold",
-    verticalAlign: "top"
+    verticalAlign: "top",
+    overflowWrap: "anywhere", // 👈 corta cadenas largas
+    wordBreak: "break-word",  // 👈 fuerza quiebre si no hay espacios
+    whiteSpace: "normal"      // 👈 permite múltiples líneas
 };
+
 const tdLoading = {
     padding: "16px",
     textAlign: "center",
