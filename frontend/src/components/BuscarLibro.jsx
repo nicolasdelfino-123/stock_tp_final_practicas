@@ -184,7 +184,7 @@ const BuscarLibro = () => {
     negro: "#151718ff",
     amarillo: "#FFFF00",
     naranja: "#f7a308ff",
-    "verde claro": "#00FF00",
+    verde: "#00FF00",
     blanco: "#f5f5f5"
   };
 

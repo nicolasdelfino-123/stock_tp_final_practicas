@@ -41,9 +41,10 @@ async function pedirLoginRicardoAdmin(actions, titulo = "Autenticación requerid
 async function loginWithLetterAndPin(actions, letter, pin) {
     const username = String(letter || "").trim().toLowerCase(); // usa la letra directa
     // aceptar 4+ dígitos por si el PIN nuevo es más largo
-    if (!username || !/^\d{4,}$/.test(pin || "")) {
+    if (!username || !/^[a-zA-Z0-9]{3,5}$/.test(pin || "")) {
         return { ok: false, error: "Formato de credenciales inválido (letra + PIN)" };
     }
+
 
 
     const r = await actions.cajaVerificarPassword({
@@ -60,7 +61,9 @@ async function loginWithLetterAndPin(actions, letter, pin) {
 /** f123420000 => { userLetter:'f', pass4:'1234', importe:Number } */
 function parseLineaVenta(txt) {
 
-    const m = /^\s*([fyrn])\s*(\d{4,})\s*(\d+(?:[.,]\d{1,2})?)\s*$/.exec(txt || "");
+    const m = /^\s*([fyrn])\s*([a-zA-Z0-9]{3,5})\s*(\d+(?:[.,]\d{1,2})?)\s*$/.exec(txt || "");
+
+
 
     if (!m) return null;
     return {
@@ -72,7 +75,9 @@ function parseLineaVenta(txt) {
 
 /** f1234 => { letter:'f', pin:'1234' } */
 function parseCred(txt) {
-    const m = /^\s*([fyrn])\s*(\d{4,})\s*$/.exec(txt || "");
+    const m = /^\s*([fyrn])\s*([a-zA-Z0-9]{3,5})\s*$/.exec(txt || "");
+
+
 
     return m ? { letter: m[1].toLowerCase(), pin: m[2] } : null;
 }
@@ -98,6 +103,71 @@ async function bootstrapUsuarios({ florPin, yaniPin, nicoPin, ricPin, ricAdminPa
     });
     return r.ok ? { success: true } : { success: false, error: r.error || "No se pudo crear usuarios" };
 }
+
+// --- NUEVO: actualiza PINs/clave si fueron escritos en el setup ---
+// Solo cambia lo que NO esté vacío; valida f/y/n/r como dígitos 3–5.
+// ricardo_admin: si viene, se setea como pass largo.
+// --- NUEVO (fix no-undef): recibe los valores como parámetros ---
+async function aplicarCambiosDeSetupSiCorresponde(opts = {}) {
+    const {
+        florPin = "",
+        yaniPin = "",
+        nicoPin = "",
+        ricPin = "",
+        ricAdminPass = "",
+        API_BASE: passedBase,
+    } = opts;
+
+    const base = passedBase || API_BASE; // fallback
+
+    try {
+        const isPinValido = (v) => /^\d{3,5}$/.test(String(v || "").trim());
+        const ops = [];
+
+        if (isPinValido(florPin)) {
+            ops.push(fetch(`${base}/api/caja/usuarios/set-pin4`, {
+                method: "POST", headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ username: "f", pin4: String(florPin).trim() }),
+            }));
+        }
+        if (isPinValido(yaniPin)) {
+            ops.push(fetch(`${base}/api/caja/usuarios/set-pin4`, {
+                method: "POST", headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ username: "y", pin4: String(yaniPin).trim() }),
+            }));
+        }
+        if (isPinValido(nicoPin)) {
+            ops.push(fetch(`${base}/api/caja/usuarios/set-pin4`, {
+                method: "POST", headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ username: "n", pin4: String(nicoPin).trim() }),
+            }));
+        }
+        if (isPinValido(ricPin)) {
+            ops.push(fetch(`${base}/api/caja/usuarios/set-pin4`, {
+                method: "POST", headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ username: "r", pin4: String(ricPin).trim() }),
+            }));
+        }
+        if (String(ricAdminPass || "").trim() !== "") {
+            ops.push(fetch(`${base}/api/caja/usuarios/set-pass-largo`, {
+                method: "POST", headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ username: "ricardo_admin", pass: String(ricAdminPass).trim() }),
+            }));
+        }
+
+        if (ops.length === 0) return { ok: true, cambios: 0 };
+
+        const resps = await Promise.all(ops.map(p => p.then(r => r.json().catch(() => ({})))));
+        const algunError = resps.find(r => r && r.ok === false);
+        if (algunError) return { ok: false, error: algunError.error || "Error actualizando credenciales" };
+
+        return { ok: true, cambios: ops.length };
+    } catch (e) {
+        return { ok: false, error: e.message };
+    }
+}
+
+
 
 // Traducciones tolerantes para username
 const USER_ALIASES = {
@@ -229,6 +299,12 @@ export default function Caja() {
     const [entradaRapida, setEntradaRapida] = useState(""); // ej: f123420000
     const [pagaCon, setPagaCon] = useState(""); // opcional
     const [metodo, setMetodo] = useState("Efectivo");
+
+    const [ventaComentario, setVentaComentario] = useState("");
+
+    // --- NUEVO: para mostrar el comentario de la última venta
+    const [salidaComentario, setSalidaComentario] = useState("");
+
     const [ventas, setVentas] = useState([]); // {id, dbId, usuario, userLetter, pass4, importe, pago, vuelto, metodo, ts}
 
     // --------- Salidas (Gastos) ---------
@@ -307,6 +383,21 @@ export default function Caja() {
             alert("Ya hay una caja abierta. Debés cerrarla primero.");
             return;
         }
+        // --- NUEVO: si en el setup escribieron PINs/clave, actualizalos antes de la apertura
+        const resSetup = await aplicarCambiosDeSetupSiCorresponde({
+            florPin,
+            yaniPin,
+            nicoPin,
+            ricPin,
+            ricAdminPass,
+            API_BASE,
+        });
+
+        if (resSetup && resSetup.ok === false) {
+            alert(resSetup.error || "No se pudieron aplicar cambios de credenciales");
+            return;
+        }
+
 
         // Primera vez → mostrar setup
         if (needsSetup) {
@@ -428,7 +519,7 @@ export default function Caja() {
         }
         const parsed = parseLineaVenta(entradaRapida);
         if (!parsed) {
-            alert("Formato inválido. Usá f123420000 (letra + 4 dígitos + importe).");
+            alert("Formato inválido. Usá f123420000 (letra + 3–5 dígitos + importe).");
             return;
         }
 
@@ -441,14 +532,18 @@ export default function Caja() {
 
         const pago = pagaCon ? Number(String(pagaCon).replace(",", ".")) : null;
         const vuelto = pago != null ? Number((pago - parsed.importe).toFixed(2)) : null;
+        const comentarioV = ventaComentario.trim();
+        const descVenta = `Venta (${parsed.userLetter}${parsed.pass4})${comentarioV ? ` - ${comentarioV}` : ""}`;
+
 
         const res = await actions.cajaCrearMovimiento({
             turno_id: turnoId,
             tipo: "VENTA",
             metodo_pago: metodo,
             importe: parsed.importe,
-            descripcion: `Venta (${parsed.userLetter}${parsed.pass4})`,
+
             paga_con: pago,
+            descripcion: descVenta,        // <-- se guarda en DB
             vuelto: vuelto,
         });
         if (!res?.success) {
@@ -467,6 +562,7 @@ export default function Caja() {
                 pass4: parsed.pass4,
                 importe: parsed.importe,
                 pago,
+                comentario: comentarioV || "",   // <-- para la tabla
                 vuelto,
                 metodo,
                 ts: Date.now(),
@@ -474,6 +570,7 @@ export default function Caja() {
         ]);
         setEntradaRapida("");
         setPagaCon("");
+        setVentaComentario("");  // <-- limpiar comentario
         setMetodo("Efectivo");
     }
 
@@ -573,13 +670,15 @@ export default function Caja() {
             alert(auth.error || "Credenciales inválidas");
             return;
         }
-
+        const comentarioS = salidaComentario.trim();
+        const descSalida = `Salida (${cred.letter}${cred.pin}) - ${salidaDesc || "Salida"}${comentarioS ? ` | ${comentarioS}` : ""}`;
         const res = await actions.cajaCrearMovimiento({
             turno_id: turnoId,
             tipo: "SALIDA",
             metodo_pago: "Efectivo",
+            descripcion: descSalida,     // <-- se guarda en DB
             importe: imp,
-            descripcion: `Salida (${cred.letter}${cred.pin}) - ${salidaDesc || "Salida"}`,
+
         });
         if (!res?.success) {
             alert(res?.error || "No se pudo registrar la salida");
@@ -595,11 +694,14 @@ export default function Caja() {
                 desc: salidaDesc.trim() || "Salida",
                 importe: imp,
                 ts: Date.now(),
+                desc: salidaDesc.trim() || "Salida",
+                comentario: comentarioS || "",    // <-- para la tabla
                 respLetter: cred.letter,
                 respPass4: cred.pin,
             },
         ]);
         setSalidaDesc("");
+        setSalidaComentario("");  // <-- limpiar comentario
         setSalidaImporte("");
         setSalidaRespCode("");
     }
@@ -844,10 +946,15 @@ export default function Caja() {
                         const val = e.target.value;
                         if (val) {
                             setSelectedUser(val);
+                            // --- NUEVO: limpiar campos al abrir el modal
+                            setOldPass("");
+                            setNewPass("");
+                            setResetFromZero(false);
                             setShowPassModal(true);
                         }
                     }}
                 >
+
                     <option value="">Cambiar contraseña…</option>
                     <option value="ricardo_admin">Ricardo (ADMIN)</option>
                     <option value="r">Ricardo (user)</option>
@@ -878,6 +985,30 @@ export default function Caja() {
             {/* Inicio de caja */}
             <section style={styles.card}>
                 <div style={{ ...styles.cardHeader, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 10 }}>
+                        <div>
+                            <div style={{ fontSize: 12, opacity: 0.75 }}>Fecha de caja</div>
+                            <input
+                                type="date"
+                                style={styles.input}
+                                value={cajaFecha}
+                                onChange={(e) => setCajaFecha(e.target.value)}
+                                disabled={turnoAbierto}
+                            />
+                        </div>
+                        <div>
+                            <div style={{ fontSize: 12, opacity: 0.75 }}>Turno</div>
+                            <select
+                                style={styles.input}
+                                value={cajaTurno}
+                                onChange={(e) => setCajaTurno(e.target.value)}
+                                disabled={turnoAbierto}
+                            >
+                                <option value="MANANA">Mañana</option>
+                                <option value="TARDE">Tarde</option>
+                            </select>
+                        </div>
+                    </div>
                     <span>Inicio de caja (importe por billetes)</span>
                     <div style={{ display: "flex", gap: 8 }}>
                         {!turnoAbierto && (
@@ -966,32 +1097,10 @@ export default function Caja() {
                     }}
                 >
                     {/* 10 */}
+
                     <div style={styles.countBox}>
                         <div style={{ fontSize: 12, opacity: 0.75 }}>Importe en billetes de</div>
-                        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 10 }}>
-                            <div>
-                                <div style={{ fontSize: 12, opacity: 0.75 }}>Fecha de caja</div>
-                                <input
-                                    type="date"
-                                    style={styles.input}
-                                    value={cajaFecha}
-                                    onChange={(e) => setCajaFecha(e.target.value)}
-                                    disabled={turnoAbierto}
-                                />
-                            </div>
-                            <div>
-                                <div style={{ fontSize: 12, opacity: 0.75 }}>Turno</div>
-                                <select
-                                    style={styles.input}
-                                    value={cajaTurno}
-                                    onChange={(e) => setCajaTurno(e.target.value)}
-                                    disabled={turnoAbierto}
-                                >
-                                    <option value="MANANA">Mañana</option>
-                                    <option value="TARDE">Tarde</option>
-                                </select>
-                            </div>
-                        </div>
+
 
                         <div style={{ fontWeight: 800 }}>ARS 10</div>
                         <input
@@ -1111,10 +1220,10 @@ export default function Caja() {
             {/* Entradas (Ventas) */}
             <section style={styles.card}>
                 <div style={styles.cardHeader}>Entradas</div>
-                <div style={{ ...styles.controlsRow, gridTemplateColumns: "2fr 1.6fr 1fr auto" }}>
+                <div style={{ ...styles.controlsRow, gridTemplateColumns: "2fr 1.2fr 1.4fr 1fr auto" }}>
                     <input
                         style={{ ...styles.input, border: "2px solid black" }}
-                        placeholder="f1234 2000 / f12345 2000 (letra + PIN + importe)"
+                        placeholder="f123 2000 / f12345 2000 (letra + PIN 3–5 + importe)"
                         value={entradaRapida}
                         onChange={(e) => setEntradaRapida(e.target.value)}
                         onKeyDown={(e) => e.key === "Enter" && agregarVenta()}
@@ -1125,6 +1234,15 @@ export default function Caja() {
                         placeholder="Paga con (opcional)"
                         value={pagaCon}
                         onChange={(e) => setPagaCon(e.target.value)}
+                        onKeyDown={(e) => e.key === "Enter" && agregarVenta()}
+                        disabled={!turnoAbierto}
+                    />
+                    {/* NUEVO: comentario venta */}
+                    <input
+                        style={styles.input}
+                        placeholder="Comentario (opcional)"
+                        value={ventaComentario}
+                        onChange={(e) => setVentaComentario(e.target.value)}
                         onKeyDown={(e) => e.key === "Enter" && agregarVenta()}
                         disabled={!turnoAbierto}
                     />
@@ -1144,6 +1262,7 @@ export default function Caja() {
                     </button>
                 </div>
 
+
                 <div style={styles.tableWrap}>
                     <table style={styles.table}>
                         <thead>
@@ -1154,6 +1273,7 @@ export default function Caja() {
                                 <th style={styles.th}>Pagó con</th>
                                 <th style={styles.th}>Vuelto</th>
                                 <th style={styles.th}>Método</th>
+                                <th style={styles.th}>Comentario</th>   {/* NUEVO */}
                                 <th style={styles.th}></th>
                             </tr>
                         </thead>
@@ -1166,10 +1286,8 @@ export default function Caja() {
                                     <td style={styles.td}>{v.pago != null ? moneda(v.pago) : "-"}</td>
                                     <td style={styles.td}>{v.vuelto != null ? moneda(Math.max(0, v.vuelto)) : "-"}</td>
                                     <td style={styles.td}>{v.metodo}</td>
-                                    <td style={styles.tdRight}>
-                                        <button style={styles.iconBtn} title="Editar" onClick={() => editarVenta(v)}>✏️</button>{" "}
-                                        <button style={styles.iconBtn} title="Eliminar" onClick={() => eliminarVenta(v)}>🗑️</button>
-                                    </td>
+                                    <td style={styles.td}>{v.comentario || "-"}</td> {/* NUEVO */}
+                                    <td style={styles.tdRight}> ... </td>
                                 </tr>
                             ))}
                             {ventas.length === 0 && (
@@ -1185,7 +1303,7 @@ export default function Caja() {
             {/* Salidas */}
             <section style={styles.card}>
                 <div style={styles.cardHeader}>Salidas</div>
-                <div style={{ ...styles.controlsRow, gridTemplateColumns: "2fr 1fr 1fr auto" }}>
+                <div style={{ ...styles.controlsRow, gridTemplateColumns: "2fr 1fr 1.2fr 1fr auto" }}>
                     <input
                         style={styles.input}
                         placeholder="Descripción (proveedor, gasto, etc.)"
@@ -1202,6 +1320,15 @@ export default function Caja() {
                         onKeyDown={(e) => e.key === "Enter" && agregarSalida()}
                         disabled={!turnoAbierto}
                     />
+                    {/* NUEVO: comentario salida */}
+                    <input
+                        style={styles.input}
+                        placeholder="Comentario (opcional)"
+                        value={salidaComentario}
+                        onChange={(e) => setSalidaComentario(e.target.value)}
+                        onKeyDown={(e) => e.key === "Enter" && agregarSalida()}
+                        disabled={!turnoAbierto}
+                    />
                     <input
                         style={styles.input}
                         placeholder="Responsable (f1234 / y1234 / r1234 / n1234)"
@@ -1215,12 +1342,14 @@ export default function Caja() {
                     </button>
                 </div>
 
+
                 <div style={styles.tableWrap}>
                     <table style={styles.table}>
                         <thead>
                             <tr>
                                 <th style={styles.th}>Hora</th>
                                 <th style={styles.th}>Descripción</th>
+                                <th style={styles.th}>Comentario</th>   {/* NUEVO */}
                                 <th style={styles.th}>Importe</th>
                                 <th style={styles.th}></th>
                             </tr>
@@ -1230,13 +1359,12 @@ export default function Caja() {
                                 <tr key={s.id}>
                                     <td style={styles.td}>{hora(s.ts)}</td>
                                     <td style={styles.td}>{s.desc}</td>
+                                    <td style={styles.td}>{s.comentario || "-"}</td> {/* NUEVO */}
                                     <td style={styles.td}>{moneda(s.importe)}</td>
-                                    <td style={styles.tdRight}>
-                                        <button style={styles.iconBtn} title="Editar" onClick={() => editarSalida(s)}>✏️</button>{" "}
-                                        <button style={styles.iconBtn} title="Eliminar" onClick={() => eliminarSalida(s)}>🗑️</button>
-                                    </td>
+                                    <td style={styles.tdRight}> ... </td>
                                 </tr>
                             ))}
+
                             {salidas.length === 0 && (
                                 <tr>
                                     <td style={styles.tdEmpty} colSpan={4}>Sin salidas registradas</td>
@@ -1360,20 +1488,64 @@ export default function Caja() {
                     }}>
                         <h3 style={{ marginBottom: 12 }}>Cambiar contraseña: {selectedUser}</h3>
 
+                        {/* INPUT: contraseña/PIN ACTUAL */}
+                        {/* INPUT: contraseña/PIN ACTUAL */}
                         <input
                             style={{ ...styles.input, marginBottom: 10 }}
                             type="password"
-                            placeholder="Contraseña/PIN actual"
+                            placeholder={
+                                selectedUser === "ricardo_admin"
+                                    ? "Contraseña actual (mín. 6 caracteres)"
+                                    : "Contraseña/PIN actual (3 a 5 caracteres)"
+                            }
                             value={oldPass}
-                            onChange={(e) => setOldPass(e.target.value)}
+                            onChange={(e) => {
+                                const v = e.target.value;
+                                if (selectedUser === "ricardo_admin") {
+                                    // admin → cualquier alfanumérico, mínimo 6, sin tope
+                                    const limpio = v.replace(/[^a-zA-Z0-9]/g, "");
+                                    setOldPass(limpio);
+                                } else {
+                                    // resto → alfanumérico de hasta 5
+                                    const limpio = v.replace(/[^a-zA-Z0-9]/g, "").slice(0, selectedUser === "ricardo_admin" ? 64 : 5);
+
+                                    setOldPass(limpio);
+                                }
+                            }}
+                            autoComplete="current-password"
+                            name={`${selectedUser || "user"}-current-password`}
+                            inputMode="text"
                         />
+
+                        {/* INPUT: NUEVA contraseña/PIN */}
                         <input
                             style={{ ...styles.input, marginBottom: 10 }}
                             type="password"
-                            placeholder="Nueva contraseña/PIN"
+                            placeholder={
+                                selectedUser === "ricardo_admin"
+                                    ? "Nueva contraseña (mín. 6 caracteres)"
+                                    : "Nuevo PIN (3 a 5 caracteres)"
+                            }
                             value={newPass}
-                            onChange={(e) => setNewPass(e.target.value)}
+                            onChange={(e) => {
+                                const v = e.target.value;
+                                if (selectedUser === "ricardo_admin") {
+                                    const limpio = v.replace(/[^a-zA-Z0-9]/g, "");
+                                    setNewPass(limpio);
+                                } else {
+                                    const limpio = v.replace(/[^a-zA-Z0-9]/g, "").slice(0, selectedUser === "ricardo_admin" ? 64 : 5);
+
+
+                                    setNewPass(limpio);
+                                }
+                            }}
+                            autoComplete="new-password"
+                            name={`${selectedUser || "user"}-new-password`}
+                            inputMode="text"
                         />
+
+
+
                         <div style={{ marginBottom: 10 }}>
                             <label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 14 }}>
                                 <input
@@ -1416,6 +1588,27 @@ export default function Caja() {
 
                                     const isAdmin = selectedUser === "ricardo_admin";
 
+                                    // Validación según usuario
+                                    if (isAdmin) {
+                                        if (!/^[a-zA-Z0-9]{6,}$/.test(newPass)) {
+                                            alert("La nueva contraseña de ADMIN debe tener al menos 6 caracteres alfanuméricos");
+                                            return;
+                                        }
+                                        if (oldPass && !/^[a-zA-Z0-9]{6,}$/.test(oldPass)) {
+                                            alert("La contraseña actual de ADMIN debe tener al menos 6 caracteres alfanuméricos");
+                                            return;
+                                        }
+                                    } else {
+                                        if (!/^[a-zA-Z0-9]{3,5}$/.test(newPass)) {
+                                            alert("El nuevo PIN debe tener entre 3 y 5 caracteres alfanuméricos");
+                                            return;
+                                        }
+                                        if (oldPass && !/^[a-zA-Z0-9]{3,5}$/.test(oldPass)) {
+                                            alert("El PIN actual debe tener entre 3 y 5 caracteres alfanuméricos");
+                                            return;
+                                        }
+                                    }
+
                                     // Si NO es admin y quiere crear desde cero: pedir autorización de ADMIN
                                     if (!isAdmin && resetFromZero) {
                                         const adminPw = window.prompt("Autorización requerida.\nContraseña de Ricardo (ADMIN):") || "";
@@ -1446,13 +1639,13 @@ export default function Caja() {
                                         }
 
                                         // Setear NUEVO PIN/PASSWORD directamente
-                                        const endpoint = isAdmin ?
-                                            `${API_BASE}/api/caja/usuarios/set-pass-largo` :
-                                            `${API_BASE}/api/caja/usuarios/set-pin4`;
+                                        const endpoint = isAdmin
+                                            ? `${API_BASE}/api/caja/usuarios/set-pass-largo`
+                                            : `${API_BASE}/api/caja/usuarios/set-pin4`;
 
-                                        const body = isAdmin ?
-                                            { username: selectedUser, pass: newPass } :
-                                            { username: selectedUser, pin4: newPass };
+                                        const body = isAdmin
+                                            ? { username: selectedUser, pass: newPass }
+                                            : { username: selectedUser, pin4: newPass };
 
                                         try {
                                             const res = await fetch(endpoint, {
@@ -1504,13 +1697,13 @@ export default function Caja() {
                                     }
 
                                     // Si llegamos acá, la verificación fue exitosa - cambiar contraseña
-                                    const endpoint = isAdmin ?
-                                        `${API_BASE}/api/caja/usuarios/set-pass-largo` :
-                                        `${API_BASE}/api/caja/usuarios/set-pin4`;
+                                    const endpoint = isAdmin
+                                        ? `${API_BASE}/api/caja/usuarios/set-pass-largo`
+                                        : `${API_BASE}/api/caja/usuarios/set-pin4`;
 
-                                    const body = isAdmin ?
-                                        { username: selectedUser, pass: newPass } :
-                                        { username: selectedUser, pin4: newPass };
+                                    const body = isAdmin
+                                        ? { username: selectedUser, pass: newPass }
+                                        : { username: selectedUser, pin4: newPass };
 
                                     try {
                                         const res = await fetch(endpoint, {
@@ -1530,8 +1723,8 @@ export default function Caja() {
                                     } catch (e) {
                                         alert("Error actualizando contraseña: " + e.message);
                                     }
-                                }}
-                            >
+                                }} >
+
                                 Guardar
                             </button>
 
