@@ -311,6 +311,9 @@ const PedidoForm = () => {
   };
 
   const verificarDatosYResetearFlags = () => {
+    // 👉 Normalizar seña IGUAL que en handleGuardar
+    const señaNumero = Number(String(seña).replace(/\D/g, ''));
+
     const datosActuales = {
       nombreCliente,
       tituloLibro,
@@ -318,7 +321,7 @@ const PedidoForm = () => {
       editorial,
       cantidad,
       fecha,
-      seña,
+      seña: isNaN(señaNumero) ? 0 : señaNumero, // ← numérica
       comentario,
       isbn,
       telefonoCliente
@@ -332,6 +335,7 @@ const PedidoForm = () => {
   };
 
   const handleGuardar = async () => {
+    const señaNumero = Number(String(seña).replace(/\D/g, ''));
     const datosActuales = {
       nombreCliente,
       tituloLibro,
@@ -339,7 +343,7 @@ const PedidoForm = () => {
       editorial,
       cantidad,
       fecha,
-      seña,
+      seña: isNaN(señaNumero) ? 0 : señaNumero,  // 👈 preserva 0
       comentario,
       isbn,
       telefonoCliente
@@ -362,10 +366,17 @@ const PedidoForm = () => {
       return;
     }
 
-    if (!nombreCliente || !tituloLibro || !autorLibro || !seña || !telefonoCliente) {
+    if (
+      !nombreCliente ||
+      !tituloLibro ||
+      !autorLibro ||
+      seña === "" || seña === null || seña === undefined ||   // 👈 ahora 0 es válido
+      !telefonoCliente
+    ) {
       alert("Por favor complete todos los campos obligatorios");
       return;
     }
+
     if (cantidad === 0) {
       alert("La cantidad no puede ser cero");
       return;
@@ -738,7 +749,11 @@ const PedidoForm = () => {
       setAutorLibro(pedido.autor);
       setCantidad(pedido.cantidad || 1);
       setFecha(formatearFechaArgentina(pedido.fecha));
-      setSenia(pedido.seña ? pedido.seña.toString() : "");
+      setSenia(
+        pedido.seña !== null && pedido.seña !== undefined
+          ? String(pedido.seña)
+          : ""
+      );
       setComentario(pedido.comentario || "");
       setIsbn(pedido.isbn || "");
       setTelefonoCliente(pedido.telefonoCliente || "");
@@ -1812,7 +1827,19 @@ const PedidoForm = () => {
                       <th style={{ padding: '12px', border: '1px solid #ddd' }}>Fecha Pedido</th>      {/* 9 */}
                       <th style={{ padding: '12px', border: '1px solid #ddd' }}>Seña</th>              {/* 10 */}
                       <th style={{ padding: '12px', border: '1px solid #ddd' }}>Comentarios</th>       {/* 11 */}
-                      <th style={{ padding: '12px', border: '1px solid #ddd' }}>Acciones</th>          {/* 12 */}
+                      <th
+                        style={{
+                          padding: '12px',
+                          border: '1px solid #ddd',
+                          width: '96px',
+                          minWidth: '96px',
+                          whiteSpace: 'normal',   // 👈 permite que “Acciones” se parta si hace falta
+                          textAlign: 'center'
+                        }}
+                      >
+                        Acciones
+                      </th>
+
                     </tr>
                   </thead>
 
@@ -1894,23 +1921,43 @@ const PedidoForm = () => {
                             {pedido.comentario || '-'}
                           </td>
 
-                          <td style={{ padding: '12px', border: '1px solid #3c2828ff', display: 'flex', gap: '5px' }}>
+                          <td
+                            style={{
+                              padding: '12px',
+                              border: '1px solid #3c2828ff',
+                              display: 'flex',
+                              flexDirection: 'column',
+                              gap: '6px',
+                              alignItems: 'stretch',
+                              width: '96px',
+                              minWidth: '96px',
+                              maxWidth: '96px',          // 👈 tope duro
+                              boxSizing: 'border-box',
+                              overflow: 'hidden'         // 👈 evita que algo se salga
+                            }}
+                          >
                             <button
                               onClick={() => handleEditarPedido(pedido.id)}
                               style={{
                                 backgroundColor: '#ffc107',
                                 color: 'black',
                                 border: 'none',
-                                padding: '5px 10px',
+                                padding: '6px 6px',      // 👈 un pelín menos horizontal
                                 borderRadius: '3px',
                                 cursor: 'pointer',
-                                fontWeight: 'bold'
+                                fontWeight: 'bold',
+                                width: '100%',
+                                display: 'block',
+                                boxSizing: 'border-box',
+                                whiteSpace: 'normal',     // 👈 permite salto de línea
+                                wordBreak: 'break-word',  // 👈 por si “Editar” cambia
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis'
                               }}
                             >
                               Editar
                             </button>
 
-                            {/* Ocultar (soft delete) */}
                             <button
                               onClick={() => handleOcultarPedido(pedido.id)}
                               disabled={pedido.oculto === true}
@@ -1919,33 +1966,47 @@ const PedidoForm = () => {
                                 backgroundColor: pedido.oculto ? '#adb5bd' : '#dc3545',
                                 color: 'white',
                                 border: 'none',
-                                padding: '5px 10px',
+                                padding: '6px 6px',
                                 borderRadius: '3px',
                                 cursor: pedido.oculto ? 'not-allowed' : 'pointer',
-                                fontWeight: 'bold'
+                                fontWeight: 'bold',
+                                width: '100%',
+                                display: 'block',
+                                boxSizing: 'border-box',
+                                whiteSpace: 'normal',
+                                wordBreak: 'break-word',
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis'
                               }}
                             >
                               Ocultar
                             </button>
 
-                            {/* Recuperar */}
                             <button
                               onClick={() => handleRecuperarPedido(pedido)}
                               disabled={pedido.oculto !== true}
                               title={pedido.oculto ? "Recuperar (volver a mostrar)" : "Sólo para pedidos ocultos"}
                               style={{
                                 backgroundColor: pedido.oculto ? '#198754' : '#adb5bd',
-                                color: 'white',
+                                color: 'black',
                                 border: 'none',
-                                padding: '5px 10px',
+                                padding: '6px 6px',
                                 borderRadius: '3px',
                                 cursor: pedido.oculto ? 'pointer' : 'not-allowed',
-                                fontWeight: 'bold'
+                                fontWeight: 'bold',
+                                width: '100%',
+                                display: 'block',
+                                boxSizing: 'border-box',
+                                whiteSpace: 'normal',
+                                wordBreak: 'break-word',
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis'
                               }}
                             >
                               Recuperar
                             </button>
                           </td>
+
 
                         </tr>
                       ))

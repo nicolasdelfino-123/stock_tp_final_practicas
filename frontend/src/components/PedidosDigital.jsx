@@ -735,7 +735,7 @@ export default function PedidosDigital() {
                             <col style={{ width: 110 }} />   {/* Fecha pedido (110) */}
                             {filtroEstado === "VIENE" && <col style={{ width: 110 }} />}{/* Fecha viene (110) */}
                             <col style={{ width: 110 }} />   {/* Coment. (fixed(110)) */}
-                            <col />                          {/* Estado (auto) */}
+                            <col style={{ width: 90 }} />    {/* 👉 ESTADO (achicado) */}
                             <col />                          {/* Motivo (auto) */}
                             <col style={{ width: 120 }} />   {/* Acciones (fixed(120)) */}
                         </colgroup>
@@ -753,7 +753,10 @@ export default function PedidosDigital() {
                                     <th style={thStyleCenter}>Fecha viene</th>
                                 )}
                                 <th style={{ ...thStyle, ...fixed(110) }}>Coment.</th>
-                                <th style={thStyle}>Estado</th>
+                                {/* 👉 TH de ESTADO: ancho fijo + permite wrap */}
+                                <th style={{ ...thStyle, ...fixed(90), whiteSpace: "normal", textAlign: "start" }}>
+                                    Estado
+                                </th>
                                 <th style={thStyle}>Motivo</th>
                                 <th style={{ ...thStyleCenter, ...fixed(120) }}>Acciones</th>
                             </tr>
@@ -863,7 +866,7 @@ export default function PedidosDigital() {
 
 
                                             <td style={{ ...tdStyle, ...fixed(120), whiteSpace: "normal" }}>
-                                                <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                                                <div style={{ display: "flex", gap: 6, flexWrap: "wrap", justifyContent: "center" }}>
                                                     <button
                                                         className="btn-viene-tabla-principal"
                                                         onClick={() => setEstado(p.id, "VIENE")}

@@ -1039,8 +1039,9 @@ def crear_pedido():
         fecha_str = data.get('fecha')
         fecha_viene_str = data.get('fecha_viene')
 
-        fecha = datetime.strptime(fecha_str, '%d/%m/%Y').date() if fecha_str else None
-        fecha_viene = datetime.strptime(fecha_viene_str, '%d/%m/%Y').date() if fecha_viene_str else None
+        fecha = ((datetime.strptime(fecha_str, '%d/%m/%Y') if '/' in fecha_str else datetime.fromisoformat(fecha_str.replace('Z', '+00:00'))).date()) if fecha_str else None
+        fecha_viene = ((datetime.strptime(fecha_viene_str, '%d/%m/%Y') if '/' in fecha_viene_str else datetime.fromisoformat(fecha_viene_str.replace('Z', '+00:00'))).date()) if fecha_viene_str else None
+
 
         nuevo_pedido = Pedido(
             cliente_nombre=data.get('cliente_nombre'),
@@ -1112,20 +1113,17 @@ def actualizar_pedido(pedido_id):
      # 👇 Manejo de fecha igual que en POST
         fecha_str = data.get('fecha')
         if fecha_str:
-            pedido.fecha = datetime.strptime(fecha_str, '%d/%m/%Y').date()
+            pedido.fecha = (datetime.strptime(fecha_str, '%d/%m/%Y') if '/' in fecha_str else datetime.fromisoformat(fecha_str.replace('Z', '+00:00'))).date()
+
         pedido.oculto = data.get('oculto', pedido.oculto)
 
         # 👇 Manejo de fecha_viene
+        fv = data.get('fecha_viene')
         if data.get('estado') == 'VIENE':
-            # si viene fecha_viene explícita la usamos, sino la seteamos ahora
-            pedido.fecha_viene = data.get('fecha_viene') or func.now()
-        else:
-            # si mandan null explícito, la limpia
-            if 'fecha_viene' in data:
-                pedido.fecha_viene = data.get('fecha_viene')
+            pedido.fecha_viene = ((datetime.strptime(fv, '%d/%m/%Y') if fv and '/' in fv else datetime.fromisoformat(fv.replace('Z', '+00:00')).date()) if fv else datetime.utcnow().date())
+        elif 'fecha_viene' in data:
+            pedido.fecha_viene = ((datetime.strptime(fv, '%d/%m/%Y') if fv and '/' in fv else datetime.fromisoformat(fv.replace('Z', '+00:00')).date()) if fv else None)
 
-
-                
 
         session.commit()
         return jsonify({'mensaje': 'Pedido actualizado con éxito'})
