@@ -1025,15 +1025,23 @@ def get_pedidos():
         session.close()
 
 
+from datetime import datetime
+from sqlalchemy.exc import SQLAlchemyError
+
 @app.route('/api/pedidos', methods=['POST'])
 def crear_pedido():
-   
-   
     session = app.session
     data = request.json
     print("📦 Datos recibidos para crear pedido:", data)
 
     try:
+        # Convertir string 'DD/MM/YYYY' a datetime.date (si vienen)
+        fecha_str = data.get('fecha')
+        fecha_viene_str = data.get('fecha_viene')
+
+        fecha = datetime.strptime(fecha_str, '%d/%m/%Y').date() if fecha_str else None
+        fecha_viene = datetime.strptime(fecha_viene_str, '%d/%m/%Y').date() if fecha_viene_str else None
+
         nuevo_pedido = Pedido(
             cliente_nombre=data.get('cliente_nombre'),
             seña=float(data.get('seña', 0)) if data.get('seña') else 0.0,
@@ -1041,17 +1049,15 @@ def crear_pedido():
             autor=data.get('autor'),
             editorial=data.get('editorial', ''),
             telefono=data.get('telefonoCliente', ''),
-            fecha=data.get('fecha'), 
+            fecha=fecha,
             comentario=data.get('comentario', ''),
             cantidad=int(data.get('cantidad', 1)),
             isbn=data.get('isbn', ''),
             estado=data.get('estado', None),
             motivo=data.get('motivo', None),
-            fecha_viene=data.get('fecha_viene', None),
-          
-
-            
+            fecha_viene=fecha_viene,
         )
+
         session.add(nuevo_pedido)
         session.commit()
 
@@ -1075,9 +1081,11 @@ def crear_pedido():
 
     except SQLAlchemyError as e:
         session.rollback()
+        print("🛑 Error SQL:", str(e))  # Log para depuración
         return jsonify({'error': 'Error al crear el pedido', 'mensaje': str(e)}), 500
     finally:
         session.close()
+
 
 
 @app.route('/api/pedidos/<int:pedido_id>', methods=['PUT'])
