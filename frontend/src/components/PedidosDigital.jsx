@@ -726,20 +726,21 @@ export default function PedidosDigital() {
                     >
                         <thead>
                             <tr style={{ backgroundColor: "#0655a8ff", color: 'white' }}>
-                                <th style={thStyle}>Cliente</th>
-                                <th style={thStyle}>Título</th>
+                                <th style={{ ...thStyle, ...fixed(100) }}>Cliente</th>   {/* ⬅️ Aca agrandás/achicás CLIENTE */}
+                                <th style={{ ...thStyle, ...fixed(200) }}>Título</th>    {/* ⬅️ Aca agrandás/achicás TITULO */}
                                 <th style={thStyle}>Autor</th>
-                                <th style={thStyle}>Editorial</th> {/* ⬅️ NUEVO */}
-                                <th style={thStyleCenter}>Cant.</th>
+                                <th style={{ ...thStyle, ...fixed(120) }}>Editorial</th> {/* ⬅️ Aca agrandás/achicás EDITORIAL */}
+                                <th style={{ ...thStyle, ...fixed(65) }}>Cant.</th>
                                 <th style={thStyle}>ISBN</th>
                                 <th style={thStyleCenter}>Fecha pedido</th>
                                 {filtroEstado === "VIENE" && (
                                     <th style={thStyleCenter}>Fecha viene</th>
                                 )}
-                                <th style={thStyle}>Comentarios</th>
+                                <th style={{ ...thStyle, ...fixed(110) }}>Coment.</th>
                                 <th style={thStyle}>Estado</th>
                                 <th style={thStyle}>Motivo</th>
-                                <th style={thStyleCenter}>Acciones</th>
+                                <th style={{ ...thStyleCenter, ...fixed(120) }}>Acciones</th>  {/* ⬅️ ancho fijo acciones */}
+
                             </tr>
                         </thead>
 
@@ -847,23 +848,24 @@ export default function PedidosDigital() {
                                             </td>
 
 
-                                            <td style={{ ...tdStyle, whiteSpace: "nowrap" }}>
-                                                <div style={{ display: "flex", gap: 6 }}>
-                                                    <button className="btn-viene-tabla-principal"
+                                            <td style={{ ...tdStyle, ...fixed(120), whiteSpace: "normal" }}>
+                                                <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                                                    <button
+                                                        className="btn-viene-tabla-principal"
                                                         onClick={() => setEstado(p.id, "VIENE")}
                                                         style={btnOk}
                                                     >
                                                         VIENE
                                                     </button>
-                                                    {/* Botón ROJO: cambia solo en la vista VIENEN */}
+
                                                     {filtroEstado === "VIENE" ? (
                                                         <button
                                                             onClick={() => {
                                                                 const ok = window.confirm(
                                                                     "Ojo!! Estás a punto de agregar el pedido a la lista para pedirlo de nuevo.\n\n¿Confirmás?"
                                                                 );
-                                                                if (!ok) return;               // Cancelar: no hace nada
-                                                                setEstado(p.id, "NO_VIENE");   // Aceptar: comportamiento actual
+                                                                if (!ok) return;
+                                                                setEstado(p.id, "NO_VIENE");
                                                             }}
                                                             style={btnNo}
                                                         >
@@ -877,9 +879,9 @@ export default function PedidosDigital() {
                                                             NO VIENE
                                                         </button>
                                                     )}
-
                                                 </div>
                                             </td>
+
                                         </tr>
                                     );
                                 })
@@ -891,6 +893,17 @@ export default function PedidosDigital() {
         </div >
     );
 }
+
+// ⬇️ Helper para columna de ancho fijo (ajustá los px a gusto)
+const fixed = (px) => ({
+    width: px,
+    minWidth: px,
+    maxWidth: px,
+    overflowWrap: "anywhere",
+    wordBreak: "break-word",
+    whiteSpace: "normal",
+    boxSizing: "border-box",
+});
 
 /* Estilos inline compartidos */
 const thStyle = {
@@ -913,10 +926,12 @@ const tdStyle = {
     color: "black",
     fontWeight: "bold",
     verticalAlign: "top",
-    overflowWrap: "anywhere", // 👈 corta cadenas largas
-    wordBreak: "break-word",  // 👈 fuerza quiebre si no hay espacios
-    whiteSpace: "normal"      // 👈 permite múltiples líneas
+    overflowWrap: "anywhere",  // ⬅️ corta cadenas largas
+    wordBreak: "break-word",   // ⬅️ fuerza quiebre si no hay espacios
+    whiteSpace: "normal",      // ⬅️ permite múltiples líneas
+    boxSizing: "border-box",
 };
+
 
 const tdLoading = {
     padding: "16px",
