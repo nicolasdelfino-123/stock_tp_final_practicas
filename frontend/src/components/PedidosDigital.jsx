@@ -721,15 +721,31 @@ export default function PedidosDigital() {
                             borderCollapse: "collapse",
                             border: "1px solid #adb5bd",
                             background: "blue",
-                            tableLayout: "fixed" // 👈 evita que el contenido estire columnas
+                            tableLayout: "fixed", // 👈 evita que el contenido estire columnas
                         }}
                     >
+                        {/* ⬇️ NUEVO: colgroup fija anchos de columnas */}
+                        <colgroup>
+                            <col style={{ width: 100 }} />   {/* Cliente (fixed(100)) */}
+                            <col style={{ width: 200 }} />   {/* Título  (fixed(200)) */}
+                            <col />                          {/* Autor (auto) */}
+                            <col style={{ width: 120 }} />   {/* Editorial (fixed(120)) */}
+                            <col style={{ width: 65 }} />    {/* Cant. (fixed(65)) */}
+                            <col />                          {/* ISBN (auto) */}
+                            <col style={{ width: 110 }} />   {/* Fecha pedido (110) */}
+                            {filtroEstado === "VIENE" && <col style={{ width: 110 }} />}{/* Fecha viene (110) */}
+                            <col style={{ width: 110 }} />   {/* Coment. (fixed(110)) */}
+                            <col />                          {/* Estado (auto) */}
+                            <col />                          {/* Motivo (auto) */}
+                            <col style={{ width: 120 }} />   {/* Acciones (fixed(120)) */}
+                        </colgroup>
+
                         <thead>
-                            <tr style={{ backgroundColor: "#0655a8ff", color: 'white' }}>
-                                <th style={{ ...thStyle, ...fixed(100) }}>Cliente</th>   {/* ⬅️ Aca agrandás/achicás CLIENTE */}
-                                <th style={{ ...thStyle, ...fixed(200) }}>Título</th>    {/* ⬅️ Aca agrandás/achicás TITULO */}
+                            <tr style={{ backgroundColor: "#0655a8ff", color: "white" }}>
+                                <th style={{ ...thStyle, ...fixed(100) }}>Cliente</th>
+                                <th style={{ ...thStyle, ...fixed(200) }}>Título</th>
                                 <th style={thStyle}>Autor</th>
-                                <th style={{ ...thStyle, ...fixed(120) }}>Editorial</th> {/* ⬅️ Aca agrandás/achicás EDITORIAL */}
+                                <th style={{ ...thStyle, ...fixed(120) }}>Editorial</th>
                                 <th style={{ ...thStyle, ...fixed(65) }}>Cant.</th>
                                 <th style={thStyle}>ISBN</th>
                                 <th style={thStyleCenter}>Fecha pedido</th>
@@ -739,11 +755,9 @@ export default function PedidosDigital() {
                                 <th style={{ ...thStyle, ...fixed(110) }}>Coment.</th>
                                 <th style={thStyle}>Estado</th>
                                 <th style={thStyle}>Motivo</th>
-                                <th style={{ ...thStyleCenter, ...fixed(120) }}>Acciones</th>  {/* ⬅️ ancho fijo acciones */}
-
+                                <th style={{ ...thStyleCenter, ...fixed(120) }}>Acciones</th>
                             </tr>
                         </thead>
-
                         <tbody>
                             {loading ? (
                                 <tr><td colSpan={10} style={tdLoading}>Cargando...</td></tr>
@@ -910,13 +924,18 @@ const thStyle = {
     border: "1px solid #adacac",
     fontWeight: "bold",
     textAlign: "left",
-    whiteSpace: "nowrap",
+    whiteSpace: "normal",       // 👈 permite partir el texto del header
     position: "sticky",
     top: 0,
     zIndex: 2,
     backgroundColor: "#0655a8ff",
     color: "white",
+    minWidth: 0,                // 👈 habilita que pueda achicarse
+    overflowWrap: "anywhere",   // 👈 por si hay palabras largas
+    wordBreak: "break-word",
+    boxSizing: "border-box",
 };
+
 
 const thStyleCenter = { ...thStyle, textAlign: "center" };
 const tdStyle = {
@@ -925,11 +944,14 @@ const tdStyle = {
     color: "black",
     fontWeight: "bold",
     verticalAlign: "top",
-    overflowWrap: "anywhere",  // ⬅️ corta cadenas largas
-    wordBreak: "break-word",   // ⬅️ fuerza quiebre si no hay espacios
-    whiteSpace: "normal",      // ⬅️ permite múltiples líneas
+    overflowWrap: "anywhere",
+    wordBreak: "break-word",
+    whiteSpace: "normal",
     boxSizing: "border-box",
+    minWidth: 0,          // 👈 clave para que el contenido no “empuje” la columna
+    maxWidth: "100%",
 };
+
 
 
 const tdLoading = {
