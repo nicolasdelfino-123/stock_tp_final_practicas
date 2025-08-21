@@ -857,7 +857,6 @@ export default function PedidosDigital() {
                                                     >
                                                         VIENE
                                                     </button>
-
                                                     {filtroEstado === "VIENE" ? (
                                                         <button
                                                             onClick={() => {

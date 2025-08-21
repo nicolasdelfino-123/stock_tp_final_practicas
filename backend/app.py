@@ -1109,7 +1109,10 @@ def actualizar_pedido(pedido_id):
         pedido.isbn = data.get('isbn', pedido.isbn)
         pedido.estado = data.get('estado', pedido.estado)
         pedido.motivo = data.get('motivo', pedido.motivo)
-        pedido.fecha = data.get('fecha', pedido.fecha)
+     # 👇 Manejo de fecha igual que en POST
+        fecha_str = data.get('fecha')
+        if fecha_str:
+            pedido.fecha = datetime.strptime(fecha_str, '%d/%m/%Y').date()
         pedido.oculto = data.get('oculto', pedido.oculto)
 
         # 👇 Manejo de fecha_viene
