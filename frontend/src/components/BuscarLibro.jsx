@@ -545,7 +545,7 @@ const BuscarLibro = () => {
                       gap: "10px",
                       padding: "15px 20px",
                       border: "1px solid black",
-                      backgroundColor: coloresUbicacion[libro.ubicacion?.toLowerCase()] || "#FFFFFF", // Color por defecto
+                      backgroundColor: coloresUbicacion[libro.ubicacion?.trim().toLowerCase()] || "#FFFFFF",// Color por defecto
                       borderRadius: "12px",
                       boxShadow: "0 4px 8px rgba(30, 136, 229, 0.1)",
                       fontSize: "0.95rem",
