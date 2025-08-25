@@ -47,6 +47,8 @@ export default function PedidosDigital() {
     // Añadir al inicio del componente, junto a los otros estados
     const [pedidosMarcadosRecien, setPedidosMarcadosRecien] = useState(new Set());
     const [editorial, setEditorialLibro] = useState("");
+    const [ordenFechaVieneAsc, setOrdenFechaVieneAsc] = useState(true);
+
 
     useEffect(() => { setExcluirVienen(true); }, []);
 
@@ -117,6 +119,25 @@ export default function PedidosDigital() {
             return true;
         });
     };
+
+    const handleOrdenarPorFechaViene = () => {
+        const pedidosOrdenados = [...pedidosFiltrados].sort((a, b) => {
+            const fechaA = a.fecha_viene ? new Date(a.fecha_viene) : null;
+            const fechaB = b.fecha_viene ? new Date(b.fecha_viene) : null;
+
+            if (!fechaA && !fechaB) return 0;
+            if (!fechaA) return 1;
+            if (!fechaB) return -1;
+
+            return ordenFechaVieneAsc ? fechaA - fechaB : fechaB - fechaA;
+        });
+
+        setPedidos(pedidosOrdenados);
+        setOrdenFechaVieneAsc(!ordenFechaVieneAsc);
+    };
+
+
+
     // cuando cambia fechaDesde
     const handleFechaDesdeChange = (e) => {
         const nuevaDesde = e.target.value;
@@ -750,8 +771,14 @@ export default function PedidosDigital() {
                                 <th style={thStyle}>ISBN</th>
                                 <th style={thStyleCenter}>Fecha pedido</th>
                                 {filtroEstado === "VIENE" && (
-                                    <th style={thStyleCenter}>Fecha viene</th>
+                                    <th
+                                        style={{ ...thStyleCenter, cursor: "pointer" }}
+                                        onClick={handleOrdenarPorFechaViene}
+                                    >
+                                        Fecha viene {ordenFechaVieneAsc ? "⬆️" : "⬇️"}
+                                    </th>
                                 )}
+
                                 <th style={{ ...thStyle, ...fixed(110) }}>Coment.</th>
                                 {/* 👉 TH de ESTADO: ancho fijo + permite wrap */}
                                 <th style={{ ...thStyle, ...fixed(90), whiteSpace: "normal", textAlign: "start" }}>
