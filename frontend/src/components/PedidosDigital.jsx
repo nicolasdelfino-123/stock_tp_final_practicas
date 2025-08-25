@@ -381,9 +381,9 @@ export default function PedidosDigital() {
 
         const rows = lista.map(p => `
     <tr>
-      <td>${p.titulo || "-"}</td>
-      <td>${p.autor || "-"}</td>
-      <td>${p.editorial || "-"}</td>   <!-- ⬅️ NUEVO -->
+      <td class="hyph">${p.titulo || "-"}</td>
+      <td class="hyph">${p.autor || "-"}</td>
+      <td class="hyph">${p.editorial || "-"}</td>
       <td style="text-align:center">${p.cantidad || 1}</td>
       <td>${p.isbn || "-"}</td>
     </tr>
@@ -395,7 +395,8 @@ export default function PedidosDigital() {
         const totalLibros = visibles.length;
 
         vent.document.write(`
-<html>
+<!doctype html>
+<html lang="es">
 <head>
   <meta charset="utf-8" />
   <title>Pedidos Ricardo Delfino - Librería Charles</title>
@@ -403,25 +404,63 @@ export default function PedidosDigital() {
     body { font-family: Arial, sans-serif; margin: 10px; }
     .header { text-align: center; margin-bottom: 15px; }
     .titulo { color: #2c3e50; margin: 10px 0; }
+
     table {
       border-collapse: collapse; width: 100%; table-layout: fixed;
       font-size: 10px; border: 1px solid black !important;
     }
     th, td {
       border: 1px solid black !important; padding: 4px 6px; text-align: left;
-      word-wrap: break-word; overflow-wrap: break-word; white-space: normal;
+      /* 👉 habilitamos cortes por sílaba */
+      word-break: normal;
+      overflow-wrap: normal;
+      hyphens: auto;
+      -webkit-hyphens: auto;
+      -ms-hyphens: auto;
+      white-space: normal;
       box-sizing: border-box; vertical-align: top;
     }
+
+    /* columnas clave que pueden partir por sílaba */
+    .hyph {
+      word-break: normal;
+      overflow-wrap: normal;
+      hyphens: auto;
+      -webkit-hyphens: auto;
+      -ms-hyphens: auto;
+    }
+
+    /* ✅ Fuerza que la columna 5 (ISBN) NUNCA desborde: envuelve siempre */
+    td:nth-child(5) {
+      white-space: normal;
+      word-break: break-word;
+      overflow-wrap: anywhere;
+    }
+
     th { background-color: white; color: black; font-weight: bold; white-space: nowrap; }
+
     tr:nth-child(even) { background-color: #f2f2f2; }
     tr:hover { background-color: #e8f4fd; }
+
     @media print {
       body { margin: 0.5cm; }
       table { font-size: 8pt; width: 100% !important; min-width: 100% !important; }
       th, td {
         padding: 2px 4px; color: black !important; border: 1px solid black !important;
-        word-break: break-all !important;
+        /* ❌ quitamos break-all y dejamos cortes por sílaba */
+        word-break: normal !important;
+        overflow-wrap: normal !important;
+        hyphens: auto !important;
+        -webkit-hyphens: auto !important;
+        -ms-hyphens: auto !important;
       }
+      /* ✅ Asegurar lo mismo en impresión para ISBN */
+      td:nth-child(5) {
+        white-space: normal !important;
+        word-break: break-word !important;
+        overflow-wrap: anywhere !important;
+      }
+
       th { background-color: white !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
       tr { page-break-inside: avoid; page-break-after: auto; }
     }
@@ -432,15 +471,24 @@ export default function PedidosDigital() {
     <h2 class="titulo">Librería Charles</h2>
     <h3>Las Varillas, Córdoba - 9 de julio 346</h3>
     <h4>Teléfonos: 03533-420183 / Móvil: 03533-682652</h4>
-  <h5>Fecha de impresión: ${fechaImpresion} &nbsp;|&nbsp; Cantidad de títulos en página: ${totalLibros}</h5>
-
+    <h5>Fecha de impresión: ${fechaImpresion} &nbsp;|&nbsp; Cantidad de títulos en página: ${totalLibros}</h5>
   </div>
+
   <table>
+    <!-- ✅ colgroup va AQUÍ, antes de THEAD -->
+    <colgroup>
+      <col style="width: 25%;">   <!-- Título -->
+      <col style="width: 30%;">   <!-- Autor -->
+      <col style="width: 20%;">   <!-- Editorial -->
+      <col style="width: 10%;">   <!-- Cantidad -->
+      <col style="width: 15%;">   <!-- ISBN -->
+    </colgroup>
+
     <thead>
       <tr>
         <th>Título</th>
         <th>Autor</th>
-        <th>Editorial</th>   <!-- ⬅️ NUEVO -->
+        <th>Editorial</th>
         <th>Cantidad</th>
         <th>ISBN</th>
       </tr>
@@ -449,11 +497,13 @@ export default function PedidosDigital() {
       ${rows}
     </tbody>
   </table>
+
   <script>
     setTimeout(() => { window.print(); window.close(); }, 300);
   </script>
 </body>
 </html>
+
   `);
         vent.document.close();
     };
@@ -778,7 +828,6 @@ export default function PedidosDigital() {
                                         Fecha viene {ordenFechaVieneAsc ? "⬆️" : "⬇️"}
                                     </th>
                                 )}
-
                                 <th style={{ ...thStyle, ...fixed(110) }}>Coment.</th>
                                 {/* 👉 TH de ESTADO: ancho fijo + permite wrap */}
                                 <th style={{ ...thStyle, ...fixed(90), whiteSpace: "normal", textAlign: "start" }}>

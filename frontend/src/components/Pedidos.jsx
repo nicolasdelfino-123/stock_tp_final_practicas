@@ -1454,7 +1454,13 @@ const PedidoForm = () => {
               <div className="d-flex justify-content-between align-items-start">
                 <div>
                   <div className="campo">
-                    <strong>Cliente:</strong> <span className="valor">{nombreCliente}</span>
+                    <strong>Cliente:</strong> <span
+                      className="valor"
+                      style={{ display: "inline-block", maxWidth: "85%", wordBreak: "break-word", verticalAlign: "top" }}
+                    >
+                      {nombreCliente}
+                    </span>
+
                   </div>
                   <div className="campo">
                     <strong>Teléfono:</strong> <span className="valor">{telefonoCliente}</span>
@@ -1821,7 +1827,7 @@ const PedidoForm = () => {
                       <th style={{ padding: '12px', border: '1px solid #ddd' }}>Título</th>            {/* 3 */}
                       <th style={{ padding: '12px', border: '1px solid #ddd' }}>Autor</th>             {/* 4 */}
                       <th style={{ padding: '12px', border: '1px solid #ddd' }}>Editorial</th>         {/* 5 (NUEVO) */}
-                      <th style={{ padding: '12px', border: '1px solid #ddd' }}>Cantidad</th>          {/* 6 (se corre) */}
+                      <th style={{ padding: '12px', border: '1px solid #ddd' }}>Cant.</th>          {/* 6 (se corre) */}
                       <th style={{ padding: '12px', border: '1px solid #ddd' }}>ISBN</th>              {/* 7 */}
                       <th style={{ padding: '12px', border: '1px solid #ddd' }}>Fecha</th>             {/* 8 */}
                       <th style={{ padding: '12px', border: '1px solid #ddd' }}>Fecha Pedido</th>      {/* 9 */}
@@ -1891,7 +1897,7 @@ const PedidoForm = () => {
                             {pedido.editorial || '-'}     {/* ⬅️ NUEVO: EDITORIAL */}
                           </td>
                           <td style={{
-                            padding: '12px', border: '1px solid #3c2828ff', width: '100px',
+                            padding: '12px', border: '1px solid #3c2828ff', width: '50px',
                             maxWidth: '100px', wordWrap: 'break-word',
                             whiteSpace: 'normal', overflowWrap: 'break-word', color: 'black', fontWeight: 'bold'
                           }}>
