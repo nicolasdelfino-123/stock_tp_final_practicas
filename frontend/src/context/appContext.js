@@ -617,6 +617,9 @@ export const AppProvider = ({ children }) => {
 
       /* ACCIONES CAJA */
 
+
+
+
       // ===========================
       // USUARIOS (bcrypt + JWT caja)
       // ===========================

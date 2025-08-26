@@ -7,8 +7,9 @@ import { useNavigate } from "react-router-dom";
 const USUARIOS = { f: "Flor", y: "Yani", r: "Ricardo", n: "Nico" };
 const METODOS = [
     "Efectivo",
-    "Transferencia - Bancaria",
+    "Transferencia - Taca Taca",
     "Transferencia - Mercado Pago",
+    "Transferencia - Bancor",
     "Débito",
     "Crédito",
 ];
@@ -352,8 +353,38 @@ export default function Caja() {
         [totalEfectivo, totalTransferencias, totalDebito, totalCredito, totalSalidas]
     );
 
+    function resetUIParaNuevoTurno() {
+        // inicio (conteo de billetes)
+        setInicioCounts({ 10: 0, 20: 0, 50: 0, "100_200": 0, 500: 0, 1000: 0, otros: 0 });
+
+        // entradas
+        setEntradaRapida("");
+        setPagaCon("");
+        setVentaComentario("");
+        setMetodo("Efectivo");
+        setVentas([]);
+
+        // salidas
+        setSalidaDesc("");
+        setSalidaImporte("");
+        setSalidaRespCode("");
+        setSalidaComentario("");
+        setSalidas([]);
+
+        // UI de cierre
+        setShowResumen(false);
+
+        // (opcional mínimo) fecha por defecto al día de hoy
+        setCajaFecha(new Date().toISOString().slice(0, 10));
+    }
+
+
+
+
     // --------- Turno ---------
-    const turnoId = (store?.turnoActual?.id || turnoServer?.id) || null;
+    // después (solo confía en lo que dice el backend)
+    const turnoId = turnoServer?.id || null;
+
     const turnoAbierto = !!turnoId;
 
     const moneda = (n) => n.toLocaleString("es-AR", { style: "currency", currency: "ARS" });
@@ -378,41 +409,30 @@ export default function Caja() {
     /** ---------- Apertura / Cierre ---------- **/
 
     async function iniciarCaja() {
-        // Si ya hay uno abierto (local o detectado en servidor), no dejes abrir
         if (turnoAbierto) {
             alert("Ya hay una caja abierta. Debés cerrarla primero.");
             return;
         }
-        // --- NUEVO: si en el setup escribieron PINs/clave, actualizalos antes de la apertura
-        const resSetup = await aplicarCambiosDeSetupSiCorresponde({
-            florPin,
-            yaniPin,
-            nicoPin,
-            ricPin,
-            ricAdminPass,
-            API_BASE,
-        });
 
+        const resSetup = await aplicarCambiosDeSetupSiCorresponde({
+            florPin, yaniPin, nicoPin, ricPin, ricAdminPass, API_BASE,
+        });
         if (resSetup && resSetup.ok === false) {
             alert(resSetup.error || "No se pudieron aplicar cambios de credenciales");
             return;
         }
 
-
-        // Primera vez → mostrar setup
         if (needsSetup) {
             setShowSetup(true);
             return;
         }
 
-        // Autenticación (Ricardo ADMIN, password largo)
         const auth = await pedirLoginRicardoAdmin(actions, "Iniciar caja");
         if (!auth.ok) {
             alert(auth.error || "No autenticado");
             return;
         }
 
-        // Denominaciones para backend
         const denominaciones = [
             { etiqueta: "10", importe_total: Number(inicioCounts[10] || 0) },
             { etiqueta: "20", importe_total: Number(inicioCounts[20] || 0) },
@@ -423,10 +443,7 @@ export default function Caja() {
             { etiqueta: "otros", importe_total: Number(inicioCounts["otros"] || 0) },
         ];
 
-        // Código del turno
-        const codigo = new Date()
-            .toISOString()
-            .slice(0, 16)
+        const codigo = new Date().toISOString().slice(0, 16)
             .replace(/[-:T]/g, "")
             .replace(/^(\d{8})(\d{4}).*$/, "$1-$2"); // YYYYMMDD-HHMM
 
@@ -434,51 +451,66 @@ export default function Caja() {
             codigo,
             observacion: "Apertura desde componente",
             denominaciones,
-            fecha: cajaFecha,        // NUEVO
-            turno: cajaTurno,        // NUEVO
+            fecha: cajaFecha,
+            turno: cajaTurno,
         });
-
 
         if (res?.success) {
             alert("Turno abierto.");
-        } else {
-            // si la API respondió que ya hay un turno abierto, sincroniza y avisa
-            const msg = (res?.error || "").toString();
-            if (/ABIERTO/i.test(msg)) {
-                await syncTurnoAbierto();
-                alert("Ya existe una caja abierta. Cerrala primero.");
+            // ✅ forzamos que la UI muestre “Turno abierto #…”
+            if (res.turno?.id) {
+                setTurnoServer(res.turno);
+            } else if (res.data?.turno?.id) {
+                setTurnoServer(res.data.turno);
+            } else if (res.id) {            // fallback por si viene plano
+                setTurnoServer({ id: res.id });
             } else {
-                // fallback genérico
-                await syncTurnoAbierto(); // por si se abrió desde otro navegador
-                alert(res?.error || "No se pudo abrir el turno");
+                await syncTurnoAbierto();     // último recurso: consultar backend
             }
+            return;
+        }
+
+        // ⛑️ manejo de error mínimo (incluye caso “ya hay un ABIERTO”)
+        const msg = (res?.error || "").toString();
+        if (/ABIERTO/i.test(msg)) {
+            await syncTurnoAbierto();
+            alert("Ya existe una caja abierta. Cerrala primero.");
+        } else {
+            await syncTurnoAbierto(); // por si se abrió desde otra pestaña
+            alert(res?.error || "No se pudo abrir el turno");
         }
     }
 
+
     // Click en "Cerrar caja" → pedir pass de Ricardo ADMIN, mostrar Resumen y habilitar "Confirmar cierre"
     async function pedirMostrarResumenCierre() {
-        // Si la app no cree que hay turno, chequeá en el backend antes de bloquear
-        if (!turnoAbierto) {
-            await syncTurnoAbierto();
-            if (!turnoServer?.id) {
-                alert("No hay turno abierto.");
-                return;
-            }
-        }
-
-        if (!turnoAbierto) {
-            alert("No hay turno abierto.");
-            return;
-        }
+        // 1) Pedir pass de Ricardo ADMIN SIEMPRE
         const auth = await pedirLoginRicardoAdmin(actions, "Cerrar caja (mostrar resumen)");
         if (!auth.ok) {
             alert(auth.error || "No autenticado");
             return;
         }
+
+        // 2) Mostrar el resumen SIEMPRE para poder ir a 'Ver historial'
         setShowResumen(true);
+
+        // 3) Si no hay turno abierto, avisar que no se puede cerrar
+        if (!turnoAbierto) {
+            // por las dudas sincronizamos antes de avisar
+            await syncTurnoAbierto();
+            if (!turnoServer?.id) {
+                alert("No puede cerrar la caja si no la ha abierto.");
+                // Nota: dejamos el resumen visible para que puedas usar 'Ver historial'
+                return;
+            }
+        }
+
+        // Si había turno abierto, simplemente queda visible el resumen y el botón Confirmar.
     }
 
+
     async function confirmarCierreCaja() {
+        // asegurar que el estado venga del backend
         if (!turnoAbierto) {
             await syncTurnoAbierto();
             if (!turnoServer?.id) {
@@ -487,29 +519,28 @@ export default function Caja() {
             }
         }
 
-        if (!turnoAbierto) {
-            alert("No hay turno abierto.");
-            return;
-        }
-        // por seguridad, revalidamos
+        // revalidar admin
         const auth = await pedirLoginRicardoAdmin(actions, "Confirmar cierre de caja");
         if (!auth.ok) {
             alert(auth.error || "No autenticado");
             return;
         }
-        const res = await actions.cajaCerrarTurno(turnoId, {
+
+        // UNA sola variable para la respuesta (evitar doble 'const res')
+        const result = await actions.cajaCerrarTurno(turnoId, {
             efectivo_contado: balanceCaja,
             observacion: "Cierre desde componente",
         });
-        if (res?.success) {
-            alert("Turno cerrado.");
-            setShowResumen(false);
-            setTurnoServer(null);
 
+        if (result?.success) {
+            alert("Turno cerrado.");
+            setTurnoServer(null);     // -> turnoAbierto = false (porque depende de turnoServer)
+            resetUIParaNuevoTurno();  // -> deja la UI limpia para un nuevo turno
         } else {
-            alert(res?.error || "No se pudo cerrar el turno");
+            alert(result?.error || "No se pudo cerrar el turno");
         }
     }
+
 
     /** ---------- Entradas ---------- **/
     async function agregarVenta() {
@@ -1012,10 +1043,24 @@ export default function Caja() {
                     <span>Inicio de caja (importe por billetes)</span>
                     <div style={{ display: "flex", gap: 8 }}>
                         {!turnoAbierto && (
-                            <button style={styles.primaryBtn} onClick={iniciarCaja}>
+                            <button
+                                style={{
+                                    ...styles.primaryBtn,
+                                    // 🔹 Estilo gris cuando está deshabilitado
+                                    background: (inicioTotal === 0)
+                                        ? "#9ca3af"                    // gris
+                                        : "linear-gradient(135deg, #2563eb, #1d4ed8)",
+                                    cursor: (inicioTotal === 0) ? "not-allowed" : "pointer",
+                                    opacity: (inicioTotal === 0) ? 0.8 : 1
+                                }}
+                                onClick={iniciarCaja}
+                                disabled={turnoAbierto || inicioTotal === 0}   // 🔒 bloqueo por UI
+                                title={inicioTotal === 0 ? "Ingresá algún importe inicial para abrir la caja" : "Iniciar caja"}
+                            >
                                 Iniciar caja
                             </button>
                         )}
+
                         {turnoAbierto && (
                             <span style={{ fontWeight: 700, color: isDarkMode ? "#f7f8f8ff" : "#0f766e" }}>
                                 Turno abierto #{turnoId}
@@ -1287,12 +1332,30 @@ export default function Caja() {
                                     <td style={styles.td}>{v.vuelto != null ? moneda(Math.max(0, v.vuelto)) : "-"}</td>
                                     <td style={styles.td}>{v.metodo}</td>
                                     <td style={styles.td}>{v.comentario || "-"}</td> {/* NUEVO */}
-                                    <td style={styles.tdRight}> ... </td>
+                                    <td style={styles.tdRight}>
+                                        <button
+                                            style={styles.iconBtn}
+                                            onClick={() => editarVenta(v)}
+                                            disabled={!turnoAbierto}
+                                            title="Editar importe"
+                                        >
+                                            ✏️
+                                        </button>
+                                        <button
+                                            style={{ ...styles.iconBtn, marginLeft: 6, borderColor: '#ef4444', color: '#ef4444' }}
+                                            onClick={() => eliminarVenta(v)}
+                                            disabled={!turnoAbierto}
+                                            title="Eliminar venta"
+                                        >
+                                            🗑️
+                                        </button>
+                                    </td>
+
                                 </tr>
                             ))}
                             {ventas.length === 0 && (
                                 <tr>
-                                    <td style={styles.tdEmpty} colSpan={7}>Sin ventas registradas</td>
+                                    <td style={styles.tdEmpty} colSpan={8}>Sin ventas registradas</td>
                                 </tr>
                             )}
                         </tbody>
@@ -1381,11 +1444,16 @@ export default function Caja() {
 
                 {!showResumen && (
                     <div style={{ display: "flex", justifyContent: "flex-end" }}>
-                        <button style={styles.primaryBtn} onClick={pedirMostrarResumenCierre} disabled={!turnoAbierto}>
+                        <button
+                            style={styles.primaryBtn}
+                            onClick={pedirMostrarResumenCierre}
+                            title="Cerrar caja / Ver resumen e historial"
+                        >
                             Cerrar caja
                         </button>
                     </div>
                 )}
+
                 {showResumen && (
                     <>
                         <div style={styles.summaryRow}>

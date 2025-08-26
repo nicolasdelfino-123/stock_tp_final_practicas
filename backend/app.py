@@ -2,7 +2,7 @@ from flask import Flask, jsonify, request
 from sqlalchemy import create_engine, or_, func, desc
 from flask_sqlalchemy import SQLAlchemy
 
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import sessionmaker, scoped_session
 from config import ProductionConfig  # usamos configuración segura desde .env
 from models.libro import Base, Libro, Faltante, Pedido, LibroBaja,Usuario, CajaInicioDetalle, Movimiento, AuditoriaEvento, Arqueo, MovimientoEditado, CajaTurno, MovimientoBorrado
 
@@ -48,16 +48,24 @@ def create_app():
     migrate = Migrate(app, db, compare_type=True)
     # --------------------------------------------------------
 
-    engine = create_engine(app.config["SQLALCHEMY_DATABASE_URI"], echo=True)
+    engine = create_engine(app.config["SQLALCHEMY_DATABASE_URI"], echo=True, pool_pre_ping=True)
     if os.getenv("FLASK_ENV") == "development":
         Base.metadata.create_all(engine)
 
-    Session = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-    app.session = Session()
+    SessionFactory = scoped_session(sessionmaker(autocommit=False, autoflush=False, bind=engine))
+    app.session_factory = SessionFactory
+    app.session = SessionFactory   # <— clave: los endpoints que ya usan app.session siguen funcionando
+
+
+    @app.teardown_appcontext
+    def remove_session(exception=None):
+        SessionFactory.remove()
+
     admin = Admin(app, name="Panel de Administración", template_mode="bootstrap3")
-    admin.add_view(ModelView(Libro, app.session))
+    admin.add_view(ModelView(Libro, db.session))
 
     return app
+
 
 
 app = create_app()
@@ -89,7 +97,8 @@ def usuarios_bootstrap():
         "admin_username": "admin"
       }
     """
-    s = app.session
+    s = app.session_factory()
+
     try:
         # Si ya hay usuarios, no hacer nada
         if s.query(Usuario).count() > 0:
@@ -143,7 +152,8 @@ def usuarios_bootstrap():
 
 @app.route("/api/caja/passwords/verificar", methods=["POST"])
 def verificar_passwords():
-    s = app.session
+    s = app.session_factory()
+
     try:
         data = request.get_json() or {}
         tipo = (data.get("tipo") or "").strip()
@@ -200,7 +210,7 @@ def verificar_passwords():
 
 @app.route("/api/caja/usuarios/set-pin4", methods=["POST"])
 def usuarios_set_pin4():
-    s = app.session
+    s = app.session_factory()
     try:
         data = request.get_json() or {}
         username = (data.get("username") or "").strip().lower()
@@ -237,7 +247,7 @@ def usuarios_set_pin4():
 
 @app.route("/api/caja/usuarios/set-pass-largo", methods=["POST"])
 def usuarios_set_pass_largo():
-    s = app.session
+    s = app.session_factory()
     try:
         data = request.get_json() or {}
         username = (data.get("username") or "").strip().lower()
@@ -319,7 +329,7 @@ def _ensure_user(username: str, password: str, activo: bool = True):
 
 # --- Helper auth: devuelve (usuario, None) o (None, (jsonify(...), 401)) ---
 def _get_user_or_401():
-    s = app.session
+    s = app.session_factory()
     auth = request.headers.get("Authorization", "")
     if not auth.startswith("Bearer "):
         return None, (jsonify({"error": "No autenticado"}), 401)
