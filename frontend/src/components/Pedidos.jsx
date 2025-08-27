@@ -376,21 +376,24 @@ const PedidoForm = () => {
   // por eso la lógica de verificación de cambios se separó en verificarDatosYResetearFlags
   const handleGuardar = async () => {
     const señaNumero = Number(String(seña).replace(/\D/g, ''));
+
+    // ✅ FECHA: permitir sin fecha o con "-"
+    const fechaNormalizada =
+      !fecha || fecha.trim() === "" || fecha.trim() === "-" ? null : fecha.trim();
+
     const datosActuales = {
       nombreCliente,
       tituloLibro,
       autorLibro,
       editorial,
       cantidad,
-      fecha,
-      seña: isNaN(señaNumero) ? 0 : señaNumero,  // 👈 preserva 0
+      fecha: fechaNormalizada,           // 👈 clave
+      seña: isNaN(señaNumero) ? 0 : señaNumero,
       comentario,
       isbn,
       telefonoCliente
     };
 
-    // Si los datos actuales son distintos al último pedido guardado,
-    // reseteamos los flags para permitir guardar otra vez
     const sonDistintos = JSON.stringify(datosActuales) !== JSON.stringify(ultimoPedidoGuardado.current);
     if (sonDistintos) {
       guardadoEnEstaImpresion.current = false;
@@ -406,17 +409,11 @@ const PedidoForm = () => {
       return;
     }
 
-    if (
-      !nombreCliente ||
-      !tituloLibro ||
-      !autorLibro ||
-      seña === "" || seña === null || seña === undefined ||   // 👈 ahora 0 es válido
-      !telefonoCliente
-    ) {
+    if (!nombreCliente || !tituloLibro || !autorLibro ||
+      seña === "" || seña === null || seña === undefined || !telefonoCliente) {
       alert("Por favor complete todos los campos obligatorios");
       return;
     }
-
     if (cantidad === 0) {
       alert("La cantidad no puede ser cero");
       return;
@@ -428,7 +425,6 @@ const PedidoForm = () => {
     localStorage.setItem('ultimoTelefono', telefonoCliente);
 
     setLoading(true);
-
     try {
       let result;
       if (editandoId) {
@@ -438,16 +434,13 @@ const PedidoForm = () => {
       }
 
       if (result.success) {
-        ultimoPedidoGuardado.current = datosActuales; // <-- Guardamos para comparar después
-
+        ultimoPedidoGuardado.current = datosActuales;
         if (editandoId) {
           alert("Pedido editado con éxito.");
           editadoConExito.current = true;
-
         } else {
           alert("Pedido guardado con éxito");
           guardadoEnEstaImpresion.current = true;
-
         }
         await cargarPedidos();
       } else {
@@ -457,7 +450,6 @@ const PedidoForm = () => {
       console.error("Error al guardar el pedido:", error);
       alert("Error al conectar con el servidor");
     }
-
     setLoading(false);
   };
 
