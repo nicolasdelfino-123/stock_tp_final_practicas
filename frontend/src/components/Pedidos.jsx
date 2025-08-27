@@ -72,26 +72,43 @@ const PedidoForm = () => {
   }, [modalPedidosAbierto, navType, setModalPedidosAbierto]);
 
 
-  // XXX PEGA ESTA VERSION SIMPLE XXX
-  const formatearFechaArgentina = (valor) => {
-    if (valor == null) return "";
-    const s = String(valor);
-    const dt = new Date(s);
+  // XXX PEGAR ARRIBA DE formatearFechaArgentina: helper robusto
+  const parseFechaFlexible = (valor) => {
+    if (valor == null) return null;
+    const s = String(valor).trim();
 
-    if (!isNaN(dt)) {
-      // “Clavamos” al mediodía local para evitar que un ISO en UTC 00:00
-      // se corra al día anterior por la zona horaria (AR -03:00).
-      dt.setHours(12, 0, 0, 0);
-      return dt.toLocaleDateString('es-AR', {
-        day: '2-digit',
-        month: '2-digit',
-        year: 'numeric'
-      });
+    // DD/MM/YYYY
+    const mDMY = /^(\d{2})\/(\d{2})\/(\d{4})$/;
+    const dmy = s.match(mDMY);
+    if (dmy) {
+      const [_, dd, mm, yyyy] = dmy;
+      return new Date(Number(yyyy), Number(mm) - 1, Number(dd)); // local, sin TZ
     }
 
-    // Fallback si no parsea como fecha
-    return s;
+    // YYYY-MM-DD (sin hora)
+    const mYMD = /^(\d{4})-(\d{2})-(\d{2})(?!T)/; // asegura que NO haya 'T'
+    const ymd = s.match(mYMD);
+    if (ymd) {
+      const [_, yyyy, mm, dd] = ymd;
+      return new Date(Number(yyyy), Number(mm) - 1, Number(dd)); // local, sin TZ
+    }
+
+    // ISO completo con hora -> dejá que JS lo parsee (puede traer TZ)
+    const dt = new Date(s);
+    if (!isNaN(dt)) return dt;
+
+    return null;
   };
+
+  // XXX REEMPLAZAR tu formatearFechaArgentina por esta
+  const formatearFechaArgentina = (valor) => {
+    const dt = parseFechaFlexible(valor);
+    if (!dt) return valor ?? "";
+    return dt.toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+  };
+
+
+
 
 
   useEffect(() => {
@@ -900,7 +917,8 @@ const PedidoForm = () => {
       if (result.success) {
         const pedidosFiltrados = result.pedidos.filter(pedido => {
           // Convertir la fecha del pedido a objeto Date
-          const fechaPedido = new Date(pedido.fecha);
+          const fechaPedido = parseFechaFlexible(pedido.fecha);
+
           if (!isNaN(fechaPedido)) {
             // Fijamos al mediodía local para que no se corra al día anterior por UTC
             fechaPedido.setHours(12, 0, 0, 0);
