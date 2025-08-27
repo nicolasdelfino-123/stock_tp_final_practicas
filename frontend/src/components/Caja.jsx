@@ -12,6 +12,8 @@ const METODOS = [
     "Transferencia - Bancor",
     "Débito",
     "Crédito",
+    "QR",
+    "Juan Pablo"
 ];
 
 // Mapa letra -> username real (para PIN de 4 dígitos)
@@ -221,6 +223,18 @@ export default function Caja() {
     // --- Descubre si hay un turno ABIERTO en el backend (post-refresh) ---
     const [turnoServer, setTurnoServer] = useState(null);
     const [isDarkMode, setIsDarkMode] = useState(false);
+    // ---- edición inline de ventas ----
+    const [editVentaId, setEditVentaId] = useState(null);
+    const [editVentaDraft, setEditVentaDraft] = useState({
+        importe: 0,
+        pago: "",           // string para permitir vacío
+        metodo: "Efectivo",
+        comentario: "",
+    });
+    const [editVentaPin, setEditVentaPin] = useState("");      // PIN del autor (3–5)
+    const [editVentaError, setEditVentaError] = useState("");  // mensaje inline
+    const [savingVenta, setSavingVenta] = useState(false);
+
     const navigate = useNavigate();
 
 

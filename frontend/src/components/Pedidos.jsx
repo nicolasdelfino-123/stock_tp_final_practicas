@@ -334,6 +334,8 @@ const PedidoForm = () => {
     }
   };
 
+  // esta función se llama desde el botón Guardar y desde Imprimir (si no está guardado)
+  // por eso la lógica de verificación de cambios se separó en verificarDatosYResetearFlags
   const handleGuardar = async () => {
     const señaNumero = Number(String(seña).replace(/\D/g, ''));
     const datosActuales = {

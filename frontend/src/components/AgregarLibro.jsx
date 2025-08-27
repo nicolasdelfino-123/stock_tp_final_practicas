@@ -697,6 +697,8 @@ const AgregarLibro = () => {
               type="button"
               className="back-button"
               onClick={() => navigate("/")}
+              onMouseEnter={(e) => (e.target.style.backgroundColor = "#495057")}
+              onMouseLeave={(e) => (e.target.style.backgroundColor = "")}
             >
               Volver al Inicio
             </button>

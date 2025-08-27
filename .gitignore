@@ -87,3 +87,5 @@ __pycache__/
 # === BACKEND (evitar rastreo desde frontend) ===
 ../backend/__pycache__/
 ../backend/models/__pycache__/
+
+frontend/src/components/ESTUDIO/GuardarPedido.jsx
