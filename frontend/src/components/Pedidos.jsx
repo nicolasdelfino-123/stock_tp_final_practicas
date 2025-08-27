@@ -72,14 +72,27 @@ const PedidoForm = () => {
   }, [modalPedidosAbierto, navType, setModalPedidosAbierto]);
 
 
-  const formatearFechaArgentina = (fecha) => {
-    const date = new Date(fecha);
-    return date.toLocaleDateString('es-AR', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric'
-    });
+  // XXX PEGA ESTA VERSION SIMPLE XXX
+  const formatearFechaArgentina = (valor) => {
+    if (valor == null) return "";
+    const s = String(valor);
+    const dt = new Date(s);
+
+    if (!isNaN(dt)) {
+      // “Clavamos” al mediodía local para evitar que un ISO en UTC 00:00
+      // se corra al día anterior por la zona horaria (AR -03:00).
+      dt.setHours(12, 0, 0, 0);
+      return dt.toLocaleDateString('es-AR', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric'
+      });
+    }
+
+    // Fallback si no parsea como fecha
+    return s;
   };
+
 
   useEffect(() => {
     cargarPedidos();
@@ -886,10 +899,15 @@ const PedidoForm = () => {
       const result = await actions.obtenerPedidos();
       if (result.success) {
         const pedidosFiltrados = result.pedidos.filter(pedido => {
-          // Convertir fecha del pedido a objeto Date
+          // Convertir la fecha del pedido a objeto Date
           const fechaPedido = new Date(pedido.fecha);
+          if (!isNaN(fechaPedido)) {
+            // Fijamos al mediodía local para que no se corra al día anterior por UTC
+            fechaPedido.setHours(12, 0, 0, 0);
+          }
           return fechaPedido >= desdeDate && fechaPedido <= hastaDate;
         });
+
 
         setPedidosFiltrados(pedidosFiltrados);
 
