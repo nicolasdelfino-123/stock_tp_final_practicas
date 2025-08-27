@@ -1015,8 +1015,8 @@ def get_pedidos():
             'id': p.id,
             'cliente_nombre': p.cliente_nombre,
             'seña': p.seña,
-            'fecha': p.fecha.isoformat() if p.fecha else None,
-            'fecha_viene': p.fecha_viene.isoformat() if p.fecha_viene else None,
+            'fecha': (p.fecha.date().isoformat() if p.fecha else None),
+            'fecha_viene': (p.fecha_viene.date().isoformat() if p.fecha_viene else None),
             'titulo': p.titulo,
             'autor': p.autor,
             'editorial': p.editorial,
@@ -1052,6 +1052,8 @@ def crear_pedido():
         fecha = ((datetime.strptime(fecha_str, '%d/%m/%Y') if '/' in fecha_str else datetime.fromisoformat(fecha_str.replace('Z', '+00:00').replace('T', ' ')).replace(tzinfo=None)).date()) if fecha_str else None
         fecha_viene = ((datetime.strptime(fecha_viene_str, '%d/%m/%Y') if '/' in fecha_viene_str else datetime.fromisoformat(fecha_viene_str.replace('Z', '+00:00').replace('T', ' ')).replace(tzinfo=None)).date()) if fecha_viene_str else None
 
+        
+
 
         nuevo_pedido = Pedido(
             cliente_nombre=data.get('cliente_nombre'),
@@ -1078,7 +1080,8 @@ def crear_pedido():
                 'id': nuevo_pedido.id,
                 'cliente_nombre': nuevo_pedido.cliente_nombre,
                 'seña': nuevo_pedido.seña,
-                'fecha': nuevo_pedido.fecha.isoformat() if nuevo_pedido.fecha else None,
+                'fecha': (nuevo_pedido.fecha.date().isoformat() if nuevo_pedido.fecha else None),
+                'fecha_viene': (nuevo_pedido.fecha_viene.date().isoformat() if nuevo_pedido.fecha_viene else None),
                 'titulo': nuevo_pedido.titulo,
                 'telefonoCliente': nuevo_pedido.telefono,
                 'autor': nuevo_pedido.autor,
@@ -1086,7 +1089,7 @@ def crear_pedido():
                 'comentario': nuevo_pedido.comentario,
                 'cantidad': nuevo_pedido.cantidad,
                 'isbn': nuevo_pedido.isbn,
-                'fecha_viene': nuevo_pedido.fecha_viene.isoformat() if nuevo_pedido.fecha_viene else None,
+                
             }
         }), 201
 
@@ -1128,11 +1131,21 @@ def actualizar_pedido(pedido_id):
         pedido.oculto = data.get('oculto', pedido.oculto)
 
         # 👇 Manejo de fecha_viene
+       # 👇 Manejo de fecha_viene (sin autocompletar si no la mandan)
         fv = data.get('fecha_viene')
-        if data.get('estado') == 'VIENE':
-            pedido.fecha_viene = ((datetime.strptime(fv, '%d/%m/%Y') if fv and '/' in fv else datetime.fromisoformat(fv.replace('Z', '+00:00').replace('T', ' ')).replace(tzinfo=None).date()) if fv else datetime.utcnow().date())
-        elif 'fecha_viene' in data:
-            pedido.fecha_viene = ((datetime.strptime(fv, '%d/%m/%Y') if fv and '/' in fv else datetime.fromisoformat(fv.replace('Z', '+00:00').replace('T', ' ')).replace(tzinfo=None).date()) if fv else None)
+        if 'fecha_viene' in data:
+            if fv:
+                pedido.fecha_viene = (
+                    datetime.strptime(fv, '%d/%m/%Y').date()
+                    if '/' in fv
+                    else datetime.fromisoformat(
+                        fv.replace('Z', '+00:00').replace('T', ' ')
+                    ).replace(tzinfo=None).date()
+                )
+            else:
+                pedido.fecha_viene = None
+
+
 
 
         session.commit()
