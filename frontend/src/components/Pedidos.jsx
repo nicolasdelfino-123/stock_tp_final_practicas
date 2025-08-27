@@ -12,7 +12,11 @@ const PedidoForm = () => {
   const [seña, setSenia] = useState("");
   const [isbn, setIsbn] = useState("");
   const [comentario, setComentario] = useState("");
-  const [fecha, setFecha] = useState(new Date().toLocaleDateString('es-AR'));
+  const [fecha, setFecha] = useState(() => {
+    const hoy = new Date();
+    hoy.setMinutes(hoy.getMinutes() - hoy.getTimezoneOffset());
+    return hoy.toISOString().split('T')[0].split('-').reverse().join('/');
+  });
   const [terminoBusqueda, setTerminoBusqueda] = useState("");
   const [todosLosPedidos, setTodosLosPedidos] = useState([]);
   const [pedidosFiltrados, setPedidosFiltrados] = useState([]);
@@ -82,7 +86,8 @@ const PedidoForm = () => {
     const dmy = s.match(mDMY);
     if (dmy) {
       const [_, dd, mm, yyyy] = dmy;
-      return new Date(Number(yyyy), Number(mm) - 1, Number(dd)); // local, sin TZ
+      const dt = new Date(Number(yyyy), Number(mm) - 1, Number(dd), 12, 0, 0, 0); // mediodía local
+      return dt;
     }
 
     // YYYY-MM-DD (sin hora)
@@ -493,7 +498,9 @@ const PedidoForm = () => {
     setTituloLibro("");
     setAutorLibro("");
     setCantidad(1);
-    setFecha(new Date().toLocaleDateString('es-AR'));
+    const hoy = new Date();
+    hoy.setMinutes(hoy.getMinutes() - hoy.getTimezoneOffset());
+    setFecha(hoy.toISOString().split('T')[0].split('-').reverse().join('/'));
     setSenia("");
     setComentario("");
     setEditandoId(null);
