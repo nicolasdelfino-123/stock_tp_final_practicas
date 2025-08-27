@@ -22,11 +22,28 @@ const MOTIVOS_NO_VIENE = [
 ];
 
 function formatearFechaArgentina(fecha) {
-    if (!fecha) return "";   // 👈 si viene null, undefined o "", devuelve vacío
+    if (!fecha) return "";
+    // 🚀 Si viene en formato YYYY-MM-DD, lo parseamos a mano
+    if (/^\d{4}-\d{2}-\d{2}$/.test(fecha)) {
+        const [y, m, d] = fecha.split("-").map(Number);
+        const dt = new Date(y, m - 1, d); // ← crea la fecha en local time
+        dt.setHours(12, 0, 0, 0); // 👈 “clavamos” al mediodía
+        return dt.toLocaleDateString("es-AR", {
+            day: "2-digit",
+            month: "2-digit",
+            year: "numeric"
+        });
+    }
+    // fallback: intentamos normal
     const d = new Date(fecha);
     if (Number.isNaN(d.getTime())) return "";
-    return d.toLocaleDateString("es-AR", { day: "2-digit", month: "2-digit", year: "numeric" });
+    return d.toLocaleDateString("es-AR", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric"
+    });
 }
+
 
 export default function PedidosDigital() {
     const navigate = useNavigate();
