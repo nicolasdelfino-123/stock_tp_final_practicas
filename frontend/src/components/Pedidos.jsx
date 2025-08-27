@@ -2,6 +2,15 @@ import React, { useRef, useState, useEffect } from "react";
 import { useNavigate, useNavigationType } from "react-router-dom";
 import { useAppContext } from "../context/appContext";
 
+
+// acepta "-", "sin fecha" o vacío
+const esFechaVacia = (v) => {
+  if (v == null) return true;
+  const s = String(v).trim().toLowerCase();
+  return s === "" || s === "-" || s === "sin fecha";
+};
+
+
 const PedidoForm = () => {
   const navigate = useNavigate();
   const { actions, modalPedidosAbierto, setModalPedidosAbierto } = useAppContext();
@@ -346,11 +355,11 @@ const PedidoForm = () => {
   };
 
   const verificarDatosYResetearFlags = () => {
-    // 👉 Normalizar seña IGUAL que en handleGuardar
     const señaNumero = Number(String(seña).replace(/\D/g, ''));
-
-    const fechaNormalizada =
-      !fecha || fecha.trim() === "" || fecha.trim() === "-" ? null : fecha.trim();
+    const s = String(fecha ?? "").trim();
+    const fechaNormalizada = (
+      s === "" || s === "-" || s.toLowerCase() === "sin fecha"
+    ) ? null : s;
 
     const datosActuales = {
       nombreCliente,
@@ -358,8 +367,8 @@ const PedidoForm = () => {
       autorLibro,
       editorial,
       cantidad,
-      fecha: fechaNormalizada,
-      seña: isNaN(señaNumero) ? 0 : señaNumero,  // 👈 preserva 0
+      fecha: fechaNormalizada,   // comparamos contra null si “sin fecha”
+      seña: isNaN(señaNumero) ? 0 : señaNumero,
       comentario,
       isbn,
       telefonoCliente
@@ -372,14 +381,16 @@ const PedidoForm = () => {
     }
   };
 
+
+
   // esta función se llama desde el botón Guardar y desde Imprimir (si no está guardado)
   // por eso la lógica de verificación de cambios se separó en verificarDatosYResetearFlags
   const handleGuardar = async () => {
     const señaNumero = Number(String(seña).replace(/\D/g, ''));
-
-    // ✅ FECHA: permitir sin fecha o con "-"
-    const fechaNormalizada =
-      !fecha || fecha.trim() === "" || fecha.trim() === "-" ? null : fecha.trim();
+    const s = String(fecha ?? "").trim();
+    const fechaNormalizada = (
+      s === "" || s === "-" || s.toLowerCase() === "sin fecha"
+    ) ? null : s;
 
     const datosActuales = {
       nombreCliente,
@@ -387,12 +398,17 @@ const PedidoForm = () => {
       autorLibro,
       editorial,
       cantidad,
-      fecha: fechaNormalizada,           // 👈 clave
+      // 👉 sólo mandamos la fecha válida; si tu backend prefiere “omitir” en vez de null:
+      //    - Opción A (null):
+      fecha: fechaNormalizada,
+      //    - Opción B (omitir): comenta la línea de arriba y hacé:
+      // ...(fechaNormalizada ? { fecha: fechaNormalizada } : {}),
       seña: isNaN(señaNumero) ? 0 : señaNumero,
       comentario,
       isbn,
       telefonoCliente
     };
+
 
     const sonDistintos = JSON.stringify(datosActuales) !== JSON.stringify(ultimoPedidoGuardado.current);
     if (sonDistintos) {
@@ -782,7 +798,8 @@ const PedidoForm = () => {
       setTituloLibro(pedido.titulo);
       setAutorLibro(pedido.autor);
       setCantidad(pedido.cantidad || 1);
-      setFecha(formatearFechaArgentina(pedido.fecha));
+      setFecha(pedido.fecha ? formatearFechaArgentina(pedido.fecha) : "-");
+
       setSenia(
         pedido.seña !== null && pedido.seña !== undefined
           ? String(pedido.seña)
@@ -920,12 +937,10 @@ const PedidoForm = () => {
         const pedidosFiltrados = result.pedidos.filter(pedido => {
           // Convertir la fecha del pedido a objeto Date
           const fechaPedido = parseFechaFlexible(pedido.fecha);
-
-          if (!isNaN(fechaPedido)) {
-            // Fijamos al mediodía local para que no se corra al día anterior por UTC
-            fechaPedido.setHours(12, 0, 0, 0);
-          }
+          if (!(fechaPedido instanceof Date) || isNaN(fechaPedido)) return false; // sin fecha, no matchea
+          fechaPedido.setHours(12, 0, 0, 0);
           return fechaPedido >= desdeDate && fechaPedido <= hastaDate;
+
         });
 
 
@@ -1956,7 +1971,8 @@ const PedidoForm = () => {
                             {pedido.isbn || '-'}
                           </td>
                           <td style={{ padding: '12px', border: '1px solid #3c2828ff', color: 'black', fontWeight: 'bold' }}>
-                            {formatearFechaArgentina(pedido.fecha)}
+                            {pedido.fecha ? formatearFechaArgentina(pedido.fecha) : "-"}
+
                           </td>
                           <td style={{ padding: '12px', border: '1px solid #3c2828ff', color: 'black', fontWeight: 'bold' }}>
                             {pedido.estado === 'VIENE' && pedido.fecha_viene ? formatearFechaArgentina(pedido.fecha_viene) : '-'}
