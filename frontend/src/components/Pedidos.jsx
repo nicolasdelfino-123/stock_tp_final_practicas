@@ -1330,15 +1330,20 @@ const PedidoForm = () => {
 
             {/* Comentario en fila propia, ancho total */}
             <div className="col-12 col-md-6">
-              <label className="fw-bold text-black d-block mb-1" style={{ fontSize: '22px', fontFamily: 'Roboto' }}>Comentario</label>
+              <label className="fw-bold text-black d-block mb-1" style={{ fontSize: '22px', fontFamily: 'Roboto' }}>
+                Comentario
+              </label>
               <input
                 ref={el => inputRef.current[9] = el}
                 onKeyDown={(e) => handleKeyDown(e, 9)}
                 type="text"
                 value={comentario}
+                onFocus={() => {
+                  // Si está vacío cuando el usuario entra al campo, le ponemos el prefijo
+                  if (!comentario) setComentario("Pedido tomado por: ");
+                }}
                 onChange={(e) => setComentario(e.target.value)}
-                placeholder="Ingrese un comentario (opcional). El cliente lo verá"
-
+                placeholder="Pedido tomado por: (nombre) - (otro comentario)"
                 style={{
                   width: '100%',
                   padding: '10px',
@@ -1347,9 +1352,9 @@ const PedidoForm = () => {
                   fontSize: '20px',
                   color: 'black',
                   fontWeight: '700'
-
                 }}
               />
+
             </div>
           </div>
 
