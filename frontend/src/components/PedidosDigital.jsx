@@ -845,15 +845,15 @@ export default function PedidosDigital() {
                     >
                         {/* ⬇️ NUEVO: colgroup fija anchos de columnas */}
                         <colgroup>
-                            <col style={{ width: 100 }} />   {/* Cliente (fixed(100)) */}
+                            <col style={{ width: 120 }} />   {/* Cliente (fixed(100)) */}
                             <col style={{ width: 200 }} />   {/* Título  (fixed(200)) */}
                             <col />                          {/* Autor (auto) */}
                             <col style={{ width: 120 }} />   {/* Editorial (fixed(120)) */}
                             <col style={{ width: 65 }} />    {/* Cant. (fixed(65)) */}
-                            <col />                          {/* ISBN (auto) */}
+                            <col style={{ width: 140 }} />                          {/* ISBN (auto) */}
                             <col style={{ width: 110 }} />   {/* Fecha pedido (110) */}
                             {filtroEstado === "VIENE" && <col style={{ width: 110 }} />}{/* Fecha viene (110) */}
-                            <col style={{ width: 110 }} />   {/* Coment. (fixed(110)) */}
+                            <col style={{ width: 160 }} />   {/* Coment. (fixed(110)) */}
                             <col style={{ width: 90 }} />    {/* 👉 ESTADO (achicado) */}
                             <col />                          {/* Motivo (auto) */}
                             <col style={{ width: 120 }} />   {/* Acciones (fixed(120)) */}
@@ -881,7 +881,7 @@ export default function PedidosDigital() {
                                 <th style={{ ...thStyle, ...fixed(90), whiteSpace: "normal", textAlign: "start" }}>
                                     Estado
                                 </th>
-                                <th style={thStyle}>Motivo</th>
+                                <th style={{ ...thStyle, ...fixed(90) }}>Motivo</th>
                                 <th style={{ ...thStyleCenter, ...fixed(120) }}>Acciones</th>
                             </tr>
                         </thead>
