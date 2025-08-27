@@ -1038,6 +1038,8 @@ def get_pedidos():
 from datetime import datetime
 from sqlalchemy.exc import SQLAlchemyError
 
+
+
 @app.route('/api/pedidos', methods=['POST'])
 def crear_pedido():
     session = app.session
@@ -1045,15 +1047,38 @@ def crear_pedido():
     print("📦 Datos recibidos para crear pedido:", data)
 
     try:
-        # Convertir string 'DD/MM/YYYY' a datetime.date (si vienen)
-        fecha_str = data.get('fecha')
-        fecha_viene_str = data.get('fecha_viene')
+        # --- fecha (permite "-", "sin fecha" o vacío => NULL) ---
+        fecha_raw = (data.get('fecha') or '').strip()
+        fecha = None
+# Si es texto especial, usar una fecha muy antigua para distinguir
+        if fecha_raw and fecha_raw not in ('-', 'SIN FECHA', 'sin fecha'):
+            try:
+                if '/' in fecha_raw:  # DD/MM/YYYY
+                    fecha = datetime.strptime(fecha_raw, '%d/%m/%Y')
+                else:                 # ISO variantes
+                    fecha = datetime.fromisoformat(
+                        fecha_raw.replace('Z', '+00:00').replace('T', ' ')
+                    )
+            except Exception:
+                fecha = None  # si no parsea, lo dejamos NULL
 
-        fecha = ((datetime.strptime(fecha_str, '%d/%m/%Y') if '/' in fecha_str else datetime.fromisoformat(fecha_str.replace('Z', '+00:00').replace('T', ' ')).replace(tzinfo=None)).date()) if fecha_str else None
-        fecha_viene = ((datetime.strptime(fecha_viene_str, '%d/%m/%Y') if '/' in fecha_viene_str else datetime.fromisoformat(fecha_viene_str.replace('Z', '+00:00').replace('T', ' ')).replace(tzinfo=None)).date()) if fecha_viene_str else None
-
-        
-
+        # --- fecha_viene (mismo criterio) ---
+        fecha_viene_raw = (data.get('fecha_viene') or '').strip()
+        fecha_viene = None
+        if fecha_viene_raw and fecha_viene_raw not in ('-', 'SIN FECHA', 'sin fecha'):
+            try:
+                if '/' in fecha_viene_raw:
+                    fecha_viene = datetime.strptime(fecha_viene_raw, '%d/%m/%Y')
+                else:
+                    fecha_viene = datetime.fromisoformat(
+                        fecha_viene_raw.replace('Z', '+00:00').replace('T', ' ')
+                    )
+            except Exception:
+            # Si no es fecha válida pero hay texto, usar fecha especial
+                if fecha_raw:
+                    fecha = datetime(1900, 1, 1)  # Fecha especial para texto
+                else:
+                    fecha = None
 
         nuevo_pedido = Pedido(
             cliente_nombre=data.get('cliente_nombre'),
@@ -1062,7 +1087,7 @@ def crear_pedido():
             autor=data.get('autor'),
             editorial=data.get('editorial', ''),
             telefono=data.get('telefonoCliente', ''),
-            fecha=fecha,
+            fecha=fecha,                  # puede ser None (no pisa el default si la key no venía)
             comentario=data.get('comentario', ''),
             cantidad=int(data.get('cantidad', 1)),
             isbn=data.get('isbn', ''),
@@ -1089,13 +1114,10 @@ def crear_pedido():
                 'comentario': nuevo_pedido.comentario,
                 'cantidad': nuevo_pedido.cantidad,
                 'isbn': nuevo_pedido.isbn,
-                
             }
         }), 201
-
     except SQLAlchemyError as e:
         session.rollback()
-        print("🛑 Error SQL:", str(e))  # Log para depuración
         return jsonify({'error': 'Error al crear el pedido', 'mensaje': str(e)}), 500
     finally:
         session.close()
@@ -1123,34 +1145,46 @@ def actualizar_pedido(pedido_id):
         pedido.isbn = data.get('isbn', pedido.isbn)
         pedido.estado = data.get('estado', pedido.estado)
         pedido.motivo = data.get('motivo', pedido.motivo)
-     # 👇 Manejo de fecha igual que en POST
-        fecha_str = data.get('fecha')
-        if fecha_str:
-            pedido.fecha = (datetime.strptime(fecha_str, '%d/%m/%Y') if '/' in fecha_str else datetime.fromisoformat(fecha_str.replace('Z', '+00:00').replace('T', ' ')).replace(tzinfo=None)).date()
+
+        # --- fecha: solo si viene la key; permite vaciar con "-", "sin fecha" o "" ---
+        if 'fecha' in data:
+            fecha_raw = (data.get('fecha') or '').strip()
+            if fecha_raw in ('', '-', 'sin fecha', 'SIN FECHA'):
+                pedido.fecha = None
+            else:
+                try:
+                    if '/' in fecha_raw:
+                        pedido.fecha = datetime.strptime(fecha_raw, '%d/%m/%Y')
+                    else:
+                        pedido.fecha = datetime.fromisoformat(
+                            fecha_raw.replace('Z', '+00:00').replace('T', ' ')
+                        )
+                except Exception:
+                    if fecha_raw:
+                        pedido.fecha = datetime(1900, 1, 1)  # Fecha especial
+                    else:
+                        pedido.fecha = None
 
         pedido.oculto = data.get('oculto', pedido.oculto)
 
-        # 👇 Manejo de fecha_viene
-       # 👇 Manejo de fecha_viene (sin autocompletar si no la mandan)
-        fv = data.get('fecha_viene')
+        # --- fecha_viene: mismo criterio, también opcional ---
         if 'fecha_viene' in data:
-            if fv:
-                pedido.fecha_viene = (
-                    datetime.strptime(fv, '%d/%m/%Y').date()
-                    if '/' in fv
-                    else datetime.fromisoformat(
-                        fv.replace('Z', '+00:00').replace('T', ' ')
-                    ).replace(tzinfo=None).date()
-                )
-            else:
+            fv_raw = (data.get('fecha_viene') or '').strip()
+            if fv_raw in ('', '-', 'sin fecha', 'SIN FECHA'):
                 pedido.fecha_viene = None
-
-
-
+            else:
+                try:
+                    if '/' in fv_raw:
+                        pedido.fecha_viene = datetime.strptime(fv_raw, '%d/%m/%Y')
+                    else:
+                        pedido.fecha_viene = datetime.fromisoformat(
+                            fv_raw.replace('Z', '+00:00').replace('T', ' ')
+                        )
+                except Exception:
+                    pedido.fecha_viene = None
 
         session.commit()
         return jsonify({'mensaje': 'Pedido actualizado con éxito'})
-
     except SQLAlchemyError as e:
         session.rollback()
         return jsonify({'error': 'Error al actualizar el pedido', 'mensaje': str(e)}), 500

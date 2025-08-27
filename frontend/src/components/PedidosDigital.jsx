@@ -21,28 +21,59 @@ const MOTIVOS_NO_VIENE = [
     "Otros"
 ];
 
-function formatearFechaArgentina(fecha) {
-    if (!fecha) return "";
-    // 🚀 Si viene en formato YYYY-MM-DD, lo parseamos a mano
-    if (/^\d{4}-\d{2}-\d{2}$/.test(fecha)) {
-        const [y, m, d] = fecha.split("-").map(Number);
-        const dt = new Date(y, m - 1, d); // ← crea la fecha en local time
-        dt.setHours(12, 0, 0, 0); // 👈 “clavamos” al mediodía
-        return dt.toLocaleDateString("es-AR", {
-            day: "2-digit",
-            month: "2-digit",
-            year: "numeric"
-        });
+
+// ✅ Parser robusto: acepta DD/MM/YYYY, YYYY-MM-DD (sin hora) e ISO con hora
+function parseFechaFlexible(valor) {
+    if (valor == null) return null;
+    const s = String(valor).trim();
+
+    // DD/MM/YYYY
+    const mDMY = /^(\d{2})\/(\d{2})\/(\d{4})$/;
+    const dmy = s.match(mDMY);
+    if (dmy) {
+        const [_, dd, mm, yyyy] = dmy;
+        const dt = new Date(Number(yyyy), Number(mm) - 1, Number(dd), 12, 0, 0, 0);
+        return dt;
     }
-    // fallback: intentamos normal
-    const d = new Date(fecha);
-    if (Number.isNaN(d.getTime())) return "";
-    return d.toLocaleDateString("es-AR", {
+
+    // YYYY-MM-DD (sin hora)
+    const mYMD = /^(\d{4})-(\d{2})-(\d{2})(?!T)/;
+    const ymd = s.match(mYMD);
+    if (ymd) {
+        const [_, yyyy, mm, dd] = ymd;
+        return new Date(Number(yyyy), Number(mm) - 1, Number(dd), 12, 0, 0, 0);
+    }
+
+    // ISO completo (con/sin TZ)
+    const dt = new Date(s);
+    if (!isNaN(dt)) return dt;
+
+    return null;
+}
+
+function formatearFechaArgentina(valor) {
+    if (!valor) return "";
+
+    // Si viene como string conteniendo la fecha especial
+    if (typeof valor === "string" && valor.includes("1900-01-01")) {
+        return "sin fecha";
+    }
+
+    const dt = parseFechaFlexible(valor);
+    if (!dt) return "";
+
+    // Si el año es 1900 => es nuestro marcador de “sin fecha”
+    if (dt.getFullYear() === 1900) {
+        return "sin fecha";
+    }
+
+    return dt.toLocaleDateString("es-AR", {
         day: "2-digit",
         month: "2-digit",
-        year: "numeric"
+        year: "numeric",
     });
 }
+
 
 
 export default function PedidosDigital() {

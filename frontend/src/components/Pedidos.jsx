@@ -116,8 +116,19 @@ const PedidoForm = () => {
 
   // XXX REEMPLAZAR tu formatearFechaArgentina por esta
   const formatearFechaArgentina = (valor) => {
+    // Si es la fecha especial (1900), devolver el texto original guardado
+    if (valor && valor.includes && valor.includes('1900-01-01')) {
+      return "sin fecha";
+    }
+
     const dt = parseFechaFlexible(valor);
     if (!dt) return valor ?? "";
+
+    // Si es 1900, es texto especial
+    if (dt.getFullYear() === 1900) {
+      return "sin fecha";
+    }
+
     return dt.toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric' });
   };
 
@@ -798,7 +809,8 @@ const PedidoForm = () => {
       setTituloLibro(pedido.titulo);
       setAutorLibro(pedido.autor);
       setCantidad(pedido.cantidad || 1);
-      setFecha(pedido.fecha ? formatearFechaArgentina(pedido.fecha) : "-");
+      const fechaParaEditar = pedido.fecha ? formatearFechaArgentina(pedido.fecha) : "-";
+      setFecha(fechaParaEditar === "sin fecha" ? "sin fecha" : fechaParaEditar);
 
       setSenia(
         pedido.seña !== null && pedido.seña !== undefined
