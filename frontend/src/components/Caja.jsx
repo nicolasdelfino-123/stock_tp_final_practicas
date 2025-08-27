@@ -1157,38 +1157,32 @@ export default function Caja() {
                 >
                     {/* 10 */}
 
+                    {/* 10 (usar para 10 y 20) */}
                     <div style={styles.countBox}>
                         <div style={{ fontSize: 12, opacity: 0.75 }}>Importe en billetes de</div>
-
-
-                        <div style={{ fontWeight: 800 }}>ARS 10</div>
+                        <div style={{ fontWeight: 800 }}>ARS 10 y 20</div>
                         <input
                             type="number"
                             min={0}
                             className="inicio-input"
                             value={inicioCounts[10] || 0}
                             onFocus={(e) => { if (e.target.value === "0") e.target.value = ""; }}
-                            onBlur={(e) => { const val = e.target.value === "" ? 0 : Number(e.target.value); setInicioCounts((p) => ({ ...p, 10: val })); }}
-                            onChange={(e) => { const val = e.target.value === "" ? 0 : Number(e.target.value); setInicioCounts((p) => ({ ...p, 10: val })); }}
+                            onBlur={(e) => {
+                                const val = e.target.value === "" ? 0 : Number(e.target.value);
+                                setInicioCounts((p) => ({ ...p, 10: val }));     // 10 toma el total
+                                // opcional: aseguramos 20 en 0
+                                setInicioCounts((p) => ({ ...p, 20: 0 }));
+                            }}
+                            onChange={(e) => {
+                                const val = e.target.value === "" ? 0 : Number(e.target.value);
+                                setInicioCounts((p) => ({ ...p, 10: val }));
+                                // opcional: aseguramos 20 en 0
+                                setInicioCounts((p) => ({ ...p, 20: 0 }));
+                            }}
                             style={styles.input}
                         />
                     </div>
 
-                    {/* 20 */}
-                    <div style={styles.countBox}>
-                        <div style={{ fontSize: 12, opacity: 0.75 }}>Importe en billetes de</div>
-                        <div style={{ fontWeight: 800 }}>ARS 20</div>
-                        <input
-                            type="number"
-                            min={0}
-                            className="inicio-input"
-                            value={inicioCounts[20] || 0}
-                            onFocus={(e) => { if (e.target.value === "0") e.target.value = ""; }}
-                            onBlur={(e) => { const val = e.target.value === "" ? 0 : Number(e.target.value); setInicioCounts((p) => ({ ...p, 20: val })); }}
-                            onChange={(e) => { const val = e.target.value === "" ? 0 : Number(e.target.value); setInicioCounts((p) => ({ ...p, 20: val })); }}
-                            style={styles.input}
-                        />
-                    </div>
 
                     {/* 50 */}
                     <div style={styles.countBox}>
