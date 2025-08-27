@@ -349,14 +349,17 @@ const PedidoForm = () => {
     // 👉 Normalizar seña IGUAL que en handleGuardar
     const señaNumero = Number(String(seña).replace(/\D/g, ''));
 
+    const fechaNormalizada =
+      !fecha || fecha.trim() === "" || fecha.trim() === "-" ? null : fecha.trim();
+
     const datosActuales = {
       nombreCliente,
       tituloLibro,
       autorLibro,
       editorial,
       cantidad,
-      fecha,
-      seña: isNaN(señaNumero) ? 0 : señaNumero, // ← numérica
+      fecha: fechaNormalizada,
+      seña: isNaN(señaNumero) ? 0 : señaNumero,  // 👈 preserva 0
       comentario,
       isbn,
       telefonoCliente
