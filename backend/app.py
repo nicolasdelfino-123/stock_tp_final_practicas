@@ -2120,6 +2120,85 @@ def mov_editado_detalle(log_id):
         return jsonify({"error": "No se pudo obtener movimiento editado", "mensaje": str(e)}), 500
 
 
+@app.route("/api/caja/salidas", methods=["GET"])
+def caja_salidas_listar():
+    s = app.session
+    try:
+        user, err = _get_user_or_401()
+        if err: 
+            return err
+
+        turno_id = request.args.get("turno_id", type=int)
+
+        q = (
+            s.query(Movimiento, Usuario.username)
+            .join(Usuario, Movimiento.creado_por_id == Usuario.id)
+            .filter(Movimiento.tipo == "SALIDA", Movimiento.eliminado == False)
+            .order_by(Movimiento.id.desc())
+        )
+        if turno_id:
+            q = q.filter(Movimiento.turno_id == turno_id)
+
+        out = []
+        for m, username in q.all():
+            out.append({
+                "id": m.id,
+                "turno_id": m.turno_id,
+                "usuario": username,  # 👈 nombre del usuario
+                "descripcion": m.descripcion,
+                "comentario": getattr(m, "comentario", None),  # si lo agregaste en el modelo
+                "importe": float(m.importe or 0),
+                "metodo_pago": m.metodo_pago,
+                "creado_en": m.creado_en.isoformat() if m.creado_en else None,
+            })
+        return jsonify(out), 200
+    except Exception as e:
+        return jsonify({"error": "No se pudo listar salidas", "mensaje": str(e)}), 500
+
+
+@app.route("/api/caja/salidas", methods=["POST"])
+def caja_salidas_crear():
+    s = app.session
+    try:
+        user, err = _get_user_or_401()
+        if err: 
+            return err
+
+        data = request.get_json() or {}
+        turno_id = data.get("turno_id")
+        if not turno_id:
+            return jsonify({"error": "turno_id requerido"}), 400
+
+        t = s.query(CajaTurno).get(turno_id)
+        if not t or t.estado != "ABIERTO":
+            return jsonify({"error": "Turno no encontrado o no está ABIERTO"}), 404
+
+        importe = float(data.get("importe") or 0)
+        metodo = _map_metodo(data.get("metodo_pago"))
+
+        m = Movimiento(
+            turno_id=turno_id,
+            creado_por_id=user.id,
+            tipo="SALIDA",
+            metodo_pago=metodo,
+            importe=importe,
+            descripcion=data.get("descripcion"), 
+            comentario=data.get("comentario"), 
+        )
+        s.add(m)
+        s.add(AuditoriaEvento(
+            usuario_id=user.id, 
+            accion="CREAR_SALIDA", 
+            entidad="movimiento", 
+            entidad_id=None,
+            detalle={"turno_id": turno_id, "importe": importe, "metodo": metodo}
+        ))
+        s.commit()
+
+        return jsonify({"ok": True, "id": m.id}), 201
+    except Exception as e:
+        s.rollback()
+        return jsonify({"error": "No se pudo crear salida", "mensaje": str(e)}), 500
 
 
 

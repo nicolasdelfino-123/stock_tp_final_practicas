@@ -234,6 +234,8 @@ export default function Caja() {
     const [editVentaPin, setEditVentaPin] = useState("");      // PIN del autor (3–5)
     const [editVentaError, setEditVentaError] = useState("");  // mensaje inline
     const [savingVenta, setSavingVenta] = useState(false);
+    const [salidaMetodo, setSalidaMetodo] = useState("Efectivo");
+
 
     const navigate = useNavigate();
 
@@ -720,11 +722,11 @@ export default function Caja() {
         const res = await actions.cajaCrearMovimiento({
             turno_id: turnoId,
             tipo: "SALIDA",
-            metodo_pago: "Efectivo",
+            metodo_pago: salidaMetodo,   // usar el método elegido
             descripcion: descSalida,     // <-- se guarda en DB
             importe: imp,
-
         });
+
         if (!res?.success) {
             alert(res?.error || "No se pudo registrar la salida");
             return;
@@ -739,12 +741,14 @@ export default function Caja() {
                 desc: salidaDesc.trim() || "Salida",
                 importe: imp,
                 ts: Date.now(),
-                desc: salidaDesc.trim() || "Salida",
-                comentario: comentarioS || "",    // <-- para la tabla
+                comentario: comentarioS || "",
                 respLetter: cred.letter,
                 respPass4: cred.pin,
+                usuario: USUARIOS[cred.letter] || cred.letter.toUpperCase(), // 👈 para la columna Usuario
+                metodo: salidaMetodo,                                        // 👈 para la columna Método
             },
         ]);
+
         setSalidaDesc("");
         setSalidaComentario("");  // <-- limpiar comentario
         setSalidaImporte("");
@@ -828,13 +832,14 @@ export default function Caja() {
         wrap: {
             width: "calc(100vw - 1cm)",
             maxWidth: 1600,
-            margin: "0px auto",
+            margin: "-10px auto",
             padding: 66,
             fontFamily: "system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, Helvetica, Arial, sans-serif",
             background: isDarkMode ? '#1f2937' : '#ffffff',
             color: isDarkMode ? '#f9fafb' : '#111827',
             minHeight: '100vh',
-            transition: 'all 0.3s ease'
+            transition: 'all 0.3s ease',
+            marginBottom: '40px',
         },
         header: {
             display: "flex",
@@ -866,7 +871,7 @@ export default function Caja() {
             width: "100%",
             padding: "10px 12px",
             borderRadius: 20,
-            border: `1px solid ${isDarkMode ? '#4b5563' : '#cbd5e1'}`,
+            border: `2px solid ${isDarkMode ? " white" : "  black"}`,
             outline: "none",
             background: isDarkMode ? '#4b5563' : '#97c8d7ff',
             color: isDarkMode ? '#f9fafb' : '#111827',
@@ -977,6 +982,12 @@ export default function Caja() {
             fontSize: 18,
             fontWeight: 800
         },
+        pass: {
+            width: "100%",
+
+        },
+
+
     };
 
     /** ---------- BLOQUE RETURN ---------- **/
@@ -985,7 +996,7 @@ export default function Caja() {
             {/* Cambiar contraseñas */}
             <div style={{ top: 70, right: 20, zIndex: 1000 }}>
                 <select
-                    style={styles.input}
+                    style={{ ...styles.input, width: '200px', marginBottom: '10px', marginTop: '-10px' }}
                     value={selectedUser}
                     onChange={(e) => {
                         const val = e.target.value;
@@ -1275,7 +1286,8 @@ export default function Caja() {
                 <div style={styles.cardHeader}>Entradas</div>
                 <div style={{ ...styles.controlsRow, gridTemplateColumns: "2fr 1.2fr 1.4fr 1fr auto" }}>
                     <input
-                        style={{ ...styles.input, border: "2px solid black" }}
+                        className={`input ${isDarkMode ? "dark" : "light"}`}
+                        style={{ ...styles.input, border: isDarkMode ? "2px solid white" : "2px solid black" }}
                         placeholder="f123 2000 / f12345 2000 (letra + PIN 3–5 + importe)"
                         value={entradaRapida}
                         onChange={(e) => setEntradaRapida(e.target.value)}
@@ -1283,7 +1295,8 @@ export default function Caja() {
                         disabled={!turnoAbierto}
                     />
                     <input
-                        style={{ ...styles.input, border: "2px solid black" }}
+                        className={`input ${isDarkMode ? "dark" : "light"}`}
+                        style={{ ...styles.input }}
                         placeholder="Paga con (opcional)"
                         value={pagaCon}
                         onChange={(e) => setPagaCon(e.target.value)}
@@ -1292,6 +1305,7 @@ export default function Caja() {
                     />
                     {/* NUEVO: comentario venta */}
                     <input
+                        className={`input ${isDarkMode ? "dark" : "light"}`}
                         style={styles.input}
                         placeholder="Comentario (opcional)"
                         value={ventaComentario}
@@ -1372,10 +1386,14 @@ export default function Caja() {
             </section>
 
             {/* Salidas */}
+            {/* Salidas */}
             <section style={styles.card}>
                 <div style={styles.cardHeader}>Salidas</div>
-                <div style={{ ...styles.controlsRow, gridTemplateColumns: "2fr 1fr 1.2fr 1fr auto" }}>
+
+                {/* Controles: desc, importe, comentario, usuario (PIN), método, botón */}
+                <div style={{ ...styles.controlsRow, gridTemplateColumns: "2fr 1fr 1.5fr 1fr 1.2fr auto" }}>
                     <input
+                        className={`input ${isDarkMode ? "dark" : "light"}`}
                         style={styles.input}
                         placeholder="Descripción (proveedor, gasto, etc.)"
                         value={salidaDesc}
@@ -1384,6 +1402,7 @@ export default function Caja() {
                         disabled={!turnoAbierto}
                     />
                     <input
+                        className={`input ${isDarkMode ? "dark" : "light"}`}
                         style={styles.input}
                         placeholder="Importe"
                         value={salidaImporte}
@@ -1391,8 +1410,8 @@ export default function Caja() {
                         onKeyDown={(e) => e.key === "Enter" && agregarSalida()}
                         disabled={!turnoAbierto}
                     />
-                    {/* NUEVO: comentario salida */}
                     <input
+                        className={`input ${isDarkMode ? "dark" : "light"}`}
                         style={styles.input}
                         placeholder="Comentario (opcional)"
                         value={salidaComentario}
@@ -1400,51 +1419,93 @@ export default function Caja() {
                         onKeyDown={(e) => e.key === "Enter" && agregarSalida()}
                         disabled={!turnoAbierto}
                     />
+                    {/* Usuario (PIN) */}
                     <input
+                        className={`input ${isDarkMode ? "dark" : "light"}`}
                         style={styles.input}
-                        placeholder="Responsable (f1234 / y1234 / r1234 / n1234)"
+                        placeholder="Usuario (f1234 / y1234 / r1234 / n1234)"
                         value={salidaRespCode}
                         onChange={(e) => setSalidaRespCode(e.target.value)}
                         onKeyDown={(e) => e.key === "Enter" && agregarSalida()}
                         disabled={!turnoAbierto}
                     />
-                    <button style={styles.warnBtn} onClick={agregarSalida} disabled={!turnoAbierto}>
+                    {/* Método de pago (default EFECTIVO) */}
+                    <select
+                        style={styles.input}
+                        value={salidaMetodo}
+                        onChange={(e) => setSalidaMetodo(e.target.value)}
+                        onKeyDown={(e) => e.key === "Enter" && agregarSalida()}
+                        disabled={!turnoAbierto}
+                    >
+                        {METODOS.map((m) => (
+                            <option key={m} value={m}>{m}</option>
+                        ))}
+                    </select>
+
+                    <button
+                        style={styles.warnBtn}
+                        onClick={agregarSalida}
+                        disabled={!turnoAbierto}
+                    >
                         Agregar salida
                     </button>
                 </div>
 
-
+                {/* Tabla */}
                 <div style={styles.tableWrap}>
                     <table style={styles.table}>
                         <thead>
                             <tr>
                                 <th style={styles.th}>Hora</th>
-                                <th style={styles.th}>Descripción</th>
-                                <th style={styles.th}>Comentario</th>   {/* NUEVO */}
+                                <th style={styles.th}>Usuario</th>
                                 <th style={styles.th}>Importe</th>
+                                <th style={styles.th}>Método</th>
+                                <th style={styles.th}>Comentario</th>
                                 <th style={styles.th}></th>
                             </tr>
                         </thead>
                         <tbody>
                             {salidas.map((s) => (
                                 <tr key={s.id}>
+                                    {/* 👇 Igual que Entradas: usamos s.ts */}
                                     <td style={styles.td}>{hora(s.ts)}</td>
-                                    <td style={styles.td}>{s.desc}</td>
-                                    <td style={styles.td}>{s.comentario || "-"}</td> {/* NUEVO */}
+                                    <td style={styles.td}>{s.usuario}</td>
                                     <td style={styles.td}>{moneda(s.importe)}</td>
-                                    <td style={styles.tdRight}> ... </td>
+                                    {/* 👇 Igual que Entradas: usamos s.metodo */}
+                                    <td style={styles.td}>{s.metodo}</td>
+                                    <td style={styles.td}>{s.comentario || "-"}</td>
+                                    <td style={styles.tdRight}>
+                                        <button
+                                            style={styles.iconBtn}
+                                            onClick={() => editarSalida(s)}
+                                            disabled={!turnoAbierto}
+                                            title="Editar salida"
+                                        >
+                                            ✏️
+                                        </button>
+                                        <button
+                                            style={{ ...styles.iconBtn, marginLeft: 6, borderColor: '#ef4444', color: '#ef4444' }}
+                                            onClick={() => eliminarSalida(s)}
+                                            disabled={!turnoAbierto}
+                                            title="Eliminar salida"
+                                        >
+                                            🗑️
+                                        </button>
+                                    </td>
                                 </tr>
                             ))}
 
                             {salidas.length === 0 && (
                                 <tr>
-                                    <td style={styles.tdEmpty} colSpan={4}>Sin salidas registradas</td>
+                                    <td style={styles.tdEmpty} colSpan={6}>Sin salidas registradas</td>
                                 </tr>
                             )}
                         </tbody>
                     </table>
                 </div>
             </section>
+
+
 
             {/* Cierre / Resumen (OCULTO hasta pass de Ricardo ADMIN) */}
             <section style={styles.card}>

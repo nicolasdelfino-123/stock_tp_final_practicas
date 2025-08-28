@@ -158,3 +158,13 @@
 .btn-pedidos {
   background-color: #805AD5;
 }
+
+.input.dark::placeholder {
+  color: #b5cce2;
+  /* blanco */
+}
+
+.input.light::placeholder {
+  color: #111827;
+  /* negro/gris oscuro */
+}

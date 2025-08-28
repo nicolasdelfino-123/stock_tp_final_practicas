@@ -1264,6 +1264,146 @@ export const AppProvider = ({ children }) => {
         }
       },
 
+      /* =========================
+ * CAJA - SALIDAS (wrappers)
+ * ========================= */
+      cajaCrearSalida: async ({ turno_id, importe, metodo_ui = "Efectivo", comentario = "", responsableCode, descripcion }) => {
+        try {
+          // responsableCode: "f1234" / "y1234" / "r1234" / "n1234"
+          const code = (responsableCode || "").trim();
+          const m = /^\s*([fyrn])\s*([a-zA-Z0-9]{3,5})\s*$/.exec(code);
+          if (!m) return { success: false, error: "Responsable inválido (usa f1234 / y1234 / r1234 / n1234)" };
+          const letter = m[1].toLowerCase();
+          const pin = m[2];
+
+          // armamos la descripción con la firma como ya definiste en el front
+          const desc = descripcion && descripcion.trim()
+            ? descripcion.trim()
+            : `Salida (${letter}${pin})${comentario ? ` - ${comentario.trim()}` : ""}`;
+
+          const bodyUI = {
+            turno_id,
+            tipo: "SALIDA",
+            metodo_pago: metodo_ui,
+            importe,
+            descripcion: desc,
+          };
+
+          const token = localStorage.getItem("token");
+          const res = await fetch(`${API_BASE}/api/caja/movimientos`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              ...(token ? { Authorization: `Bearer ${token}` } : {}),
+            },
+            body: JSON.stringify({
+              turno_id,
+              tipo: "SALIDA",
+              metodo_pago: actions._mapMetodoUItoEnum(metodo_ui),
+              importe: Number(importe),
+              descripcion: desc,
+            }),
+          });
+          const data = await res.json().catch(() => ({}));
+          if (res.ok && (data?.ok || data?.id)) {
+            return { success: true, movimiento: { id: data.id || data?.movimiento?.id }, bodyUI };
+          }
+          return { success: false, error: data?.error || "No se pudo crear la salida" };
+        } catch (e) {
+          return { success: false, error: e.message };
+        }
+      },
+
+      cajaListarSalidas: async (turno_id) => {
+        try {
+          const token = localStorage.getItem("token");
+          const params = new URLSearchParams();
+          if (turno_id) params.set("turno_id", turno_id);
+          params.set("tipo", "SALIDA");
+          const res = await fetch(`${API_BASE}/api/caja/movimientos?${params.toString()}`, {
+            headers: { ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+          });
+          const data = await res.json();
+          if (!res.ok) return { success: false, error: data?.error || "No se pudo listar salidas" };
+
+          // Parsear usuario desde la descripción "(f1234)" → "Flor" / "Yani" / "Nico" / "Ricardo"
+          const MAP = { f: "Flor", y: "Yani", n: "Nico", r: "Ricardo" };
+          const lista = (Array.isArray(data) ? data : []).map((raw) => {
+            // raw.descripcion puede estar en varios formatos; buscamos la firma
+            let usuario = "-";
+            let comentario = "";
+            let desc = raw?.descripcion || "";
+
+            const firma = /\(\s*([fyrn])\s*[a-zA-Z0-9]{3,5}\s*\)/i.exec(desc);
+            if (firma) {
+              const letter = (firma[1] || "").toLowerCase();
+              usuario = MAP[letter] || "-";
+            }
+            // comentario: si quedó algo después de " - " o " | "
+            const cm = desc.split(" - ").slice(1).join(" - ") || desc.split(" | ").slice(1).join(" | ");
+            comentario = (cm || "").trim();
+
+            return {
+              id: raw.id,
+              creado_en: raw.creado_en,               // ← para que uses hora(s.creado_en)
+              usuario,                                // ← mostrado en tabla
+              importe: Number(raw.importe || 0),
+              metodo_pago: raw.metodo_pago,
+              comentario: comentario || "",
+              descripcion: raw.descripcion || "",
+            };
+          });
+
+          return { success: true, salidas: lista };
+        } catch (e) {
+          return { success: false, error: e.message };
+        }
+      },
+
+      cajaEditarSalida: async (movId, { importe, metodo_ui, comentario, descripcion }) => {
+        try {
+          const token = localStorage.getItem("token");
+          const payload = {};
+          if (importe != null) payload.importe = Number(importe);
+          if (metodo_ui) payload.metodo_pago = actions._mapMetodoUItoEnum(metodo_ui);
+          if (descripcion != null) payload.descripcion = String(descripcion);
+          if (comentario) {
+            // si querés, podrías rearmar la descripción con el comentario
+            payload.descripcion = descripcion ? String(descripcion) : undefined;
+          }
+          const res = await fetch(`${API_BASE}/api/caja/movimientos/${movId}`, {
+            method: "PATCH",
+            headers: {
+              "Content-Type": "application/json",
+              ...(token ? { Authorization: `Bearer ${token}` } : {}),
+            },
+            body: JSON.stringify({ ...payload, motivo: "Edición salida" }),
+          });
+          const data = await res.json().catch(() => ({}));
+          if (res.ok && data?.ok) return { success: true };
+          return { success: false, error: data?.error || "No se pudo editar la salida" };
+        } catch (e) {
+          return { success: false, error: e.message };
+        }
+      },
+
+      cajaBorrarSalida: async (movId, motivo = "Eliminado salida") => {
+        try {
+          const token = localStorage.getItem("token");
+          const url = new URL(`${API_BASE}/api/caja/movimientos/${movId}`);
+          if (motivo) url.searchParams.set("motivo", motivo);
+          const res = await fetch(url.toString(), {
+            method: "DELETE",
+            headers: { ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+          });
+          const data = res.ok ? {} : await res.json().catch(() => ({}));
+          if (res.ok) return { success: true };
+          return { success: false, error: data?.error || "No se pudo borrar la salida" };
+        } catch (e) {
+          return { success: false, error: e.message };
+        }
+      },
+
 
 
 
