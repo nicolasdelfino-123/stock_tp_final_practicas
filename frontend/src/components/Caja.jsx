@@ -457,10 +457,11 @@ export default function Caja() {
     const totalTransferencias = useMemo(
         () =>
             ventas
-                .filter((v) => v.metodo.startsWith("Transferencia"))
+                .filter((v) => v.metodo.startsWith("Transferencia") || v.metodo === "QR")
                 .reduce((a, v) => a + v.importe, 0),
         [ventas]
     );
+
     const totalDebito = useMemo(
         () => ventas.filter((v) => v.metodo === "Débito").reduce((a, v) => a + v.importe, 0),
         [ventas]
@@ -1807,6 +1808,11 @@ export default function Caja() {
                                 <div style={styles.summaryLabel}>Crédito</div>
                                 <div style={styles.summaryValue}>{moneda(totalCredito)}</div>
                             </div>
+                            <div style={styles.summaryBox}>
+                                <div style={styles.summaryLabel}>Total vendido (bruto)</div>
+                                <div style={styles.summaryValue}>{moneda(totalVentas)}</div>
+                            </div>
+
                             <div style={styles.summaryBox}>
                                 <div style={styles.summaryLabel}>Salidas</div>
                                 <div style={styles.summaryValue}>{moneda(totalSalidas)}</div>
