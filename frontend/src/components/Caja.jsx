@@ -22,6 +22,40 @@ const LETTER_TO_USERNAME = { f: "flor", y: "yani", r: "ricardo", n: "nico" };
 // Base de API
 const API_BASE = process.env.REACT_APP_API_BASE || "http://localhost:5000";
 
+// Convierte enum del backend -> etiqueta de UI
+function metodoEnumToUI(enumStr = "") {
+    const s = String(enumStr).toUpperCase();
+    if (s === "EFECTIVO") return "Efectivo";
+    if (s === "TRANSF_BANCARIA") return "Transferencia - Bancor";
+    if (s === "TRANSF_MP") return "Transferencia - Mercado Pago";
+    if (s === "DEBITO") return "Débito";
+    if (s === "CREDITO") return "Crédito";
+    return enumStr || "Efectivo";
+}
+
+// Extrae firma y comentario desde "Venta (f1234) - texto" ó "Salida (y2222) - desc | comentario"
+function parseFirmaYComentario(descripcion = "", tipo = "VENTA") {
+    const desc = String(descripcion || "");
+    const firma = /\(\s*([fyrn])\s*([a-zA-Z0-9]{3,5})\s*\)/i.exec(desc);
+    const userLetter = firma ? firma[1].toLowerCase() : null;
+    const pass4 = firma ? firma[2] : null;
+
+    // Venta: "Venta (f1234) - comentario"
+    // Salida: "Salida (f1234) - desc | comentario"
+    let comentario = "";
+    if (tipo === "VENTA") {
+        const cm = desc.split(" - ").slice(1).join(" - ");
+        comentario = (cm || "").trim();
+    } else {
+        const afterDash = desc.split(" - ").slice(1).join(" - ");
+        const parts = afterDash.split("|").map(s => s.trim());
+        comentario = (parts[1] || ""); // si existe la parte luego del "|"
+    }
+
+    return { userLetter, pass4, comentario };
+}
+
+
 
 /** ---------- Helpers de autenticación ---------- **/
 
@@ -269,8 +303,84 @@ export default function Caja() {
         }
     }
 
+    async function cargarEstadoDesdeBackend(turno_id) {
+        try {
+            if (!turno_id) {
+                // limpiar por las dudas
+                setVentas([]);
+                setSalidas([]);
+                return;
+            }
+
+            // 1) Denominaciones/inicio → llenar inicioCounts
+            const rIni = await actions.cajaListarInicioDetalles(turno_id);
+            const detalles = rIni?.detalles || [];
+            const mapIni = { 10: 0, 20: 0, 50: 0, "100_200": 0, 500: 0, 1000: 0, otros: 0 };
+            for (const d of detalles) {
+                const key = (d.etiqueta || "").toString();
+                const val = Number(d.importe_total || 0);
+                if (mapIni.hasOwnProperty(key)) mapIni[key] = val;
+            }
+            setInicioCounts(mapIni);
+
+            // 2) Ventas del turno
+            const rVen = await actions.cajaListarMovimientos({ turno_id, tipo: "VENTA" });
+            const listaRaw = rVen?.movimientos || [];
+
+            const ventasUI = listaRaw.map((raw) => {
+                const { userLetter, pass4, comentario } = parseFirmaYComentario(raw.descripcion || "", "VENTA");
+                return {
+                    id: crypto.randomUUID(),
+                    dbId: raw.id,
+                    usuario: USUARIOS[userLetter] || (userLetter ? userLetter.toUpperCase() : "-"),
+                    userLetter: userLetter || "-",
+                    pass4: pass4 || "",
+                    importe: Number(raw.importe || 0),
+                    pago: raw.paga_con != null ? Number(raw.paga_con) : null,
+                    vuelto: raw.vuelto != null ? Number(raw.vuelto) : null,
+                    metodo: metodoEnumToUI(raw.metodo_pago || raw.metodo || "EFECTIVO"),
+                    comentario: comentario || "",
+                    ts: raw.creado_en ? new Date(raw.creado_en).getTime() : Date.now(),
+                };
+            });
+            setVentas(ventasUI);
+
+            // 3) Salidas del turno (ya tenés wrapper que mapea bonito)
+            const rSal = await actions.cajaListarSalidas(turno_id);
+            const salidasUI = (rSal?.salidas || []).map(s => ({
+                id: crypto.randomUUID(),
+                dbId: s.id,
+                desc: s.descripcion || s.desc || "Salida",
+                importe: Number(s.importe || 0),
+                ts: s.creado_en ? new Date(s.creado_en).getTime() : Date.now(),
+                comentario: s.comentario || "",
+                respLetter: (s.usuario || "-")[0]?.toLowerCase?.() || "f", // no es crítico, solo para ediciones
+                respPass4: s.respPass4 || "",                               // puede no venir; se mantiene vacío
+                usuario: s.usuario || "-",
+                metodo: s.metodo || metodoEnumToUI(s.metodo_pago || "EFECTIVO"),
+            }));
+            setSalidas(salidasUI);
+        } catch (e) {
+            // si algo falla, no rompas la UI
+            console.warn("cargarEstadoDesdeBackend error:", e);
+        }
+    }
+
+
     // al montar, sincroniza contra el backend
     useEffect(() => { syncTurnoAbierto(); }, []);
+
+    // Cuando detecto un turno abierto, rehidrato toda la UI desde el backend
+    useEffect(() => {
+        const id = turnoServer?.id || null;
+        if (id) {
+            cargarEstadoDesdeBackend(id);
+        } else {
+            setVentas([]);
+            setSalidas([]);
+        }
+    }, [turnoServer]); // 👈 sin turnoAbierto/turnoId
+
 
 
     // --------- Estados de setup y visibilidad ---------

@@ -25,6 +25,31 @@ export const AppProvider = ({ children }) => {
 
 
   const API_BASE = process.env.REACT_APP_API_BASE || "http://localhost:5000";
+  // === Auth helpers (agregar debajo de API_BASE) ===
+  function getToken(store) {
+    return (store?.token || localStorage.getItem("token") || "").trim();
+  }
+
+  async function api(ctx, path, { method = "GET", headers = {}, body } = {}) {
+    const token = getToken(ctx.store);
+    const res = await fetch(`${API_BASE}${path}`, {
+      method,
+      headers: {
+        "Content-Type": "application/json",
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        ...headers,
+      },
+      body,
+    });
+
+    // Si tu backend responde 401 cuando falta/vence token, devolvemos un objeto estándar
+    const data = await res.json().catch(() => ({}));
+    if (res.status === 401) {
+      return { ok: false, status: 401, error: "TOKEN_EXPIRED", ...data };
+    }
+    return { ok: res.ok, status: res.status, ...data };
+  }
+
 
   // Inicializar datos desde localStorage al cargar la aplicación
   useEffect(() => {
@@ -837,31 +862,17 @@ export const AppProvider = ({ children }) => {
       },
 
       cajaAbrirTurno: async ({ codigo, observacion, denominaciones = [], fecha, turno }) => {
-        try {
-          const res = await fetch(`${API_BASE}/api/caja/turnos/abrir`, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${localStorage.getItem("token") || token || ""}`,
-            },
-            body: JSON.stringify({
-              codigo,
-              observacion,
-              denominaciones, // [{ etiqueta, importe_total }]
-              fecha,          // "YYYY-MM-DD"  <-- NUEVO
-              turno,          // "MANANA" | "TARDE" <-- NUEVO
-            }),
-          });
-          const data = await res.json();
-          if (res.ok) {
-            setTurnoActual(data.turno || null);
-            return { success: true, turno: data.turno };
-          }
-          return { success: false, error: data.error || "No se pudo abrir turno" };
-        } catch (e) {
-          return { success: false, error: e.message };
+        const res = await api({ store }, `/api/caja/turnos/abrir`, {
+          method: "POST",
+          body: JSON.stringify({ codigo, observacion, denominaciones, fecha, turno }),
+        });
+        if (res.ok) {
+          setTurnoActual(res.turno || null);
+          return { success: true, turno: res.turno };
         }
+        return { success: false, error: res.error || "No se pudo abrir turno", status: res.status };
       },
+
 
       cajaListarTurnos: async (filtros = {}) => {
         try {
@@ -902,25 +913,17 @@ export const AppProvider = ({ children }) => {
       },
 
       cajaCerrarTurno: async (turnoId, { efectivo_contado, resumen_por_metodo, observacion } = {}) => {
-        try {
-          const res = await fetch(`${API_BASE}/api/caja/turnos/${turnoId}/cerrar`, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${localStorage.getItem("token") || token || ""}`,
-            },
-            body: JSON.stringify({ efectivo_contado, resumen_por_metodo, observacion }),
-          });
-          const data = await res.json();
-          if (res.ok) {
-            setTurnoActual(null);
-            return { success: true, diferencia_efectivo: data.diferencia_efectivo };
-          }
-          return { success: false, error: data.error || "No se pudo cerrar turno" };
-        } catch (e) {
-          return { success: false, error: e.message };
+        const res = await api({ store }, `/api/caja/turnos/${turnoId}/cerrar`, {
+          method: "POST",
+          body: JSON.stringify({ efectivo_contado, resumen_por_metodo, observacion }),
+        });
+        if (res.ok) {
+          setTurnoActual(null);
+          return { success: true, diferencia_efectivo: res.diferencia_efectivo };
         }
+        return { success: false, error: res.error || "No se pudo cerrar turno", status: res.status };
       },
+
 
       cajaResumenTurno: async (turnoId) => {
         try {
@@ -942,34 +945,23 @@ export const AppProvider = ({ children }) => {
       // CAJA - MOVIMIENTOS
       // ======================
       cajaCrearMovimiento: async (payloadUI) => {
-        try {
-          const body = {
-            turno_id: payloadUI.turno_id,
-            tipo: actions._mapTipoUItoEnum(payloadUI.tipo),
-            metodo_pago: actions._mapMetodoUItoEnum(payloadUI.metodo_pago),
-            importe: Number(payloadUI.importe),
-            descripcion: payloadUI.descripcion || "",
-            paga_con: payloadUI.paga_con ?? null,
-            vuelto: payloadUI.vuelto ?? null,
-          };
-          const res = await fetch(`${API_BASE}/api/caja/movimientos`, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${localStorage.getItem("token") || token || ""}`,
-            },
-            body: JSON.stringify(body),
-          });
-          const data = await res.json();
-          if (res.ok) {
-            // opcional: refrescar lista
-            // await actions.cajaListarMovimientos({ turno_id: body.turno_id });
-            return { success: true, movimiento: { id: data.id } };
-          }
-          return { success: false, error: data.error || "No se pudo crear movimiento" };
-        } catch (e) {
-          return { success: false, error: e.message };
+        const body = {
+          turno_id: payloadUI.turno_id,
+          tipo: actions._mapTipoUItoEnum(payloadUI.tipo),
+          metodo_pago: actions._mapMetodoUItoEnum(payloadUI.metodo_pago),
+          importe: Number(payloadUI.importe),
+          descripcion: payloadUI.descripcion || "",
+          paga_con: payloadUI.paga_con ?? null,
+          vuelto: payloadUI.vuelto ?? null,
+        };
+        const res = await api({ store }, `/api/caja/movimientos`, {
+          method: "POST",
+          body: JSON.stringify(body),
+        });
+        if (res.ok) {
+          return { success: true, movimiento: { id: res.id || res?.movimiento?.id } };
         }
+        return { success: false, error: res.error || "No se pudo crear movimiento", status: res.status };
       },
 
       cajaListarMovimientos: async (filtros = {}) => {
@@ -1054,40 +1046,27 @@ export const AppProvider = ({ children }) => {
       },
 
       cajaBorrarMovimiento: async (movId, motivo = "") => {
-        try {
-          const qs = motivo ? `?motivo=${encodeURIComponent(motivo)}` : "";
-          const res = await fetch(`${API_BASE}/api/caja/movimientos/${movId}${qs}`, {
-            method: "DELETE",
-            headers: { Authorization: `Bearer ${localStorage.getItem("token") || token || ""}` },
-          });
-          const data = res.ok ? null : await res.json();
-          if (res.ok) return { success: true };
-          return { success: false, error: (data && data.error) || "No se pudo borrar movimiento" };
-        } catch (e) {
-          return { success: false, error: e.message };
-        }
+        const qs = motivo ? `?motivo=${encodeURIComponent(motivo)}` : "";
+        const res = await api({ store }, `/api/caja/movimientos/${movId}${qs}`, {
+          method: "DELETE",
+        });
+        if (res.ok) return { success: true };
+        return { success: false, error: res.error || "No se pudo borrar movimiento", status: res.status };
       },
 
+
       cajaEditarMovimiento: async (movId, payloadUI = {}) => {
-        try {
-          const payload = { ...payloadUI };
-          if (payload.metodo_pago) payload.metodo_pago = actions._mapMetodoUItoEnum(payload.metodo_pago);
-          if (payload.tipo) payload.tipo = actions._mapTipoUItoEnum(payload.tipo); // por si en el futuro permitís
-          const res = await fetch(`${API_BASE}/api/caja/movimientos/${movId}`, {
-            method: "PATCH",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${localStorage.getItem("token") || token || ""}`,
-            },
-            body: JSON.stringify(payload),
-          });
-          const data = await res.json();
-          if (res.ok) return { success: true, movimiento: data.movimiento };
-          return { success: false, error: data.error || "No se pudo editar movimiento" };
-        } catch (e) {
-          return { success: false, error: e.message };
-        }
+        const payload = { ...payloadUI };
+        if (payload.metodo_pago) payload.metodo_pago = actions._mapMetodoUItoEnum(payload.metodo_pago);
+        if (payload.tipo) payload.tipo = actions._mapTipoUItoEnum(payload.tipo);
+        const res = await api({ store }, `/api/caja/movimientos/${movId}`, {
+          method: "PATCH",
+          body: JSON.stringify(payload),
+        });
+        if (res.ok) return { success: true, movimiento: res.movimiento };
+        return { success: false, error: res.error || "No se pudo editar movimiento", status: res.status };
       },
+
 
       // ======================
       // CAJA - INICIO DETALLES
