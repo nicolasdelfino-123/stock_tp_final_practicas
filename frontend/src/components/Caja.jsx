@@ -235,6 +235,15 @@ export default function Caja() {
     const [editVentaError, setEditVentaError] = useState("");  // mensaje inline
     const [savingVenta, setSavingVenta] = useState(false);
     const [salidaMetodo, setSalidaMetodo] = useState("Efectivo");
+    // --- edición inline de salidas ---
+    const [editSalidaId, setEditSalidaId] = useState(null);
+    const [editSalidaDraft, setEditSalidaDraft] = useState({
+        desc: "",
+        importe: 0,
+        metodo: "Efectivo",
+        comentario: "",
+    });
+
 
 
     const navigate = useNavigate();
@@ -628,39 +637,64 @@ export default function Caja() {
             alert("Formato inválido (usa letra + 4 dígitos)");
             return;
         }
-
-        // 🔒 NUEVO: el que edita debe ser el MISMO autor del registro
         if (cred.letter !== row.userLetter || cred.pin !== row.pass4) {
             alert("Solo puede editarlo quien lo registró con su PIN original.");
             return;
         }
-
         const auth = await loginWithLetterAndPin(actions, cred.letter, cred.pin);
         if (!auth.ok) {
             alert(auth.error || "Credenciales inválidas");
             return;
         }
 
-        const nuevo = window.prompt(`Nuevo importe (actual ${moneda(row.importe)}):`, String(row.importe));
-        if (!nuevo) return;
-        const nuevoImporte = Number(String(nuevo).replace(",", "."));
-        if (!(nuevoImporte > 0)) {
-            alert("Importe inválido");
-            return;
-        }
+        // activar modo edición inline
+        setEditVentaId(row.id);
+        setEditVentaDraft({
+            importe: row.importe,
+            pago: row.pago ?? "",
+            metodo: row.metodo || "Efectivo",
+            comentario: row.comentario || "",
+        });
+    }
 
-        if (row.dbId) {
-            const r = await actions.cajaEditarMovimiento(row.dbId, {
-                importe: nuevoImporte,
-                motivo: "Edición desde componente",
-            });
-            if (!r?.success) {
-                alert(r?.error || "No se pudo editar en backend");
+    async function guardarEdicionVenta(row) {
+        try {
+            const nuevoImporte = Number(editVentaDraft.importe);
+            if (!(nuevoImporte > 0)) {
+                alert("Importe inválido");
                 return;
             }
-        }
 
-        setVentas((prev) => prev.map((v) => (v.id === row.id ? { ...v, importe: nuevoImporte } : v)));
+            // reconstruir la descripción como se guarda en DB
+            const comentarioV = (editVentaDraft.comentario || "").trim();
+            const nuevaDescripcion =
+                `Venta (${row.userLetter}${row.pass4})` + (comentarioV ? ` - ${comentarioV}` : "");
+
+            if (row.dbId) {
+                const r = await actions.cajaEditarMovimiento(row.dbId, {
+                    importe: nuevoImporte,
+                    metodo_pago: editVentaDraft.metodo,
+                    descripcion: nuevaDescripcion,
+                });
+                if (!r?.success) {
+                    alert(r?.error || "No se pudo editar en backend");
+                    return;
+                }
+            }
+
+            // actualizar UI
+            setVentas(prev => prev.map(v => v.id === row.id
+                ? { ...v, importe: nuevoImporte, metodo: editVentaDraft.metodo, comentario: comentarioV }
+                : v
+            ));
+            setEditVentaId(null);
+        } catch (e) {
+            alert(e.message);
+        }
+    }
+
+    function cancelarEdicionVenta() {
+        setEditVentaId(null);
     }
 
 
@@ -762,40 +796,64 @@ export default function Caja() {
             alert("Formato inválido (letra + 4 dígitos)");
             return;
         }
-
-        // 🔒 NUEVO: solo el responsable original puede editar
         if (cred.letter !== row.respLetter || cred.pin !== row.respPass4) {
             alert("Solo puede editarla quien la registró con su PIN original.");
             return;
         }
-
         const auth = await loginWithLetterAndPin(actions, cred.letter, cred.pin);
         if (!auth.ok) {
             alert(auth.error || "Credenciales inválidas");
             return;
         }
 
-        const nuevo = window.prompt(`Nuevo importe (actual ${moneda(row.importe)}):`, String(row.importe));
-        if (!nuevo) return;
-        const nuevoImporte = Number(String(nuevo).replace(",", "."));
-        if (!(nuevoImporte > 0)) {
-            alert("Importe inválido");
-            return;
-        }
+        // activar modo edición inline
+        setEditSalidaId(row.id);
+        setEditSalidaDraft({
+            desc: row.desc || "Salida",
+            importe: row.importe,
+            metodo: row.metodo || "Efectivo",
+            comentario: row.comentario || "",
+        });
+    }
 
-        if (row.dbId) {
-            const r = await actions.cajaEditarMovimiento(row.dbId, {
-                importe: nuevoImporte,
-                motivo: "Edición salida",
-            });
-            if (!r?.success) {
-                alert(r?.error || "No se pudo editar en backend");
+    async function guardarEdicionSalida(row) {
+        try {
+            const nuevoImporte = Number(editSalidaDraft.importe);
+            if (!(nuevoImporte > 0)) {
+                alert("Importe inválido");
                 return;
             }
-        }
+            const comentarioS = (editSalidaDraft.comentario || "").trim();
+            const descArmadaBase = editSalidaDraft.desc?.trim() || "Salida";
+            // mantener firma del responsable visible en la descripción que va a DB
+            const nuevaDescripcion = `Salida (${row.respLetter}${row.respPass4}) - ${descArmadaBase}` + (comentarioS ? ` | ${comentarioS}` : "");
 
-        setSalidas((prev) => prev.map((s) => (s.id === row.id ? { ...s, importe: nuevoImporte } : s)));
+            if (row.dbId) {
+                const r = await actions.cajaEditarMovimiento(row.dbId, {
+                    importe: nuevoImporte,
+                    metodo_pago: editSalidaDraft.metodo,
+                    descripcion: nuevaDescripcion,
+                });
+                if (!r?.success) {
+                    alert(r?.error || "No se pudo editar en backend");
+                    return;
+                }
+            }
+
+            setSalidas(prev => prev.map(s => s.id === row.id
+                ? { ...s, desc: descArmadaBase, importe: nuevoImporte, metodo: editSalidaDraft.metodo, comentario: comentarioS }
+                : s
+            ));
+            setEditSalidaId(null);
+        } catch (e) {
+            alert(e.message);
+        }
     }
+
+    function cancelarEdicionSalida() {
+        setEditSalidaId(null);
+    }
+
 
 
     async function eliminarSalida(row) {
@@ -1349,31 +1407,75 @@ export default function Caja() {
                                 <tr key={v.id}>
                                     <td style={styles.td}>{hora(v.ts)}</td>
                                     <td style={styles.td}>{v.usuario}</td>
-                                    <td style={styles.td}>{moneda(v.importe)}</td>
-                                    <td style={styles.td}>{v.pago != null ? moneda(v.pago) : "-"}</td>
-                                    <td style={styles.td}>{v.vuelto != null ? moneda(Math.max(0, v.vuelto)) : "-"}</td>
-                                    <td style={styles.td}>{v.metodo}</td>
-                                    <td style={styles.td}>{v.comentario || "-"}</td> {/* NUEVO */}
-                                    <td style={styles.tdRight}>
-                                        <button
-                                            style={styles.iconBtn}
-                                            onClick={() => editarVenta(v)}
-                                            disabled={!turnoAbierto}
-                                            title="Editar importe"
-                                        >
-                                            ✏️
-                                        </button>
-                                        <button
-                                            style={{ ...styles.iconBtn, marginLeft: 6, borderColor: '#ef4444', color: '#ef4444' }}
-                                            onClick={() => eliminarVenta(v)}
-                                            disabled={!turnoAbierto}
-                                            title="Eliminar venta"
-                                        >
-                                            🗑️
-                                        </button>
+
+                                    {/* IMPORTE */}
+                                    <td style={styles.td}>
+                                        {editVentaId === v.id ? (
+                                            <input
+                                                type="number"
+                                                style={styles.input}
+                                                value={editVentaDraft.importe}
+                                                onChange={(e) => setEditVentaDraft(d => ({ ...d, importe: e.target.value }))}
+                                            />
+                                        ) : (
+                                            moneda(v.importe)
+                                        )}
                                     </td>
 
+                                    {/* PAGO CON (lo dejamos solo lectura por ahora para no cambiar lógicas de vuelto) */}
+                                    <td style={styles.td}>{v.pago != null ? moneda(v.pago) : "-"}</td>
+
+                                    {/* VUELTO (derivado) */}
+                                    <td style={styles.td}>{v.vuelto != null ? moneda(Math.max(0, v.vuelto)) : "-"}</td>
+
+                                    {/* METODO */}
+                                    <td style={styles.td}>
+                                        {editVentaId === v.id ? (
+                                            <select
+                                                style={styles.input}
+                                                value={editVentaDraft.metodo}
+                                                onChange={(e) => setEditVentaDraft(d => ({ ...d, metodo: e.target.value }))}
+                                            >
+                                                {METODOS.map(m => <option key={m} value={m}>{m}</option>)}
+                                            </select>
+                                        ) : (
+                                            v.metodo
+                                        )}
+                                    </td>
+
+                                    {/* COMENTARIO */}
+                                    <td style={styles.td}>
+                                        {editVentaId === v.id ? (
+                                            <input
+                                                style={styles.input}
+                                                value={editVentaDraft.comentario}
+                                                onChange={(e) => setEditVentaDraft(d => ({ ...d, comentario: e.target.value }))}
+                                                placeholder="Comentario (opcional)"
+                                            />
+                                        ) : (
+                                            v.comentario || "-"
+                                        )}
+                                    </td>
+
+                                    {/* ACCIONES */}
+                                    <td style={styles.tdRight}>
+                                        {editVentaId === v.id ? (
+                                            <>
+                                                <button style={styles.primaryBtn} onClick={() => guardarEdicionVenta(v)}>Guardar</button>
+                                                <button style={{ ...styles.iconBtn, marginLeft: 6 }} onClick={cancelarEdicionVenta}>Cancelar</button>
+                                            </>
+                                        ) : (
+                                            <>
+                                                <button style={styles.iconBtn} onClick={() => editarVenta(v)} disabled={!turnoAbierto} title="Editar">✏️</button>
+                                                <button
+                                                    style={{ ...styles.iconBtn, marginLeft: 6, borderColor: '#ef4444', color: '#ef4444' }}
+                                                    onClick={() => eliminarVenta(v)} disabled={!turnoAbierto} title="Eliminar"
+                                                >🗑️</button>
+                                            </>
+                                        )}
+                                    </td>
                                 </tr>
+
                             ))}
                             {ventas.length === 0 && (
                                 <tr>
@@ -1467,32 +1569,81 @@ export default function Caja() {
                         <tbody>
                             {salidas.map((s) => (
                                 <tr key={s.id}>
-                                    {/* 👇 Igual que Entradas: usamos s.ts */}
                                     <td style={styles.td}>{hora(s.ts)}</td>
                                     <td style={styles.td}>{s.usuario}</td>
-                                    <td style={styles.td}>{moneda(s.importe)}</td>
-                                    {/* 👇 Igual que Entradas: usamos s.metodo */}
-                                    <td style={styles.td}>{s.metodo}</td>
-                                    <td style={styles.td}>{s.comentario || "-"}</td>
+
+                                    {/* IMPORTE */}
+                                    <td style={styles.td}>
+                                        {editSalidaId === s.id ? (
+                                            <input
+                                                type="number"
+                                                style={styles.input}
+                                                value={editSalidaDraft.importe}
+                                                onChange={(e) => setEditSalidaDraft(d => ({ ...d, importe: e.target.value }))}
+                                            />
+                                        ) : (
+                                            moneda(s.importe)
+                                        )}
+                                    </td>
+
+                                    {/* METODO */}
+                                    <td style={styles.td}>
+                                        {editSalidaId === s.id ? (
+                                            <select
+                                                style={styles.input}
+                                                value={editSalidaDraft.metodo}
+                                                onChange={(e) => setEditSalidaDraft(d => ({ ...d, metodo: e.target.value }))}
+                                            >
+                                                {METODOS.map(m => <option key={m} value={m}>{m}</option>)}
+                                            </select>
+                                        ) : (
+                                            s.metodo
+                                        )}
+                                    </td>
+
+                                    {/* COMENTARIO (y abajo la descripción editable) */}
+                                    <td style={styles.td}>
+                                        {editSalidaId === s.id ? (
+                                            <div style={{ display: "grid", gap: 6 }}>
+                                                <input
+                                                    style={styles.input}
+                                                    value={editSalidaDraft.comentario}
+                                                    onChange={(e) => setEditSalidaDraft(d => ({ ...d, comentario: e.target.value }))}
+                                                    placeholder="Comentario (opcional)"
+                                                />
+                                                <input
+                                                    style={styles.input}
+                                                    value={editSalidaDraft.desc}
+                                                    onChange={(e) => setEditSalidaDraft(d => ({ ...d, desc: e.target.value }))}
+                                                    placeholder="Descripción (proveedor, gasto, etc.)"
+                                                />
+                                            </div>
+                                        ) : (
+                                            <>
+                                                <div>{s.comentario || "-"}</div>
+                                                <div style={{ fontSize: 12, opacity: 0.7 }}>{s.desc}</div>
+                                            </>
+                                        )}
+                                    </td>
+
                                     <td style={styles.tdRight}>
-                                        <button
-                                            style={styles.iconBtn}
-                                            onClick={() => editarSalida(s)}
-                                            disabled={!turnoAbierto}
-                                            title="Editar salida"
-                                        >
-                                            ✏️
-                                        </button>
-                                        <button
-                                            style={{ ...styles.iconBtn, marginLeft: 6, borderColor: '#ef4444', color: '#ef4444' }}
-                                            onClick={() => eliminarSalida(s)}
-                                            disabled={!turnoAbierto}
-                                            title="Eliminar salida"
-                                        >
-                                            🗑️
-                                        </button>
+                                        {editSalidaId === s.id ? (
+                                            <>
+                                                <button style={styles.primaryBtn} onClick={() => guardarEdicionSalida(s)}>Guardar</button>
+                                                <button style={{ ...styles.iconBtn, marginLeft: 6 }} onClick={cancelarEdicionSalida}>Cancelar</button>
+                                            </>
+                                        ) : (
+                                            <>
+                                                <button style={styles.iconBtn} onClick={() => editarSalida(s)} disabled={!turnoAbierto} title="Editar">✏️</button>
+                                                <button
+                                                    style={{ ...styles.iconBtn, marginLeft: 6, borderColor: '#ef4444', color: '#ef4444' }}
+                                                    onClick={() => eliminarSalida(s)} disabled={!turnoAbierto} title="Eliminar"
+                                                >🗑️</button>
+                                            </>
+                                        )}
                                     </td>
                                 </tr>
+
                             ))}
 
                             {salidas.length === 0 && (
