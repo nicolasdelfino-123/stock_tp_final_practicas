@@ -202,13 +202,11 @@ export default function PedidosDigital() {
 
 
     // 📌 pedidosFiltrados:
-    // Calcula y memoriza la lista final de pedidos según:
-    // 1. Filtrado por fechas y por texto de búsqueda.
-    // 2. Estado seleccionado en los botones ("VIENE", "NO_VIENE" o "TODOS").
-    // 3. Si está activado "excluirVienen", quita los pedidos con estado "VIENE".
-    // Devuelve el arreglo resultante ya filtrado, evitando recalcularlo
-    // innecesariamente gracias a useMemo.
-    // ⬇️ REEMPLAZA COMPLETO tu useMemo de pedidosFiltrados por este
+    // - siempre parte de `pedidos`
+    // - aplica búsqueda y fechas si están definidas (ambas opcionales) 
+    // - luego aplica el filtroEstado (Todos/Viene/No viene) y excluirVienen si corresponde         
+    // - si filtroEstado es "VIENE", ordena por fecha_viene según ordenFechaVieneAsc 
+    // - si filtroEstado es "TODOS" y excluirVienen es true, quita los que están en VIENE
     const pedidosFiltrados = useMemo(() => {
         let base = filtrarPorBusqueda(filtrarPorFechas(pedidos));
 

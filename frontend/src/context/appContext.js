@@ -261,33 +261,6 @@ export const AppProvider = ({ children }) => {
         }
       },
 
-      bajarStockLibro: async (id, cantidad) => {
-        try {
-          const response = await fetch(`${API_BASE}/bajar-libro/${id}`, {
-            method: "PUT",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ cantidad }),
-          });
-
-          const data = await response.json();
-
-          if (response.ok) {
-            await actions.fetchLibros();
-            return {
-              success: true,
-              ubicacion: data.ubicacion || "",
-            };
-          } else {
-            return {
-              success: false,
-              error: data.error || "Error al bajar el stock",
-            };
-          }
-        } catch (error) {
-          console.error("Error en la solicitud:", error);
-          return { success: false, error: error.message };
-        }
-      },
 
 
       // Obtener faltantes activos (no eliminados)
