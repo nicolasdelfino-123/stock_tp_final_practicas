@@ -168,21 +168,12 @@ export default function PedidosDigital() {
         });
     };
 
+    // ⬇️ REEMPLAZA COMPLETO tu handleOrdenarPorFechaViene por este
     const handleOrdenarPorFechaViene = () => {
-        const pedidosOrdenados = [...pedidosFiltrados].sort((a, b) => {
-            const fechaA = a.fecha_viene ? new Date(a.fecha_viene) : null;
-            const fechaB = b.fecha_viene ? new Date(b.fecha_viene) : null;
-
-            if (!fechaA && !fechaB) return 0;
-            if (!fechaA) return 1;
-            if (!fechaB) return -1;
-
-            return ordenFechaVieneAsc ? fechaA - fechaB : fechaB - fechaA;
-        });
-
-        setPedidos(pedidosOrdenados);
-        setOrdenFechaVieneAsc(!ordenFechaVieneAsc);
+        // ❗ No pisamos `pedidos` con un subset. Solo cambiamos la dirección del orden.
+        setOrdenFechaVieneAsc(prev => !prev);
     };
+
 
 
 
@@ -217,26 +208,53 @@ export default function PedidosDigital() {
     // 3. Si está activado "excluirVienen", quita los pedidos con estado "VIENE".
     // Devuelve el arreglo resultante ya filtrado, evitando recalcularlo
     // innecesariamente gracias a useMemo.
+    // ⬇️ REEMPLAZA COMPLETO tu useMemo de pedidosFiltrados por este
     const pedidosFiltrados = useMemo(() => {
         let base = filtrarPorBusqueda(filtrarPorFechas(pedidos));
 
         // Botones "Todos / Vienen / No vienen"
-        if (filtroEstado === "VIENE") return base.filter(p => (p.estado || "") === "VIENE");
-        if (filtroEstado === "NO_VIENE") return base.filter(p => (p.estado || "") === "NO_VIENE");
+        if (filtroEstado === "VIENE") {
+            const soloVienen = base.filter(p => (p.estado || "") === "VIENE");
+
+            // ✅ ordenar aquí, sin tocar el estado global `pedidos`
+            return soloVienen.slice().sort((a, b) => {
+                const fechaA = a.fecha_viene ? new Date(a.fecha_viene) : null;
+                const fechaB = b.fecha_viene ? new Date(b.fecha_viene) : null;
+
+                if (!fechaA && !fechaB) return 0;
+                if (!fechaA) return 1;
+                if (!fechaB) return -1;
+
+                return ordenFechaVieneAsc ? (fechaA - fechaB) : (fechaB - fechaA);
+            });
+        }
+
+        if (filtroEstado === "NO_VIENE") {
+            return base.filter(p => (p.estado || "") === "NO_VIENE");
+        }
 
         if (filtroEstado === "TODOS" && excluirVienen) {
             return base.filter(p => {
-                // Si fue marcado en este ciclo (sin importar su estado o motivo), SIEMPRE mostrarlo
-                if (pedidosMarcadosRecien.has(p.id)) {
-                    return true;
-                }
-                // Ocultar TODOS los pedidos con estado "VIENE"
+                // Si fue marcado en este ciclo, mostrarlo igual
+                if (pedidosMarcadosRecien.has(p.id)) return true;
+                // Ocultar los que están en VIENE
                 return (p.estado || "") !== "VIENE";
             });
         }
-        // Si no hay filtro de estado, devuelve todos los pedidos filtrados por texto y fechas.
+
+        // Sin filtro especial: devolver base (ya filtrada por búsqueda/fechas)
         return base;
-    }, [pedidos, terminoBusqueda, fechaDesde, fechaHasta, filtroEstado, excluirVienen, pedidosMarcadosRecien]);
+    }, [
+        pedidos,
+        terminoBusqueda,
+        fechaDesde,
+        fechaHasta,
+        filtroEstado,
+        excluirVienen,
+        pedidosMarcadosRecien,
+        ordenFechaVieneAsc, // 👈 IMPORTANTE: agrega esta dependencia
+    ]);
+
 
     // Cambia el estado de un pedido y (según el caso) lo persiste en el backend.
     // - Si nuevoEstado === "VIENE": solo actualiza el estado en memoria y limpia el motivo,
