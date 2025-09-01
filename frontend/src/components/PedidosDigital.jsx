@@ -96,7 +96,8 @@ export default function PedidosDigital() {
     const [pedidosMarcadosRecien, setPedidosMarcadosRecien] = useState(new Set());
     const [editorial, setEditorialLibro] = useState("");
     const [ordenFechaVieneAsc, setOrdenFechaVieneAsc] = useState(true);
-
+    const [ordenFechaPedidoAsc, setOrdenFechaPedidoAsc] = useState(true);
+    const [reseteando, setReseteando] = useState(false);
 
     useEffect(() => { setExcluirVienen(true); }, []);
 
@@ -168,6 +169,10 @@ export default function PedidosDigital() {
         });
     };
 
+    const handleOrdenarPorFechaPedido = () => {
+        setOrdenFechaPedidoAsc(prev => !prev);
+    };
+
     // ⬇️ REEMPLAZA COMPLETO tu handleOrdenarPorFechaViene por este
     const handleOrdenarPorFechaViene = () => {
         // ❗ No pisamos `pedidos` con un subset. Solo cambiamos la dirección del orden.
@@ -210,6 +215,8 @@ export default function PedidosDigital() {
     const pedidosFiltrados = useMemo(() => {
         let base = filtrarPorBusqueda(filtrarPorFechas(pedidos));
 
+
+
         // Botones "Todos / Vienen / No vienen"
         if (filtroEstado === "VIENE") {
             const soloVienen = base.filter(p => (p.estado || "") === "VIENE");
@@ -230,7 +237,27 @@ export default function PedidosDigital() {
         if (filtroEstado === "NO_VIENE") {
             return base.filter(p => (p.estado || "") === "NO_VIENE");
         }
+        if (filtroEstado === "TODOS") {
+            // Ordenar por fecha pedido si estamos en TODOS
+            const baseOrdenada = base.slice().sort((a, b) => {
+                const fechaA = a.fecha ? new Date(a.fecha) : null;
+                const fechaB = b.fecha ? new Date(b.fecha) : null;
 
+                if (!fechaA && !fechaB) return 0;
+                if (!fechaA) return 1;
+                if (!fechaB) return -1;
+
+                return ordenFechaPedidoAsc ? (fechaA - fechaB) : (fechaB - fechaA);
+            });
+
+            if (excluirVienen) {
+                return baseOrdenada.filter(p => {
+                    if (pedidosMarcadosRecien.has(p.id)) return true;
+                    return (p.estado || "") !== "VIENE";
+                });
+            }
+            return baseOrdenada;
+        }
         if (filtroEstado === "TODOS" && excluirVienen) {
             return base.filter(p => {
                 // Si fue marcado en este ciclo, mostrarlo igual
@@ -250,7 +277,8 @@ export default function PedidosDigital() {
         filtroEstado,
         excluirVienen,
         pedidosMarcadosRecien,
-        ordenFechaVieneAsc, // 👈 IMPORTANTE: agrega esta dependencia
+        ordenFechaVieneAsc,
+        ordenFechaPedidoAsc,
     ]);
 
 
@@ -576,6 +604,22 @@ export default function PedidosDigital() {
     const fondoURL = "/fondoo.webp";
 
     const totalVienen = pedidos.filter(p => p.estado === "VIENE").length;
+
+    // CSS para la animación del spinner
+    const spinnerStyles = `
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+`;
+
+    // Inyectar estilos si no existen
+    if (!document.querySelector('#spinner-styles')) {
+        const styleSheet = document.createElement('style');
+        styleSheet.id = 'spinner-styles';
+        styleSheet.textContent = spinnerStyles;
+        document.head.appendChild(styleSheet);
+    }
     return (
         <div style={{
             minHeight: "100vh",
@@ -740,72 +784,86 @@ export default function PedidosDigital() {
                         <div className="boton-reset-div d-flex">
                             <button
                                 onClick={async () => {
-
                                     // 🚦 Bloqueo visual si hay filtros activos
                                     if ((terminoBusqueda && terminoBusqueda.trim() !== "") || fechaDesde || fechaHasta) {
                                         alert("Primero debe hacer clic en 'Limpiar búsqueda' para quitar filtros de texto y fecha. Luego podrá 'Resetear para nuevo pedido'.");
-                                        return; // no sigue con el reseteo
-                                    }
-                                    // Paso 1) Reseteo en BACKEND de todos los pedidos que NO son "VIENE".
-                                    const aResetear = pedidos.filter(p => (p.estado || "") !== "VIENE");
-                                    for (const p of pedidos.filter(p => (p.estado || "") === "VIENE")) {
-                                        await actions.actualizarPedido(p.id, p);
+                                        return;
                                     }
 
+                                    setReseteando(true); // 👈 NUEVO: activar loading
 
-
-                                    if (aResetear.length) {
-                                        for (const p of aResetear) {
-                                            // ✅ Conservar cualquier motivo existente, sin importar el estado previo
-                                            const conservarMotivo = !!p.motivo;
-                                            await actions.actualizarPedido(
-                                                p.id,
-                                                { ...p, estado: "", motivo: conservarMotivo ? p.motivo : "" }
-                                            );
+                                    try {
+                                        // Paso 1) Reseteo en BACKEND de todos los pedidos que NO son "VIENE".
+                                        const aResetear = pedidos.filter(p => (p.estado || "") !== "VIENE");
+                                        for (const p of pedidos.filter(p => (p.estado || "") === "VIENE")) {
+                                            await actions.actualizarPedido(p.id, p);
                                         }
+
+                                        if (aResetear.length) {
+                                            for (const p of aResetear) {
+                                                const conservarMotivo = !!p.motivo;
+                                                await actions.actualizarPedido(
+                                                    p.id,
+                                                    { ...p, estado: "", motivo: conservarMotivo ? p.motivo : "" }
+                                                );
+                                            }
+                                        }
+
+                                        // Paso 2) Reseteo en MEMORIA (estado local)
+                                        setPedidos(prev =>
+                                            prev.map(p => {
+                                                if ((p.estado || "") === "VIENE") return p;
+                                                return { ...p, estado: "", motivo: p.motivo || "" };
+                                            })
+                                        );
+
+                                        // Limpiar pedidos marcados recientemente
+                                        setPedidosMarcadosRecien(new Set());
+                                        setProveedorPorDefecto("");
+
+                                        // Paso 3) Ajusta la vista
+                                        setFiltroEstado("TODOS");
+                                        setExcluirVienen(true);
+                                        alert("Comenzará un NUEVO PEDIDO, los pedidos que VIENEN se excluyeron de la lista para no volverlos a pedir");
+                                    } finally {
+                                        setReseteando(false); // 👈 NUEVO: desactivar loading
                                     }
-
-
-                                    // Paso 2) Reseteo en MEMORIA (estado local) y QUITAMOS los que son "VIENE" de la tabla actual
-                                    setPedidos(prev =>
-                                        prev.map(p => {
-                                            if ((p.estado || "") === "VIENE") return p; // intactos
-                                            // ✅ Conservar el motivo si existe, aunque el estado quede vacío
-                                            return { ...p, estado: "", motivo: p.motivo || "" };
-                                        })
-                                    );
-
-
-
-                                    // Limpiar pedidos marcados recientemente
-                                    setPedidosMarcadosRecien(new Set());
-                                    setProveedorPorDefecto(""); // 👈 limpia el proveedor por defecto al comenzar nuevo pedido
-
-
-                                    // Paso 3) Ajusta la vista (código existente)
-                                    setFiltroEstado("TODOS");
-                                    setExcluirVienen(true);
-                                    alert("Comenzará un NUEVO PEDIDO, los pedidos que VIENEN se excluyeron de la lista para no volverlos a pedir");
-                                }
-                                }
-
+                                }}
 
 
                                 style={{
-                                    backgroundColor: "#f06610ff",
+                                    backgroundColor: reseteando ? "#cccccc" : "#f06610ff",
                                     color: "white",
                                     border: "none",
                                     padding: "10px 20px",
                                     borderRadius: "6px",
-                                    cursor: "pointer",
+                                    cursor: reseteando ? "not-allowed" : "pointer",
                                     fontWeight: "bold",
                                     marginBottom: "1px",
                                     marginLeft: "100px",
                                     marginTop: "0px",
-                                    display: "flex-end"
+                                    display: "flex-end",
+                                    opacity: reseteando ? 0.7 : 1
                                 }}
+                                disabled={reseteando}
                             >
-                                🔄 Resetear para nuevo pedido
+                                {reseteando ? (
+                                    <>
+                                        <span style={{
+                                            display: "inline-block",
+                                            width: "16px",
+                                            height: "16px",
+                                            border: "2px solid #ffffff",
+                                            borderTop: "2px solid transparent",
+                                            borderRadius: "50%",
+                                            animation: "spin 1s linear infinite",
+                                            marginRight: "8px"
+                                        }}></span>
+                                        Procesando...
+                                    </>
+                                ) : (
+                                    "🔄 Resetear para nuevo pedido"
+                                )}
                             </button>
 
                         </div>
@@ -883,7 +941,12 @@ export default function PedidosDigital() {
                                 <th style={{ ...thStyle, ...fixed(120) }}>Editorial</th>
                                 <th style={{ ...thStyle, ...fixed(65) }}>Cant.</th>
                                 <th style={thStyle}>ISBN</th>
-                                <th style={thStyleCenter}>Fecha pedido</th>
+                                <th
+                                    style={{ ...thStyleCenter, cursor: "pointer" }}
+                                    onClick={filtroEstado === "TODOS" ? handleOrdenarPorFechaPedido : undefined}
+                                >
+                                    Fecha pedido {filtroEstado === "TODOS" ? (ordenFechaPedidoAsc ? "⬆️" : "⬇️") : ""}
+                                </th>
                                 {filtroEstado === "VIENE" && (
                                     <th
                                         style={{ ...thStyleCenter, cursor: "pointer" }}
