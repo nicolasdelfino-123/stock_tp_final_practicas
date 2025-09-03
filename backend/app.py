@@ -839,15 +839,30 @@ def generar_isbn():
     
 @app.route('/api/libros/buscar')
 def buscar_por_titulo_o_autor():
+    # Tomamos parámetros de la URL (si no vienen, quedan en string vacío)
     titulo = request.args.get('titulo', '')
     autor = request.args.get('autor', '')
 
-    libros = Libro.query.filter(
-        (Libro.titulo.ilike(f"%{titulo}%")) |
-        (Libro.autor.ilike(f"%{autor}%"))
-    ).all()
+    # Normalizamos lo que viene del cliente: minúsculas + sin tildes
+    titulo_norm = unidecode(titulo.lower())
+    autor_norm  = unidecode(autor.lower())
+
+    # Armamos condiciones: aplicamos unaccent y lower a las columnas
+    condiciones = []
+    if titulo_norm:
+        condiciones.append(func.lower(func.unaccent(Libro.titulo)).like(f"%{titulo_norm}%"))
+    if autor_norm:
+        condiciones.append(func.lower(func.unaccent(Libro.autor)).like(f"%{autor_norm}%"))
+
+    # Ejecutamos consulta
+    q = Libro.query
+    if condiciones:
+        q = q.filter(or_(*condiciones))
+
+    libros = q.all()
 
     return jsonify({"libros": [libro.to_dict() for libro in libros]})
+
 
 
 

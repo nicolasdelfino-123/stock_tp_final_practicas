@@ -89,3 +89,7 @@ __pycache__/
 ../backend/models/__pycache__/
 
 frontend/src/components/ESTUDIO/GuardarPedido.jsx
+frontend/src/components/ESTUDIO/App_prueba.py
+
+# Ignorar carpeta de pruebas
+frontend/src/components/ESTUDIO/

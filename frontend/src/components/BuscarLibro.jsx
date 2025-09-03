@@ -3,6 +3,16 @@ import { useNavigate } from "react-router-dom";
 import { useAppContext } from "../context/appContext";
 import { useEffect } from "react";
 
+
+// Normaliza: minúsculas + sin tildes
+const norm = (s = "") =>
+  s
+    .normalize("NFD")                 // separa letras + tildes
+    .replace(/[\u0300-\u036f]/g, "")  // borra tildes/diacríticos
+    .toLowerCase()
+    .trim();
+
+
 const BuscarLibro = () => {
   const navigate = useNavigate();
   const { store, actions, API_BASE } = useAppContext();
@@ -102,10 +112,11 @@ const BuscarLibro = () => {
       }
 
       const librosFiltrados = store.libros.filter((libro) => {
-        const matchTitulo = titulo.trim() && libro.titulo.toLowerCase().includes(titulo.toLowerCase());
-        const matchAutor = autor.trim() && libro.autor.toLowerCase().includes(autor.toLowerCase());
+        const matchTitulo = titulo.trim() && norm(libro.titulo).includes(norm(titulo));
+        const matchAutor = autor.trim() && norm(libro.autor).includes(norm(autor));
         return matchTitulo || matchAutor;
       });
+
 
       if (librosFiltrados.length === 0) {
         setError("No se encontraron coincidencias en nuestro stock");
