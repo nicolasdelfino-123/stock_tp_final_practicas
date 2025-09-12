@@ -6,12 +6,12 @@ Sistema de gestión de stock de libros desarrollado como trabajo práctico final
 
 ## ✨ Características Implementadas
 
-- **Gestión Completa de Libros**: Agregar, buscar, actualizar y eliminar libros
-- **Control de Stock**: Bajar stock y marcar libros dados de baja  
-- **Lista de Faltantes**: Gestionar libros que necesitan ser repuestos
-- **Búsqueda Avanzada**: Por título, autor, ISBN con normalización de texto
-- **Generación Automática de ISBN**: Códigos secuenciales de 5 dígitos
-- **Interfaz de Usuario**: Frontend React moderno y responsive
+- **Gestión Completa de Libros**: Agregar, buscar, actualizar libros.
+- **Control de Stock**: Bajar stock y marcar libros dados de baja.
+- **Lista de Faltantes**: Gestionar faltantes que necesitan ser repuestos.
+- **Búsqueda Avanzada**: Por título, autor, ISBN con normalización de texto.
+- **Generación Automática de ISBN**: Códigos secuenciales de 5 dígitos.
+- **Interfaz de Usuario**: Frontend React moderno y responsive.
 
 ---
 
@@ -23,7 +23,10 @@ Sistema de gestión de stock de libros desarrollado como trabajo práctico final
 - Flask-Admin
 - Flask-CORS
 - Unidecode
-- SQLite (por defecto)
+- PostgreSQL
+- React
+- Bootstrap
+- Javascrpit
 
 ---
 
@@ -46,11 +49,56 @@ pip install -r requirements.txt
 
 4. Configurá variables de entorno en un archivo .env (si no existe)
 
-DATABASE_URL=sqlite:///db.sqlite3
-FLASK_ENV=development
+```bash
+# Configuración de Base de Datos PostgreSQL para DESARROLLO
+DB_USER=app_stock_dev
+DB_PASSWORD=dev123456
+DB_HOST=localhost
+DB_PORT=5432
+DB_NAME=stock_charles_dev
+DB_SCHEMA=stock_charles_schema
 
-5. Ejecutá la app
+# URL completa de la base de datos
+DATABASE_URL=postgresql://app_stock_dev:dev123456@localhost:5432/stock_charles_dev?options=-csearch_path%3Dstock_charles_schema
+
+# Configuración de Flask
+SECRET_KEY=tu-clave-secreta-muy-segura-cambiar-en-produccion
+FLASK_ENV=development
+FLASK_DEBUG=True
+
+# Configuración de autenticación
+APP_LOGIN=admin
+APP_PASSWORD=admin123
+
+# Puerto para desarrollo
+PORT=5001
+```
+
+5. Configurá la base de datos PostgreSQL
+
+```bash
+# Ejecutar el script de configuración de desarrollo
+./backend/setup_dev_db.sh
+```
+
+5. Ejecutá las migraciones de base de datos
+
+```bash
+cd backend
+source venv/bin/activate
+flask db upgrade
+```
+
+6. Ejecutá la aplicación
+
+```bash
+# Backend (desde backend/)
 python app.py
+
+# Frontend (desde frontend/ en otra terminal)
+npm install
+npm start
+```
 
 🧪 Endpoints disponibles
 
