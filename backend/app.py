@@ -609,4 +609,6 @@ def get_faltantes_eliminados():
 if __name__ == "__main__":
     port = int(os.getenv('PORT', 5000))  # Render usa la variable PORT
     print(f"🚀 Starting app on port {port}")
+    print(f"🔑 APP_LOGIN configured: {os.getenv('APP_LOGIN')}")
+    print(f"🔐 APP_PASSWORD configured: {'***' if os.getenv('APP_PASSWORD') else 'NOT SET'}")
     app.run(debug=False, host='0.0.0.0', port=port)  # debug=False para producción
