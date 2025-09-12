@@ -71,7 +71,7 @@ APP_LOGIN=admin
 APP_PASSWORD=admin123
 
 # Puerto para desarrollo
-PORT=5001
+PORT=5000
 ```
 
 5. Configurá la base de datos PostgreSQL

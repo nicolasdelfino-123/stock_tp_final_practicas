@@ -604,4 +604,5 @@ def get_faltantes_eliminados():
         return jsonify({"error": str(e)}), 500
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    port = int(os.getenv('PORT', 5000))  # Railway usa la variable PORT
+    app.run(debug=False, host='0.0.0.0', port=port)  # debug=False para producción
