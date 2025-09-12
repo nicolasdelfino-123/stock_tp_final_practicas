@@ -51,37 +51,20 @@ export const AppProvider = ({ children }) => {
   }
 
 
-  // Inicializar datos desde localStorage al cargar la aplicación
+  // Inicializar datos - cargar libros directamente al iniciar la aplicación
   useEffect(() => {
-    const initializeAuth = () => {
-      const storedToken = localStorage.getItem("token");
-      const storedUser = localStorage.getItem("user");
-
-      if (storedToken && storedUser) {
-        // Verificar si el token no ha expirado
-        try {
-          const payload = JSON.parse(atob(storedToken.split('.')[1]));
-          const exp = payload.exp * 1000;
-
-          if (Date.now() < exp) {
-            setToken(storedToken);
-            setUser(storedUser);
-          } else {
-            // Token expirado, limpiar localStorage
-            localStorage.removeItem("token");
-            localStorage.removeItem("user");
-          }
-        } catch (e) {
-          // Token inválido, limpiar localStorage
-          localStorage.removeItem("token");
-          localStorage.removeItem("user");
-        }
+    const initializeApp = async () => {
+      try {
+        // Cargar libros directamente sin necesidad de autenticación para la demo
+        await actions.fetchLibros();
+      } catch (error) {
+        console.error("Error al inicializar la aplicación:", error);
+      } finally {
+        setIsLoading(false);
       }
-
-      setIsLoading(false);
     };
 
-    initializeAuth();
+    initializeApp();
   }, []);
 
   const actions = useMemo(
