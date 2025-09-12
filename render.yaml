@@ -1,0 +1,32 @@
+services:
+  - type: web
+    name: stock-tp-final
+    runtime: python3
+    buildCommand: "./build.sh"
+    startCommand: "cd backend && python app.py"
+    plan: free
+    env: python
+    region: oregon
+    buildFilter:
+      paths:
+        - backend/**
+        - frontend/**
+        - build.sh
+    envVars:
+      - key: FLASK_ENV
+        value: production
+      - key: SECRET_KEY
+        generateValue: true
+      - key: APP_LOGIN
+        value: admin
+      - key: APP_PASSWORD
+        value: admin123
+      - key: CORS_ORIGINS
+        value: "*"
+
+databases:
+  - name: stock-postgres
+    databaseName: stock_charles
+    user: stock_user
+    plan: free
+    region: oregon

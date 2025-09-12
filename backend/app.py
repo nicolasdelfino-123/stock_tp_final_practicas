@@ -10,7 +10,6 @@ from unidecode import unidecode
 from flask_cors import CORS
 from flask_admin import Admin
 from flask_admin.contrib.sqla import ModelView
-from models.libro import Base
 from flask import send_from_directory,request, jsonify
 from flask import abort
 from datetime import datetime, timedelta, timezone
@@ -19,8 +18,12 @@ from flask_migrate import Migrate
 
 import jwt 
 import time
-from flask import send_from_directory,request, jsonify
 import os
+
+# Cargar variables de entorno solo si no estamos en producción
+if os.getenv('FLASK_ENV') != 'production':
+    from dotenv import load_dotenv
+    load_dotenv()
 
 def create_app():
     app = Flask(__name__, static_folder="../frontend/build", static_url_path="/")
