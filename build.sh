@@ -1,14 +1,17 @@
 #!/bin/bash
-# Build script para Render
+set -e
+
+echo "Starting build process..."
 
 # Instalar dependencias del backend
+echo "Installing backend dependencies..."
 cd backend
 pip install -r requirements.txt
 
-# Instalar dependencias del frontend
+# Instalar dependencias del frontend y hacer build
+echo "Installing frontend dependencies and building..."
 cd ../frontend
 npm install
 npm run build
 
-# Volver al directorio backend
-cd ../backend
+echo "Build completed successfully!"
