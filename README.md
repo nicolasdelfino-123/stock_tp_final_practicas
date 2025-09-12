@@ -1,6 +1,17 @@
-# 📚 Librería API - Flask
+# 📚 Stock TP Final Prácticas
 
-Este proyecto es una API RESTful construida con **Flask**, pensada para administrar libros de una librería (alta, baja, modificación, consulta por título, autor o ISBN). Usa **SQLAlchemy** como ORM, soporta **CORS** para conexión con frontends y cuenta con un **panel de administración** básico con Flask-Admin.
+Sistema de gestión de stock de libros desarrollado como trabajo práctico final. 
+
+**Versión simplificada** que incluye únicamente la funcionalidad de gestión de libros (sin módulos de caja y pedidos).
+
+## ✨ Características Implementadas
+
+- **Gestión Completa de Libros**: Agregar, buscar, actualizar y eliminar libros
+- **Control de Stock**: Bajar stock y marcar libros dados de baja  
+- **Lista de Faltantes**: Gestionar libros que necesitan ser repuestos
+- **Búsqueda Avanzada**: Por título, autor, ISBN con normalización de texto
+- **Generación Automática de ISBN**: Códigos secuenciales de 5 dígitos
+- **Interfaz de Usuario**: Frontend React moderno y responsive
 
 ---
 
@@ -85,5 +96,5 @@ Tests automatizados
 Conexión con base de datos remota (PostgreSQL/MySQL)
 
 👨‍💻 Autor
-Hecho con ❤️ por [Nicolás - @nicolasdelfino-123]
+Hecho con ❤️ por [ Grupo Prácticas Profesionalizantes - DVS]
 ```

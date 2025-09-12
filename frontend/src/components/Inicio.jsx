@@ -137,12 +137,14 @@ const Inicio = () => {
               </button>
 
               <button
-                onClick={() => navigate("/pedidos")}
+                onClick={() => alert("Funcionalidad en desarrollo...")}
                 className="btn-pedidos btn-lg d-flex align-items-center justify-content-center gap-2 px-4 py-3 btn-futurista m-5"
                 style={{
                   borderRadius: "50px",
                   padding: "10px 30px",
                   minWidth: "150px",
+                  opacity: 0.7,
+                  cursor: "not-allowed"
                 }}
               >
                 <BookOpenCheck size={45} color="black" />
@@ -152,13 +154,15 @@ const Inicio = () => {
           </div>
           <div className="d-flex justify-content-center" style={{ marginTop: '-50px' }}>
             <button
-              onClick={() => navigate("/caja")}
+              onClick={() => alert("Funcionalidad en desarrollo...")}
               className="btn btn-success btn-lg gap-2 px-4 py-3 btn-futurista"
               style={{
                 borderRadius: "10px",
                 padding: "10px 30px",
                 minWidth: "150px",
                 margin: 50,
+                opacity: 0.7,
+                cursor: "not-allowed"
               }}
             >
               <PackageOpen size={45} color="black" />
