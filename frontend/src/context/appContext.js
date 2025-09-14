@@ -183,6 +183,8 @@ export const AppProvider = ({ children }) => {
 
       crearLibro: async (formData) => {
         try {
+          console.log("📦 Datos que se envían al backend:", formData);
+
           const response = await fetch(`${API_BASE}/libros`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -195,6 +197,7 @@ export const AppProvider = ({ children }) => {
             return { success: true, libro: data.libro || null };
           } else {
             const errorData = await response.json();
+            console.error("❌ Error del backend:", errorData);
             return {
               success: false,
               error: errorData.error || "Error al crear libro",

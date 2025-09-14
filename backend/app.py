@@ -154,54 +154,86 @@ def obtener_libros():
     except Exception as e:
         return jsonify({'error': 'Ocurrió un error al obtener los libros', 'mensaje': str(e)}), 500
 
-# Crear nuevo libro con validación
 @app.route('/libros', methods=['POST'])
 def crear_libro():
     session = app.session
     data = request.json
     print("📦 Datos recibidos:", data)
+    print(f"🔍 Tipo de cada campo:")
+    for key, value in data.items():
+        print(f"  {key}: {value} (tipo: {type(value)})")
 
-    # Validación de campos obligatorios (sacamos precio de la validación)
+    # Validación de campos obligatorios
     if not data.get('titulo') or not data.get('autor'):
+        print("❌ Error: Faltan campos obligatorios (titulo o autor)")
         return jsonify({'error': 'Faltan campos obligatorios (titulo o autor)'}), 400
+    
+    # Validar ISBN - debe existir y no estar vacío
+    isbn = data.get('isbn', '').strip()
+    if not isbn:
+        print("❌ Error: ISBN vacío o faltante")
+        return jsonify({'error': 'El ISBN es obligatorio'}), 400
+    print(f"✅ ISBN validado: '{isbn}'")
+
+    # Validar ubicación - debe existir y no estar vacía
+    ubicacion = data.get('ubicacion', '').strip()
+    if not ubicacion:
+        print("❌ Error: Ubicación vacía o faltante")
+        return jsonify({'error': 'La ubicación es obligatoria'}), 400
+    print(f"✅ Ubicación validada: '{ubicacion}'")
 
     # Procesar el precio: si viene vacío o null, lo dejamos en None
     precio_raw = data.get('precio')
     precio = float(precio_raw) if precio_raw not in (None, '', 'null') else None
+    print(f"✅ Precio procesado: {precio}")
 
     try:
+        print("🔍 Buscando libro existente por ISBN...")
         # Buscar si ya existe un libro con el mismo ISBN
-        libro_existente = session.query(Libro).filter(Libro.isbn == data.get('isbn')).first()
+        libro_existente = session.query(Libro).filter(Libro.isbn == isbn).first()
 
         if libro_existente:
+            print(f"📚 Libro existente encontrado, actualizando...")
             # Si ya existe, actualizamos el libro con los nuevos datos
             libro_existente.titulo = data['titulo']
             libro_existente.autor = data['autor']
             libro_existente.editorial = data.get('editorial')
             libro_existente.stock = data.get('stock', 0)
             libro_existente.precio = precio
-            libro_existente.ubicacion = data.get('ubicacion')
+            libro_existente.ubicacion = ubicacion
 
             session.commit()
+            print("✅ Libro actualizado exitosamente")
             return jsonify({'mensaje': 'Libro actualizado con éxito'}), 200
         else:
+            print(f"📚 Creando nuevo libro...")
             # Si no existe, creamos un nuevo libro
             nuevo_libro = Libro(
                 titulo=data['titulo'],
                 autor=data['autor'],
                 editorial=data.get('editorial'),
-                isbn=data.get('isbn'),
+                isbn=isbn,
                 stock=data.get('stock', 0),
                 precio=precio,
-                ubicacion=data.get('ubicacion')
+                ubicacion=ubicacion
             )
             session.add(nuevo_libro)
             session.commit()
+            print("✅ Libro creado exitosamente")
             return jsonify({'mensaje': 'Libro creado con éxito'}), 201
 
     except Exception as e:
         session.rollback()
-        return jsonify({'error': 'Error al crear o actualizar el libro', 'mensaje': str(e)}), 500
+        print(f"❌ Error en crear_libro: {type(e).__name__}: {str(e)}")
+        print(f"📦 Datos que causaron el error: {data}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({
+            'error': 'Error al crear o actualizar el libro', 
+            'mensaje': str(e),
+            'tipo_error': type(e).__name__,
+            'datos_enviados': data
+        }), 500
 
 
 # Actualizar libro

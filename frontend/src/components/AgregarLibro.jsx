@@ -454,11 +454,39 @@ const AgregarLibro = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    const { isbn, titulo, autor, ubicacion, stock } = formData;
+    // Limpiar espacios en blanco de los campos de texto
+    const datosLimpios = {
+      ...formData,
+      isbn: formData.isbn.trim(),
+      titulo: formData.titulo.trim(),
+      autor: formData.autor.trim(),
+      editorial: formData.editorial ? formData.editorial.trim() : '',
+      ubicacion: formData.ubicacion.trim()
+    };
 
-    // Validaciones básicas
-    if (!isbn || !titulo || !autor || !ubicacion) {
-      alert("Por favor, complete los campos obligatorios: ISBN, título, autor y ubicación.");
+    console.log("📋 Datos del formulario antes de limpiar:", formData);
+    console.log("✨ Datos limpios para envío:", datosLimpios);
+
+    const { isbn, titulo, autor, ubicacion, stock } = datosLimpios;
+
+    // Validaciones básicas más estrictas
+    if (!isbn || isbn === "") {
+      alert("El ISBN es obligatorio y no puede estar vacío.");
+      return;
+    }
+
+    if (!titulo || titulo === "") {
+      alert("El título es obligatorio y no puede estar vacío.");
+      return;
+    }
+
+    if (!autor || autor === "") {
+      alert("El autor es obligatorio y no puede estar vacío.");
+      return;
+    }
+
+    if (!ubicacion || ubicacion === "") {
+      alert("La ubicación es obligatoria y no puede estar vacía.");
       return;
     }
 
@@ -467,7 +495,7 @@ const AgregarLibro = () => {
       return;
     }
 
-    if (formData.precio < 0) {
+    if (datosLimpios.precio < 0) {
       alert("El precio no puede ser negativo.");
       return;
     }
@@ -476,7 +504,7 @@ const AgregarLibro = () => {
       // Primero verificamos si el libro existe en NUESTRA base de datos
       let libroExistente = null;
       try {
-        const resultadoBusqueda = await actions.buscarLibroPorISBN(formData.isbn.trim());
+        const resultadoBusqueda = await actions.buscarLibroPorISBN(datosLimpios.isbn);
         // Solo consideramos que existe si viene de nuestra BD local
         if (resultadoBusqueda && resultadoBusqueda.fuente === "Base de datos local") {
           libroExistente = resultadoBusqueda;
@@ -489,29 +517,29 @@ const AgregarLibro = () => {
         // Lógica de actualización
         let cambios = [];
 
-        if (formData.titulo !== libroExistente.titulo) {
+        if (datosLimpios.titulo !== libroExistente.titulo) {
           cambios.push("título");
         }
-        if (formData.autor !== libroExistente.autor) {
+        if (datosLimpios.autor !== libroExistente.autor) {
           cambios.push("autor");
         }
-        if (formData.editorial !== libroExistente.editorial) {
+        if (datosLimpios.editorial !== libroExistente.editorial) {
           cambios.push("editorial");
         }
-        if (parseInt(formData.stock) !== parseInt(libroExistente.stock)) {
-          cambios.push(`stock (${libroExistente.stock} → ${formData.stock})`);
+        if (parseInt(datosLimpios.stock) !== parseInt(libroExistente.stock)) {
+          cambios.push(`stock (${libroExistente.stock} → ${datosLimpios.stock})`);
         }
-        if (parseFloat(formData.precio) !== parseFloat(libroExistente.precio)) {
+        if (parseFloat(datosLimpios.precio) !== parseFloat(libroExistente.precio)) {
           cambios.push("precio");
         }
-        if (formData.ubicacion !== libroExistente.ubicacion) {
+        if (datosLimpios.ubicacion !== libroExistente.ubicacion) {
           cambios.push("ubicación");
         }
 
         if (cambios.length > 0) {
           const resultado = await actions.actualizarLibro(
             libroExistente.id,
-            formData
+            datosLimpios
           );
 
           if (resultado.success) {
@@ -520,7 +548,7 @@ const AgregarLibro = () => {
             setOrigen("local");
             limpiarFormularioCompleto();
 
-            if (formData.editorial) {
+            if (datosLimpios.editorial) {
               actions.obtenerEditoriales();
             }
           } else {
@@ -532,14 +560,15 @@ const AgregarLibro = () => {
         }
       } else {
         // Creación de nuevo libro
-        const resultado = await actions.crearLibro(formData);
+        console.log("🚀 Enviando datos limpios al backend:", datosLimpios);
+        const resultado = await actions.crearLibro(datosLimpios);
 
         if (resultado.success) {
           actions.setMensaje(
-            `✅ Libro creado con éxito con stock de ${formData.stock} unidad(es).`
+            `✅ Libro creado con éxito con stock de ${datosLimpios.stock} unidad(es).`
           );
 
-          if (formData.editorial) {
+          if (datosLimpios.editorial) {
             actions.obtenerEditoriales();
           }
 
