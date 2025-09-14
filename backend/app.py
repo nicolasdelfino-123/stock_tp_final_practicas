@@ -1,5 +1,5 @@
 from flask import Flask, jsonify, request
-from sqlalchemy import create_engine, or_, func, desc
+from sqlalchemy import create_engine, or_, func, desc, text
 from flask_sqlalchemy import SQLAlchemy
 
 from sqlalchemy.orm import sessionmaker, scoped_session
@@ -45,9 +45,20 @@ def create_app():
 
     engine = create_engine(app.config["SQLALCHEMY_DATABASE_URI"], echo=True, pool_pre_ping=True)
     
-    # 🔧 CREAR TABLAS EN PRODUCCIÓN
+    # 🔧 CREAR SCHEMA Y TABLAS EN PRODUCCIÓN
     if os.getenv("FLASK_ENV") == "production" or app.config.get("CREATE_TABLES_ON_STARTUP"):
-        print("🏗️ Creando tablas en producción...")
+        print("🏗️ Creando schema y tablas en producción...")
+        
+        # Crear el schema si no existe
+        with engine.connect() as conn:
+            try:
+                conn.execute(text("CREATE SCHEMA IF NOT EXISTS stock_charles_schema"))
+                conn.commit()
+                print("✅ Schema 'stock_charles_schema' creado/verificado!")
+            except Exception as e:
+                print(f"⚠️ Error creando schema: {e}")
+        
+        # Crear las tablas
         Base.metadata.create_all(engine)
         print("✅ Tablas creadas exitosamente!")
     elif os.getenv("FLASK_ENV") == "development":
