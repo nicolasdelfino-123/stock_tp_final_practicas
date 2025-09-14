@@ -24,7 +24,15 @@ export const AppProvider = ({ children }) => {
   // --- FIN ESTADO CAJA ---
 
 
-  const API_BASE = process.env.REACT_APP_API_BASE || "http://localhost:5000";
+  // API_BASE: detecta automáticamente si estamos en localhost o producción
+  const API_BASE = (() => {
+    // Si estás en desarrollo (localhost), usa el puerto 5000
+    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+      return process.env.REACT_APP_API_BASE || "http://localhost:5000";
+    }
+    // Si estás en producción (Render), usa la misma URL base (backend y frontend en mismo dominio)
+    return `${window.location.protocol}//${window.location.host}`;
+  })();
   // === Auth helpers (agregar debajo de API_BASE) ===
   function getToken(store) {
     return (store?.token || localStorage.getItem("token") || "").trim();
@@ -51,20 +59,37 @@ export const AppProvider = ({ children }) => {
   }
 
 
-  // Inicializar datos - cargar libros directamente al iniciar la aplicación
+  // Inicializar datos desde localStorage al cargar la aplicación
   useEffect(() => {
-    const initializeApp = async () => {
-      try {
-        // Cargar libros directamente sin necesidad de autenticación para la demo
-        await actions.fetchLibros();
-      } catch (error) {
-        console.error("Error al inicializar la aplicación:", error);
-      } finally {
-        setIsLoading(false);
+    const initializeAuth = () => {
+      const storedToken = localStorage.getItem("token");
+      const storedUser = localStorage.getItem("user");
+
+      if (storedToken && storedUser) {
+        // Verificar si el token no ha expirado
+        try {
+          const payload = JSON.parse(atob(storedToken.split('.')[1]));
+          const exp = payload.exp * 1000;
+
+          if (Date.now() < exp) {
+            setToken(storedToken);
+            setUser(storedUser);
+          } else {
+            // Token expirado, limpiar localStorage
+            localStorage.removeItem("token");
+            localStorage.removeItem("user");
+          }
+        } catch (e) {
+          // Token inválido, limpiar localStorage
+          localStorage.removeItem("token");
+          localStorage.removeItem("user");
+        }
       }
+
+      setIsLoading(false);
     };
 
-    initializeApp();
+    initializeAuth();
   }, []);
 
   const actions = useMemo(
