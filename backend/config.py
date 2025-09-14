@@ -32,16 +32,11 @@ class Config:
 
 
 class ProductionConfig(Config):
-    DB_USER = os.getenv('DB_USER', 'app_stock')
-    DB_PASSWORD = os.getenv('DB_PASSWORD', '1q2w3e4r')
-    DB_HOST = os.getenv('DB_HOST', 'localhost')
-    DB_PORT = os.getenv('DB_PORT', '5432')
-    DB_NAME = os.getenv('DB_NAME', 'stock_charles')
-    DB_SCHEMA = os.getenv('DB_SCHEMA', 'stock_charles_schema')
     DEBUG = False
-
-    SQLALCHEMY_DATABASE_URI = (
-        f"postgresql://{DB_USER}:{DB_PASSWORD}@"
-        f"{DB_HOST}:{DB_PORT}/{DB_NAME}"
-        f"?options=-csearch_path%3D{DB_SCHEMA}"
+    
+    # 🎯 FIX: Usar DATABASE_URL directamente en producción
+    SQLALCHEMY_DATABASE_URI = os.getenv(
+        'DATABASE_URL',
+        # Fallback para desarrollo local
+        "postgresql://app_stock_dev:dev123456@localhost:5432/stock_charles_dev?options=-csearch_path%3Dstock_charles_schema"
     )
