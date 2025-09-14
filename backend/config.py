@@ -40,3 +40,6 @@ class ProductionConfig(Config):
         # Fallback para desarrollo local
         "postgresql://app_stock_dev:dev123456@localhost:5432/stock_charles_dev?options=-csearch_path%3Dstock_charles_schema"
     )
+    
+    # 🔧 CREAR TABLAS EN PRODUCCIÓN
+    CREATE_TABLES_ON_STARTUP = True

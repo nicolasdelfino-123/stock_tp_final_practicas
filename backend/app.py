@@ -44,7 +44,13 @@ def create_app():
     # --------------------------------------------------------
 
     engine = create_engine(app.config["SQLALCHEMY_DATABASE_URI"], echo=True, pool_pre_ping=True)
-    if os.getenv("FLASK_ENV") == "development":
+    
+    # 🔧 CREAR TABLAS EN PRODUCCIÓN
+    if os.getenv("FLASK_ENV") == "production" or app.config.get("CREATE_TABLES_ON_STARTUP"):
+        print("🏗️ Creando tablas en producción...")
+        Base.metadata.create_all(engine)
+        print("✅ Tablas creadas exitosamente!")
+    elif os.getenv("FLASK_ENV") == "development":
         Base.metadata.create_all(engine)
 
     SessionFactory = scoped_session(sessionmaker(autocommit=False, autoflush=False, bind=engine))
